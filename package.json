@@ -1,0 +1,9 @@
+{
+  "name": "playful-island-root",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node tests/build.js"
+  },
+  "engines": { "node": ">=22" }
+}
