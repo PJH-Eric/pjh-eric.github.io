@@ -19,7 +19,6 @@ function render(cfg, lobby) {
     }
     seen.add(game.launchUrl); ids.add(game.id);
   }
-  const links = lobby.games.map(g => '<li><a href="' + esc(g.launchUrl) + '">' + esc(g.title) + '</a><p>' + esc(g.description) + '</p></li>').join('\n');
   const verification = cfg.googleSiteVerification ? '<meta name="google-site-verification" content="' + esc(cfg.googleSiteVerification) + '">' : '';
   const html = `<!doctype html>
 <html lang="zh-Hant"><head>
@@ -35,8 +34,43 @@ ${verification}<link rel="canonical" href="${esc(cfg.siteUrl)}"><meta name="robo
 <meta property="og:image" content="${ORIGIN}og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:type" content="image/png"><meta property="og:image:alt" content="遊戲小小島">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(cfg.title)}"><meta name="twitter:description" content="${esc(cfg.description)}"><meta name="twitter:image" content="${ORIGIN}og-image.png">
 <script>(function(){if(location.hostname!=="pjh-eric.github.io")return;window.dataLayer=window.dataLayer||[];window.gtag=function(){dataLayer.push(arguments)};gtag('js',new Date());gtag('config','${cfg.gaMeasurementId}',{game_id:'root',page_location:'${ORIGIN}'});var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id=${cfg.gaMeasurementId}';document.head.appendChild(s);})();</script>
-<style>html{font:18px/1.7 system-ui,sans-serif;color:#263b40;background:#f5faf7}body{max-width:960px;margin:auto;padding:clamp(18px,5vw,48px)}a{color:#125d69;text-underline-offset:4px}a:focus-visible{outline:3px solid #da8c25;outline-offset:5px}ul{list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}li{background:white;padding:22px;border:1px solid #cadbd2;border-radius:12px;overflow-wrap:anywhere}li a{font-weight:bold;font-size:1.2rem}li p{margin-bottom:0}.lobby{display:inline-block;padding:12px 24px;background:#125d69;color:white;border-radius:8px}</style>
-</head><body><main><h1>遊戲小小島入口</h1><p>${esc(cfg.description)}</p><p><a class="lobby" href="${esc(cfg.lobbyUrl)}">前往遊戲大廳</a></p><h2>挑一款遊戲開始玩</h2><ul>${links}</ul></main></body></html>
+<meta name="theme-color" content="#f8f5ed">
+<link rel="stylesheet" href="/home.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳至主要內容</a>
+  <div class="page">
+    <header class="header">
+      <a class="brand" href="${esc(cfg.siteUrl)}" aria-label="遊戲小小島首頁">
+        <img src="/favicon.svg" width="42" height="42" alt="">
+        <span>遊戲小小島<small>PLAYFUL ISLAND</small></span>
+      </a>
+      <a class="nav-link" href="${esc(cfg.lobbyUrl)}">遊戲大廳 <span aria-hidden="true">↗</span></a>
+    </header>
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span>給生活一點遊戲時間</p>
+          <h1 id="hero-title">放下忙碌，<br>來島上<span class="accent">玩。</span></h1>
+          <p class="intro">一點挑戰，一點歡笑，還有剛剛好的放鬆。<br class="desktop-break">一個人闖關，或揪朋友同樂，下一場快樂就在這裡。</p>
+          <a class="primary-link" href="${esc(cfg.lobbyUrl)}">前往遊戲大廳 <span aria-hidden="true">→</span></a>
+          <p class="quick-note"><span aria-hidden="true">✦</span> 免費遊玩 <span class="separator">／</span> 免下載 <span class="separator">／</span> 打開就能玩</p>
+        </div>
+        <div class="hero-art">
+          <span class="art-label">YOUR LITTLE PLAY BREAK</span>
+          <img class="island" src="/island.svg" width="640" height="560" alt="漂浮在海上的遊戲小島，有棕櫚樹、遊戲手把與溫暖的太陽">
+          <span class="island-note"><i aria-hidden="true"></i>快樂，隨時靠岸。</span>
+        </div>
+      </section>
+      <section class="possibilities" aria-label="在小島上的遊玩方式">
+        <article><span class="feature-number" aria-hidden="true">01 /</span><div><h2>留一點時間給自己</h2><p>輕鬆動腦，享受自己的小小成就。</p></div></article>
+        <article><span class="feature-number" aria-hidden="true">02 /</span><div><h2>把朋友也揪上島</h2><p>一起挑戰，讓平凡日常多一點笑聲。</p></div></article>
+        <article><span class="feature-number" aria-hidden="true">03 /</span><div><h2>在哪裡，都能開玩</h2><p>手機、平板或電腦，找到舒服的玩法。</p></div></article>
+      </section>
+    </main>
+    <footer><span>遊戲小小島 <span class="footer-dot">·</span> 把快樂留在日常裡</span><span class="footer-sign">A LITTLE ISLAND. A LOT OF FUN.</span></footer>
+  </div>
+</body></html>
 `;
   return {
     'index.html': html,
@@ -63,7 +97,7 @@ async function build(env = process.env) {
   const out = path.join(root, 'dist');
   fs.mkdirSync(out, { recursive: true });
   for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(out, name), text, 'utf8');
-  for (const name of ['favicon.svg', 'favicon-96.png', 'favicon.ico', 'apple-touch-icon.png', 'og-image.png', 'icons/icon-192.png', 'icons/icon-512.png']) {
+  for (const name of ['home.css', 'island.svg', 'favicon.svg', 'favicon-96.png', 'favicon.ico', 'apple-touch-icon.png', 'og-image.png', 'icons/icon-192.png', 'icons/icon-512.png']) {
     fs.mkdirSync(path.dirname(path.join(out, name)), { recursive: true });
     fs.copyFileSync(path.join(root, 'assets', name), path.join(out, name));
   }
