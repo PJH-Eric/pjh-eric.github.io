@@ -12,6 +12,8 @@ assert.ok(files['index.html'].includes('&lt;可玩&gt;'));
 assert.ok(files['index.html'].includes(game.launchUrl));
 assert.ok(!files['index.html'].includes('http-equiv="refresh"'));
 assert.ok(files['404.html'].includes('noindex'));
+assert.ok(files['index.html'].includes('rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png"'));
+assert.ok(files['index.html'].includes('property="og:image" content="' + cfg.siteUrl + 'og-image.png"'));
 assert.throws(() => render(cfg, { games: [] }), /沒有任何遊戲/);
 assert.throws(() => render(cfg, { games: [game, game] }), /重複/);
 assert.throws(() => render(cfg, { games: [{ ...game, launchUrl: 'https://evil.example/' }] }), /遊戲設定/);
