@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const ORIGIN = 'https://pjh-eric.github.io/';
+const STANDALONE_GAME_URLS = [ORIGIN + 'snake-3d/'];
 const root = path.join(__dirname, '..');
 const esc = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -12,6 +13,10 @@ function render(cfg, lobby) {
   if (!Array.isArray(lobby.games) || !lobby.games.length) throw new Error('games.json 沒有任何遊戲');
   const seen = new Set([cfg.siteUrl, cfg.lobbyUrl]);
   const ids = new Set();
+  for (const url of STANDALONE_GAME_URLS) {
+    if (seen.has(url)) throw new Error('獨立遊戲網址重複：' + url);
+    seen.add(url);
+  }
   for (const game of lobby.games) {
     if (!/^[a-z0-9-]+$/.test(game.id) || game.launchUrl !== ORIGIN + game.id + '/' ||
         !game.title || !game.description || seen.has(game.launchUrl) || ids.has(game.id)) {
@@ -20,6 +25,12 @@ function render(cfg, lobby) {
     seen.add(game.launchUrl); ids.add(game.id);
   }
   const verification = cfg.googleSiteVerification ? '<meta name="google-site-verification" content="' + esc(cfg.googleSiteVerification) + '">' : '';
+  const sitemapUrls = [
+    cfg.siteUrl + 'sitemap.xml',
+    cfg.lobbyUrl + 'sitemap.xml',
+    ...lobby.games.map(game => game.launchUrl + 'sitemap.xml'),
+    ...STANDALONE_GAME_URLS.map(url => url + 'sitemap.xml')
+  ];
   const html = `<!doctype html>
 <html lang="zh-Hant"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -74,7 +85,7 @@ ${verification}<link rel="canonical" href="${esc(cfg.siteUrl)}"><meta name="robo
 `;
   return {
     'index.html': html,
-    'robots.txt': 'User-agent: *\nAllow: /\n\nSitemap: ' + cfg.siteUrl + 'sitemap.xml\n',
+    'robots.txt': 'User-agent: *\nAllow: /\n\n' + sitemapUrls.map(url => 'Sitemap: ' + url).join('\n') + '\n',
     'sitemap.xml': '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
       [...seen].map(url => '  <url><loc>' + esc(url) + '</loc></url>').join('\n') + '\n</urlset>\n',
     '404.html': '<!doctype html><html lang="zh-Hant"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>找不到這個頁面</title><h1>找不到這個頁面</h1><p><a href="' + cfg.lobbyUrl + '">回遊戲大廳</a></p></html>\n',
@@ -94,6 +105,7 @@ async function build(env = process.env) {
   }
   // 先完成全部驗證與渲染，避免連線或設定錯誤時覆蓋既有產物。
   const files = render(cfg, lobby);
+  fs.writeFileSync(path.join(root, 'robots.txt'), files['robots.txt'], 'utf8');
   const out = path.join(root, 'dist');
   fs.mkdirSync(out, { recursive: true });
   for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(out, name), text, 'utf8');
