@@ -26,10 +26,12 @@ assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.lobbyUrl + 'sitemap.xml
 assert.ok(files['robots.txt'].includes('Sitemap: ' + game.launchUrl + 'sitemap.xml'));
 assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'snake-3d/sitemap.xml'));
 assert.ok(files['index.html'].includes('href="' + cfg.lobbyUrl + '"'));
-assert.ok(files['index.html'].includes('href="' + game.launchUrl + '"'));
-assert.ok(files['index.html'].includes('src="' + game.imageUrl + '"'));
-assert.ok(files['index.html'].includes(game.title));
-assert.ok(files['index.html'].includes('3D貪吃蛇'));
+assert.ok(!files['index.html'].includes('href="' + game.launchUrl + '"'));
+assert.ok(!files['index.html'].includes('src="' + game.imageUrl + '"'));
+assert.ok(!files['index.html'].includes(game.title));
+assert.ok(!files['index.html'].includes('3D貪吃蛇'));
+assert.ok(!files['index.html'].includes('class="game-library"'));
+assert.ok(!files['index.html'].includes('class="game-grid"'));
 assert.ok(files['sitemap.xml'].includes(game.launchUrl));
 assert.ok(!files['index.html'].includes('http-equiv="refresh"'));
 assert.ok(files['404.html'].includes('noindex'));
@@ -52,13 +54,13 @@ if (fs.existsSync(local)) {
   assert.equal((actual['robots.txt'].match(/^Sitemap:/gm) || []).length, lobby.games.length + 3);
   assert.ok(actual['sitemap.xml'].includes(cfg.siteUrl + 'snake-3d/'));
   assert.ok(actual['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'snake-3d/sitemap.xml'));
-  assert.equal((actual['index.html'].match(/class="game-tile"/g) || []).length, lobby.games.length + 1);
+  assert.equal((actual['index.html'].match(/class="game-tile"/g) || []).length, 0);
   lobby.games.forEach(g => {
     assert.ok(actual['sitemap.xml'].includes(g.launchUrl));
     assert.ok(actual['robots.txt'].includes('Sitemap: ' + g.launchUrl + 'sitemap.xml'));
     assert.equal(g.imageUrl, g.launchUrl + 'assets/images/cover.webp');
-    assert.ok(actual['index.html'].includes('src="' + g.imageUrl + '"'));
+    assert.ok(!actual['index.html'].includes('src="' + g.imageUrl + '"'));
   });
-  assert.ok(actual['index.html'].includes('src="' + snakeCover + '"'));
+  assert.ok(!actual['index.html'].includes('src="' + snakeCover + '"'));
 }
-console.log('✓ 根網站遊戲封面、大廳入口、sitemap、robots、圖示與無效設定測試通過');
+console.log('✓ 根網站不列遊戲清單、大廳入口、sitemap、robots、圖示與無效設定測試通過');
