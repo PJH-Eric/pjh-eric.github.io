@@ -3,12 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const ORIGIN = 'https://pjh-eric.github.io/';
-const STANDALONE_GAMES = [{
-  id: 'snake-3d',
-  title: '3D貪吃蛇',
-  launchUrl: ORIGIN + 'snake-3d/',
-  imageUrl: ORIGIN + 'images/games/snake-3d-cover.webp'
-}];
+// 貪吃蛇僅保留尚未發布的 Unity 專案，不為已移除的網頁版產生 sitemap。
+const STANDALONE_GAMES = [];
 const STANDALONE_GAME_URLS = STANDALONE_GAMES.map(game => game.launchUrl);
 const root = path.join(__dirname, '..');
 const esc = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

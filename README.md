@@ -11,3 +11,9 @@ GitHub 公開 repository 名稱須為 `pjh-eric.github.io`，Pages Source 設定
 Search Console 建立 `https://pjh-eric.github.io/` 網址前置字元資源，把該資源提供的 HTML 驗證碼填進 `googleSiteVerification`，部署後驗證並提交 `sitemap.xml`。遊戲與大廳的路徑涵蓋於這個資源。各遊戲的驗證碼不沿用其他資源的碼。
 
 入口頁 GA4 使用同一個衡量 ID、`game_id=root`；僅在正式 hostname 載入追蹤，page_location 不含 query/hash。GA4 自訂維度及正式收數仍需後台驗證。
+
+## 維護與驗證產物
+
+以 `package.json` 的 scripts 為可執行指令來源；`npm test` 執行基本驗證。需要 Playwright、瀏覽器或網路的檢查，依各測試章節的前置條件執行。
+
+截圖、測試報告、記錄檔及快取為可重新產生的驗證產物，不屬於正式遊戲資產，也不提交版本控制。測試完成後可清除 `screenshots/`、`shots/`、`.shots/`、`test-results/`、`playwright-report/`、`coverage/`、`.cache/`、`tmp/`、`temp/` 與 `*.log`。保留正式圖片、圖示、音訊、字型、原始碼、測試案例、鎖定檔及 `.env.example`；`node_modules/` 是相依套件目錄，不能當成圖片或暫存檔一起刪除。
