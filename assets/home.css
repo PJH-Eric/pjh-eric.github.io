@@ -40,6 +40,22 @@ h1 { margin: 0; font-size: clamp(50px, 5.2vw, 70px); line-height: 1.3; letter-sp
 .island { display: block; width: 100%; height: auto; }
 .island-note { position: absolute; bottom: 12px; left: 50%; display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; transform: translateX(-50%) rotate(-4deg); border: 1px solid #d8dacb; border-radius: 30px; background: #fffdf6; padding: 10px 18px; color: #456458; font-size: 12px; box-shadow: 0 4px 10px #233e4006; }
 .island-note i { width: 6px; height: 6px; border-radius: 50%; background: #72916b; }
+.game-library { padding: 18px 0 62px; }
+.game-library-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.game-library-kicker { display: block; margin-bottom: 8px; color: #9a6e45; font-size: 10px; font-weight: 800; letter-spacing: .18em; }
+.game-library-heading h2 { margin: 0; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.04em; }
+.game-library-heading p { margin: 8px 0 0; color: #6d786f; font-size: 13px; line-height: 1.7; }
+.library-link { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; border-bottom: 1px solid #bcc6bb; color: #456458; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.library-link:hover { color: #ac432e; border-color: #ac432e; }
+.library-link span { font-size: 19px; }
+.game-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 0; padding: 0; list-style: none; }
+.game-tile { min-width: 0; overflow: hidden; border: 1px solid #e0dfd3; border-radius: 16px; background: #fffdf6; box-shadow: 0 5px 14px #233e400a; transition: transform .18s, box-shadow .18s; }
+.game-tile:hover { transform: translateY(-4px); box-shadow: 0 10px 22px #233e4017; }
+.game-tile a { display: flex; height: 100%; flex-direction: column; }
+.game-tile a:focus-visible { outline-offset: -4px; }
+.game-cover { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #fff8ed; }
+.game-tile-title { padding: 13px 14px 2px; font-size: 14px; font-weight: 800; }
+.game-tile-action { padding: 0 14px 13px; color: #748075; font-size: 11px; }
 .possibilities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; padding: 30px 0 36px; border-top: 1px solid #d9ddd0; border-bottom: 1px solid #d9ddd0; }
 .possibilities article { display: flex; gap: 16px; }
 .feature-number { flex-shrink: 0; padding-top: 3px; color: #9a6e45; font-size: 11px; letter-spacing: .05em; }
@@ -59,6 +75,7 @@ footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16
   h1 { font-size: 52px; }
   .desktop-break { display: none; }
   .intro { max-width: 320px; }
+  .game-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
   .possibilities { gap: 20px; }
   .possibilities article { gap: 10px; }
 }
@@ -77,6 +94,11 @@ footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16
   .primary-link { min-height: 56px; font-size: 16px; }
   .quick-note { margin-top: 23px; font-size: 11px; }
   .hero-art { width: min(100%, 410px); margin: 0 auto; }
+  .game-library { padding-bottom: 44px; }
+  .game-library-heading { align-items: start; flex-direction: column; gap: 12px; }
+  .game-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .game-tile-title { padding: 10px 10px 2px; font-size: 12px; }
+  .game-tile-action { padding: 0 10px 10px; font-size: 10px; }
   .art-label { font-size: 8px; right: 0; }
   .island-note { bottom: 0; font-size: 11px; padding: 8px 16px; }
   .possibilities { grid-template-columns: 1fr; gap: 24px; padding: 28px 0; }

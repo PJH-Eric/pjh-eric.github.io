@@ -3,7 +3,13 @@
 const fs = require('fs');
 const path = require('path');
 const ORIGIN = 'https://pjh-eric.github.io/';
-const STANDALONE_GAME_URLS = [ORIGIN + 'snake-3d/'];
+const STANDALONE_GAMES = [{
+  id: 'snake-3d',
+  title: '3D貪吃蛇',
+  launchUrl: ORIGIN + 'snake-3d/',
+  imageUrl: ORIGIN + 'snake-3d/assets/images/cover.webp'
+}];
+const STANDALONE_GAME_URLS = STANDALONE_GAMES.map(game => game.launchUrl);
 const root = path.join(__dirname, '..');
 const esc = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -19,11 +25,19 @@ function render(cfg, lobby) {
   }
   for (const game of lobby.games) {
     if (!/^[a-z0-9-]+$/.test(game.id) || game.launchUrl !== ORIGIN + game.id + '/' ||
-        !game.title || !game.description || seen.has(game.launchUrl) || ids.has(game.id)) {
+        !game.title || !game.description || game.imageUrl !== game.launchUrl + 'assets/images/cover.webp' ||
+        seen.has(game.launchUrl) || ids.has(game.id)) {
       throw new Error('遊戲設定不正確或重複：' + game.id);
     }
     seen.add(game.launchUrl); ids.add(game.id);
   }
+  for (const game of STANDALONE_GAMES) {
+    if (ids.has(game.id) || game.imageUrl !== game.launchUrl + 'assets/images/cover.webp') {
+      throw new Error('獨立遊戲設定不正確或重複：' + game.id);
+    }
+    ids.add(game.id);
+  }
+  const homeGames = [...lobby.games, ...STANDALONE_GAMES];
   const verification = cfg.googleSiteVerification ? '<meta name="google-site-verification" content="' + esc(cfg.googleSiteVerification) + '">' : '';
   const sitemapUrls = [
     cfg.siteUrl + 'sitemap.xml',
@@ -72,6 +86,15 @@ ${verification}<link rel="canonical" href="${esc(cfg.siteUrl)}"><meta name="robo
           <img class="island" src="/island.svg" width="640" height="560" alt="漂浮在海上的遊戲小島，有棕櫚樹、遊戲手把與溫暖的太陽">
           <span class="island-note"><i aria-hidden="true"></i>快樂，隨時靠岸。</span>
         </div>
+      </section>
+      <section class="game-library" aria-labelledby="game-library-title">
+        <div class="game-library-heading">
+          <div><span class="game-library-kicker">CHOOSE YOUR GAME</span><h2 id="game-library-title">島上的每一款遊戲</h2><p>挑一張喜歡的封面，直接開始遊玩。</p></div>
+          <a class="library-link" href="${esc(cfg.lobbyUrl)}">前往遊戲大廳 <span aria-hidden="true">→</span></a>
+        </div>
+        <ul class="game-grid" aria-label="遊戲清單">
+          ${homeGames.map(game => `<li class="game-tile"><a href="${esc(game.launchUrl)}"><img class="game-cover" src="${esc(game.imageUrl)}" width="1200" height="675" loading="lazy" decoding="async" alt="${esc(game.title)} 遊戲封面"><span class="game-tile-title">${esc(game.title)}</span><span class="game-tile-action" aria-hidden="true">開始遊玩 ↗</span></a></li>`).join('\n          ')}
+        </ul>
       </section>
       <section class="possibilities" aria-label="在小島上的遊玩方式">
         <article><span class="feature-number" aria-hidden="true">01 /</span><div><h2>留一點時間給自己</h2><p>輕鬆動腦，享受自己的小小成就。</p></div></article>
