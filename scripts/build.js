@@ -7,7 +7,7 @@ const STANDALONE_GAMES = [{
   id: 'snake-3d',
   title: '3D貪吃蛇',
   launchUrl: ORIGIN + 'snake-3d/',
-  imageUrl: ORIGIN + 'snake-3d/assets/images/cover.webp'
+  imageUrl: ORIGIN + 'images/games/snake-3d-cover.webp'
 }];
 const STANDALONE_GAME_URLS = STANDALONE_GAMES.map(game => game.launchUrl);
 const root = path.join(__dirname, '..');
@@ -32,7 +32,7 @@ function render(cfg, lobby) {
     seen.add(game.launchUrl); ids.add(game.id);
   }
   for (const game of STANDALONE_GAMES) {
-    if (ids.has(game.id) || game.imageUrl !== game.launchUrl + 'assets/images/cover.webp') {
+    if (ids.has(game.id) || game.imageUrl !== ORIGIN + 'images/games/snake-3d-cover.webp') {
       throw new Error('獨立遊戲設定不正確或重複：' + game.id);
     }
     ids.add(game.id);
@@ -132,7 +132,7 @@ async function build(env = process.env) {
   const out = path.join(root, 'dist');
   fs.mkdirSync(out, { recursive: true });
   for (const [name, text] of Object.entries(files)) fs.writeFileSync(path.join(out, name), text, 'utf8');
-  for (const name of ['home.css', 'island.svg', 'favicon.svg', 'favicon-96.png', 'favicon.ico', 'apple-touch-icon.png', 'og-image.png', 'icons/icon-192.png', 'icons/icon-512.png']) {
+  for (const name of ['home.css', 'island.svg', 'favicon.svg', 'favicon-96.png', 'favicon.ico', 'apple-touch-icon.png', 'og-image.png', 'icons/icon-192.png', 'icons/icon-512.png', 'images/games/snake-3d-cover.webp']) {
     fs.mkdirSync(path.dirname(path.join(out, name)), { recursive: true });
     fs.copyFileSync(path.join(root, 'assets', name), path.join(out, name));
   }

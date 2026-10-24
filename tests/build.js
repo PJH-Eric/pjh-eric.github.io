@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { render } = require('../scripts/build');
 const cfg = require('../seo.config.json');
+const snakeCover = cfg.siteUrl + 'images/games/snake-3d-cover.webp';
 const game = {
   id: 'test-game',
   title: '測試遊戲',
@@ -18,6 +19,7 @@ assert.ok(sourceRobots.includes('Allow: /'));
 assert.ok(sourceRobots.includes('Sitemap: ' + cfg.siteUrl + 'sitemap.xml'));
 assert.ok(sourceRobots.includes('Sitemap: ' + cfg.lobbyUrl + 'sitemap.xml'));
 assert.ok(sourceRobots.includes('Sitemap: ' + cfg.siteUrl + 'snake-3d/sitemap.xml'));
+assert.ok(fs.existsSync(path.join(__dirname, '..', 'assets', 'images', 'games', 'snake-3d-cover.webp')));
 assert.equal((files['sitemap.xml'].match(/<loc>/g) || []).length, 4);
 assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'sitemap.xml'));
 assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.lobbyUrl + 'sitemap.xml'));
@@ -57,6 +59,6 @@ if (fs.existsSync(local)) {
     assert.equal(g.imageUrl, g.launchUrl + 'assets/images/cover.webp');
     assert.ok(actual['index.html'].includes('src="' + g.imageUrl + '"'));
   });
-  assert.ok(actual['index.html'].includes('src="' + cfg.siteUrl + 'snake-3d/assets/images/cover.webp"'));
+  assert.ok(actual['index.html'].includes('src="' + snakeCover + '"'));
 }
 console.log('✓ 根網站遊戲封面、大廳入口、sitemap、robots、圖示與無效設定測試通過');
