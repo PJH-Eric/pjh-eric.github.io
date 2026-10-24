@@ -38,7 +38,10 @@ assert.throws(() => render(cfg, { games: [game, game] }), /重複/);
 assert.throws(() => render(cfg, { games: [{ ...game, launchUrl: 'https://evil.example/' }] }), /遊戲設定/);
 assert.throws(() => render({ ...cfg, siteUrl: 'https://other.example/' }, { games: [game] }), /SEO 設定/);
 // 在多 repo 的本機工作區可加驗實際遊戲，CI 的單一 checkout 不依賴兄弟 repo。
-const local = path.resolve(__dirname, '../../game-lobby/config/games.json');
+const local = process.env.GAMES_JSON_PATH
+  ? path.resolve(process.cwd(), process.env.GAMES_JSON_PATH)
+  : path.resolve(__dirname, '../../game-lobby/config/games.json');
+if (process.env.GAMES_JSON_PATH) assert.ok(fs.existsSync(local), 'GAMES_JSON_PATH 必須指向大廳設定檔');
 if (fs.existsSync(local)) {
   const lobby = JSON.parse(fs.readFileSync(local, 'utf8'));
   const actual = render(cfg, lobby);

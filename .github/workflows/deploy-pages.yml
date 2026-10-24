@@ -15,11 +15,21 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      GAMES_JSON_PATH: .game-lobby-source/config/games.json
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - name: 取得遊戲大廳設定
+        uses: actions/checkout@v4
+        with:
+          repository: PJH-Eric/game-lobby
+          ref: main
+          path: .game-lobby-source
+          sparse-checkout: config
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
