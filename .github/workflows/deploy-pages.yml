@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "26.12.1"
       - run: npm test
       - run: npm run build
       - uses: actions/configure-pages@v5

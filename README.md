@@ -1,6 +1,6 @@
 # 遊戲小小島根網站
 
-Node.js 22，零套件依賴。`npm test` 驗證輸出與錯誤情境；`npm run build` 從已上線大廳讀取遊戲清單，產生 `dist/` 的入口頁、robots.txt、sitemap.xml、404.html 與 .nojekyll。
+Node.js 26.12.1，零套件依賴。`npm test` 驗證輸出與錯誤情境；`npm run build` 從已上線大廳讀取遊戲清單，產生 `dist/` 的入口頁、robots.txt、sitemap.xml、404.html 與 .nojekyll。
 
 首頁以品牌介紹、小島插畫及遊戲大廳入口為主，不逐款列出遊戲；遊戲清單只用於驗證與產生 sitemap。樣式及插畫來源為 `assets/home.css`、`assets/island.svg`，建置時複製至發布根目錄。
 
