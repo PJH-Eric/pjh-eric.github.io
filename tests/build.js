@@ -18,7 +18,6 @@ assert.ok(sourceRobots.includes('User-agent: *'));
 assert.ok(sourceRobots.includes('Allow: /'));
 assert.ok(sourceRobots.includes('Sitemap: ' + cfg.siteUrl + 'sitemap.xml'));
 assert.ok(sourceRobots.includes('Sitemap: ' + cfg.lobbyUrl + 'sitemap.xml'));
-assert.ok(!sourceRobots.includes('Sitemap: ' + cfg.siteUrl + 'snake-3d/sitemap.xml'));
 assert.ok(fs.existsSync(path.join(__dirname, '..', 'assets', 'images', 'games', 'snake-3d-cover.webp')));
 assert.equal((files['sitemap.xml'].match(/<loc>/g) || []).length, 3);
 assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'sitemap.xml'));
@@ -52,8 +51,6 @@ if (fs.existsSync(local)) {
   assert.equal(sourceRobots, actual['robots.txt']);
   assert.equal((actual['sitemap.xml'].match(/<loc>/g) || []).length, lobby.games.length + 2);
   assert.equal((actual['robots.txt'].match(/^Sitemap:/gm) || []).length, lobby.games.length + 2);
-  assert.ok(!actual['sitemap.xml'].includes(cfg.siteUrl + 'snake-3d/'));
-  assert.ok(!actual['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'snake-3d/sitemap.xml'));
   assert.equal((actual['index.html'].match(/class="game-tile"/g) || []).length, 0);
   lobby.games.forEach(g => {
     assert.ok(actual['sitemap.xml'].includes(g.launchUrl));

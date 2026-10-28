@@ -3,7 +3,6 @@
 const fs = require('fs');
 const path = require('path');
 const ORIGIN = 'https://pjh-eric.github.io/';
-// 貪吃蛇僅保留尚未發布的 Unity 專案，不為已移除的網頁版產生 sitemap。
 const STANDALONE_GAMES = [];
 const STANDALONE_GAME_URLS = STANDALONE_GAMES.map(game => game.launchUrl);
 const root = path.join(__dirname, '..');
