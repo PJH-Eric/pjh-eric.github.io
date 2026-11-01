@@ -1,5 +1,6 @@
-# Render 藍圖：全部 18 款遊戲共用「一個」Web Service（apps/game-server）。
-# bomb-squad 另外跑在 Oracle Cloud（https://bomb-squad.duckdns.org），這裡用 GAMES_EXCLUDE 排除，其餘 17 款由這個服務提供。
+# Render 藍圖：共用「一個」Web Service（apps/game-server），目前提供 15 款線上服務。
+# 不由這個服務提供線上：bomb-squad（另跑在 Oracle Cloud，https://bomb-squad.duckdns.org）、sudoku、pinball-hoops（彈珠籃球）。
+# 這些用 GAMES_EXCLUDE 排除；其餘 15 款由這個服務提供。
 # 路徑：/g/<遊戲id>/（HTTP）、/g/<遊戲id>/ws（WebSocket）、/health（彙總）。
 # 免費方案：閒置約 15 分鐘休眠，首次連線要等十幾秒；房間只存在記憶體，重啟即清空。
 services:
@@ -14,7 +15,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: GAMES_EXCLUDE
-        value: bomb-squad
+        value: bomb-squad,sudoku,pinball-hoops
       - key: NODE_VERSION
         value: "26.12.1"
       # 允許連線的前端來源（逗號分隔），例如 https://pjh-eric.github.io
