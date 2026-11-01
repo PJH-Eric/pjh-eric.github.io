@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-i18n-title="meta.title">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#FFE9F2">
+<title>翻牌配對碰｜免費線上記憶配對・免下載</title>
+<!--SEO:HEAD-->
+<script>window.GAME_ANALYTICS_CONFIG={"measurement_id":"G-PG79WZK8QY","game_id":"flip-match","page_location":"https://pjh-eric.github.io/flip-match/"};</script>
+<meta name="description" data-i18n-content="meta.desc" content="翻開卡片找出相同圖案，免費免下載的記憶配對遊戲提供單機挑戰與線上雙人對戰。挑選牌組及棋盤大小，練習記憶力與專注力，手機、平板與電腦都能輕鬆玩。">
+<link rel="canonical" href="https://pjh-eric.github.io/flip-match/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="翻牌配對碰｜免費線上記憶配對・免下載">
+<meta property="og:description" content="翻開卡片找出相同圖案，免費免下載的記憶配對遊戲提供單機挑戰與線上雙人對戰。挑選牌組及棋盤大小，練習記憶力與專注力，手機、平板與電腦都能輕鬆玩。">
+<meta property="og:url" content="https://pjh-eric.github.io/flip-match/">
+<meta property="og:image" content="https://pjh-eric.github.io/flip-match/assets/images/seo.webp">
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="翻牌配對碰 遊戲封面">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="翻牌配對碰｜免費線上記憶配對・免下載">
+<meta name="twitter:description" content="翻開卡片找出相同圖案，免費免下載的記憶配對遊戲提供單機挑戰與線上雙人對戰。挑選牌組及棋盤大小，練習記憶力與專注力，手機、平板與電腦都能輕鬆玩。">
+<meta name="twitter:image" content="https://pjh-eric.github.io/flip-match/assets/images/seo.webp">
+<meta name="twitter:image:alt" content="翻牌配對碰 遊戲封面">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"翻牌配對碰","url":"https://pjh-eric.github.io/flip-match/","description":"翻開卡片找出相同圖案，免費免下載的記憶配對遊戲提供單機挑戰與線上雙人對戰。挑選牌組及棋盤大小，練習記憶力與專注力，手機、平板與電腦都能輕鬆玩。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"zh-Hant","genre":"翻牌記憶","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"image":"https://pjh-eric.github.io/flip-match/assets/images/seo.webp","thumbnailUrl":"https://pjh-eric.github.io/flip-match/assets/images/seo.webp","isPartOf":{"@type":"WebSite","url":"https://pjh-eric.github.io/game-lobby/"}}</script>
+<!--SEO:END-->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/latency.css?v=20261016a">
+
+<link rel="icon" type="image/png" sizes="96x96" href="favicon-96.png">
+<link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="stylesheet" href="css/server-outage.css?v=20261026">
+<script src="js/server-outage.js?v=20261026"></script>
+</head>
+<body>
+<div id="bgdeco" aria-hidden="true"></div>
+
+<div id="app">
+
+  <button class="btn3d icononly settings-fab" data-color="cream" id="b-settings" type="button" title="開啟遊戲設定" aria-label="開啟遊戲設定" data-i18n-attr="title=settings.open;aria-label=settings.open" aria-haspopup="dialog" aria-controls="settings-modal" aria-expanded="false">⚙️</button>
+
+  <!-- ============ 主選單 ============ -->
+  <section class="screen active" id="s-home">
+    <a class="lobby-home-link" id="lobby-link" href="https://pjh-eric.github.io/game-lobby/" aria-label="回遊戲大廳" data-i18n="home.lobbyLinkText" data-i18n-attr="aria-label=home.lobbyLink">← 回遊戲大廳</a>
+    <div class="home-wrap">
+      <div class="logo" id="logo" role="img" aria-label="翻牌配對碰" data-i18n-attr="aria-label=home.logoTitle"></div>
+      <div class="home-btns">
+        <button class="btn3d big" data-color="pink"   id="b-solo"><span class="ico">🎯</span><span data-i18n="home.solo">單機挑戰</span></button>
+        <button class="btn3d big" data-color="sky"    id="b-online"><span class="ico">🌐</span><span data-i18n="home.online">線上對戰</span></button>
+        <div class="home-row">
+          <button class="btn3d" data-color="lemon" id="b-rank"><span class="ico">🏆</span><span data-i18n="home.rank">排行榜</span></button>
+          <button class="btn3d" data-color="lilac" id="b-help"><span class="ico">📖</span><span data-i18n="home.help">玩法</span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 遊戲設定 ============ -->
+  <section class="screen" id="s-setup">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 id="setup-title" data-i18n="setup.title">單機挑戰</h2>
+        <span class="spacer"></span>
+      </div>
+
+      <h3 class="lbl" data-i18n="setup.pickDiff">選擇難度</h3>
+      <div class="opt-row" id="opt-size">
+        <button class="optcard" data-v="4"><b data-i18n="diff.4">簡單</b><span class="s">4 × 4</span><span class="t" data-i18n="setup.rule.4">記憶 10 秒 · 提示 1 次</span></button>
+        <button class="optcard" data-v="6"><b data-i18n="diff.6">普通</b><span class="s">6 × 6</span><span class="t" data-i18n="setup.rule.6">記憶 20 秒 · 提示 2 次</span></button>
+        <button class="optcard" data-v="8"><b data-i18n="diff.8">困難</b><span class="s">8 × 8</span><span class="t" data-i18n="setup.rule.8">記憶 30 秒 · 提示 3 次</span></button>
+      </div>
+
+      <h3 class="lbl" data-i18n="setup.pickDeck">選擇牌組</h3>
+      <div class="opt-row deck-row" id="opt-deck"></div>
+
+      <div class="panel-foot">
+        <button class="btn3d big" data-color="pink" id="b-start"><span data-i18n="setup.start">開始遊戲 ▶</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 大廳 ============ -->
+  <section class="screen" id="s-lobby">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 data-i18n="lobby.title">線上大廳</h2>
+        <span class="conn" id="conn-dot"><i></i><span id="conn-txt" data-i18n="lobby.connecting">連線中…</span></span>
+      </div>
+      <div class="lobby-bar">
+        <label class="nick"><span data-i18n="lobby.nick">暱稱</span> <input id="nickname" maxlength="12" placeholder="輸入暱稱" data-i18n-attr="placeholder=lobby.nickPlaceholder"></label>
+        <span id="online-count" class="online-count" role="status" aria-live="polite" hidden></span>
+        <button class="btn3d small" data-color="mint" id="b-create"><span data-i18n="lobby.create">＋ 建立房間</span></button>
+        <button class="btn3d small" data-color="cream" id="b-refresh"><span data-i18n="lobby.refresh">🔄 重新整理</span></button>
+      </div>
+      <div class="lobby-bar" id="invite-join" hidden>
+        <span id="invite-join-note" data-i18n="lobby.inviteNote">你收到一個房間邀請，請確認暱稱後加入。</span>
+        <button class="btn3d small" data-color="grape" id="b-invite-join"><span data-i18n="lobby.inviteJoin">以此暱稱加入</span></button>
+      </div>
+      <div class="roomlist" id="roomlist"></div>
+      <p class="hint-note" id="lobby-note" data-i18n="lobby.note">同一個 Wi-Fi 底下，另一台平板打開伺服器顯示的網址就能一起玩。</p>
+    </div>
+  </section>
+
+  <!-- ============ 房間 ============ -->
+  <section class="screen" id="s-room">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" id="b-leaveroom"><span data-i18n="room.leave">◀ 離開房間</span></button>
+        <h2 id="room-title" data-i18n="room.title">房間</h2>
+        <span class="spacer"></span>
+      </div>
+      <div class="invitebar" id="invitebar">
+        <label for="invite-url" data-i18n="room.invite">邀請連結</label>
+        <input id="invite-url" readonly aria-label="房間邀請連結" data-i18n-attr="aria-label=room.inviteAria">
+        <button class="btn3d small" data-color="mint" id="b-copyinvite"><span data-i18n="room.copy">複製</span></button>
+        <button class="btn3d small" data-color="sky" id="b-shareinvite"><span data-i18n="room.share">分享</span></button>
+      </div>
+      <div class="seats">
+        <div class="seat" id="seat0"><div class="ava">🐻</div><b data-i18n="room.waiting">等待中…</b><span class="rdy">—</span></div>
+        <div class="vs">VS</div>
+        <div class="seat" id="seat1"><div class="ava">🐰</div><b data-i18n="room.waiting">等待中…</b><span class="rdy">—</span></div>
+      </div>
+      <div id="host-opts">
+        <h3 class="lbl" data-i18n="room.hostSetDiff">難度（房主設定）</h3>
+        <div class="opt-row" id="ropt-size">
+          <button class="optcard" data-v="4"><b data-i18n="diff.4">簡單</b><span class="s">4 × 4</span></button>
+          <button class="optcard" data-v="6"><b data-i18n="diff.6">普通</b><span class="s">6 × 6</span></button>
+          <button class="optcard" data-v="8"><b data-i18n="diff.8">困難</b><span class="s">8 × 8</span></button>
+        </div>
+        <h3 class="lbl" data-i18n="room.hostSetDeck">牌組（房主設定）</h3>
+        <div class="opt-row deck-row" id="ropt-deck"></div>
+        <h3 class="lbl" data-i18n="room.hostSetFirst">先手玩家（房主設定）</h3>
+        <div class="opt-row" id="ropt-first">
+          <button class="optcard" data-v="host"><b data-i18n="room.hostFirst">房主先手</b><span class="s">🐱</span></button>
+          <button class="optcard" data-v="guest"><b data-i18n="room.guestFirst">對手先手</b><span class="s">🐻</span></button>
+        </div>
+      </div>
+      <div class="panel-foot">
+        <button class="btn3d big" data-color="pink" id="b-ready"><span data-i18n="room.imReady">我準備好了 ✔</span></button>
+      </div>
+      <div class="sysline" id="sysline"></div>
+      <section class="chatbox room-chat" aria-label="房間聊天室" data-i18n-attr="aria-label=chat.roomAria">
+        <div class="chat-head"><b data-i18n="chat.roomTitle">房間聊天室</b><span data-i18n="chat.limit">最多 60 字</span></div>
+        <div class="chatlog" id="room-chatlog" aria-live="polite"></div>
+        <form class="chatform" id="room-chatform">
+          <input id="room-chatinput" maxlength="60" autocomplete="off" placeholder="說點什麼…" aria-label="輸入聊天室訊息" data-i18n-attr="placeholder=chat.placeholderRoom;aria-label=chat.inputAria">
+          <button class="btn3d small" data-color="mint" type="submit"><span data-i18n="chat.send">送出</span></button>
+        </form>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 遊戲畫面 ============ -->
+  <section class="screen" id="s-game">
+    <header class="gbar">
+      <button class="btn3d small" data-color="cream" id="b-quit"><span data-i18n="game.quit">◀ 離開</span></button>
+      <div class="gmeta"><span id="g-mode" data-i18n="game.modeSolo">單機</span><span class="dot">·</span><span id="g-diff" data-i18n="diff.4">簡單</span><span class="dot">·</span><span id="g-deck">動物</span></div>
+    </header>
+
+    <div class="scorebar" id="scorebar"></div>
+
+    <div class="timerbar"><div class="fill" id="timer-fill"></div><span class="num" id="timer-num">10</span></div>
+
+    <div class="gamebody">
+      <div class="boardwrap"><div class="board" id="board"></div></div>
+      <aside class="online-tools" id="online-tools" aria-label="即時對戰資訊" data-i18n-attr="aria-label=game.liveInfo">
+        <section class="summary-card">
+          <div class="summary-head"><b data-i18n="game.liveStatus">即時戰況</b><span id="summary-progress">配對 0／0</span></div>
+          <div class="summary-players" id="summary-players"></div>
+          <div class="summary-feed" id="summary-feed" aria-live="polite"></div>
+        </section>
+        <section class="chatbox game-chat" id="game-chatbox" aria-label="對戰聊天室" aria-hidden="true" data-i18n-attr="aria-label=chat.gameTitle">
+          <div class="chat-head"><b data-i18n="chat.gameTitle">對戰聊天室</b><span data-i18n="chat.live">即時</span></div>
+          <div class="chatlog" id="game-chatlog" aria-live="polite"></div>
+          <form class="chatform" id="game-chatform">
+            <input id="game-chatinput" maxlength="60" autocomplete="off" placeholder="送出訊息…" aria-label="輸入聊天室訊息" data-i18n-attr="placeholder=chat.placeholderGame;aria-label=chat.inputAria">
+            <button class="btn3d small" data-color="mint" type="submit"><span data-i18n="chat.send">送出</span></button>
+          </form>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="gfoot">
+      <div class="game-controls">
+        <button class="btn3d small chat-toggle" data-color="sky" id="b-gamechat" type="button" aria-expanded="false" aria-controls="game-chatbox"><span data-i18n="chat.toggle">💬 聊天室</span></button>
+        <button class="btn3d" data-color="lemon" id="b-hint"><span data-i18n="game.hint">💡 提示</span> <span id="hint-left">1</span></button>
+      </div>
+      <div class="statline" id="statline"></div>
+    </footer>
+
+    <div class="overlay" id="overlay"><div class="ovbox"><div class="ovtxt" id="ov-txt" data-i18n="game.memorize">記住牌面！</div><div class="ovnum" id="ov-num">10</div></div></div>
+    <div class="toast" id="toast"></div>
+  </section>
+
+  <!-- ============ 結算 ============ -->
+  <section class="screen" id="s-result">
+    <div class="panel result" data-result-share>
+      <div class="rescrown" id="res-crown">🎉</div>
+      <h2 id="res-title" data-i18n="res.allDone">全部配對完成！</h2>
+      <div class="resstats" id="res-stats"></div>
+      <div class="panel-foot col">
+        <button class="btn3d big" data-color="pink" id="b-again"><span data-i18n="res.again">再玩一次 🔁</span></button>
+        <button class="btn3d" data-color="cream" id="b-home2"><span data-i18n="res.home">回主選單 🏠</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 排行榜 ============ -->
+  <section class="screen" id="s-rank">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 data-i18n="rank.title">🏆 個人最佳紀錄</h2>
+        <button class="btn3d small" data-color="cream" id="b-clearrank"><span data-i18n="rank.clear">清除</span></button>
+      </div>
+      <div class="ranklist" id="ranklist"></div>
+    </div>
+  </section>
+
+  <!-- ============ 玩法 ============ -->
+  <section class="screen" id="s-help">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 data-i18n="help.title">📖 玩法說明</h2>
+        <span class="spacer"></span>
+      </div>
+      <div class="helpbody">
+        <h3 data-i18n="help.h.how">怎麼玩？</h3>
+        <p data-i18n-html="help.how">開場會先掀開全部的牌讓你<b>記住位置</b>，時間到就全部蓋起來。接著每次翻兩張，圖案一樣就<b>配對成功、得 1 分，那兩張會一直保持翻開不再蓋回去</b>，而且可以繼續翻；翻錯才換對手。把全部的牌配完就結束。</p>
+        <h3 data-i18n="help.h.levels">三種難度</h3>
+        <table class="htable">
+          <tr><th data-i18n="help.th.diff">難度</th><th data-i18n="help.th.cards">牌數</th><th data-i18n="help.th.memory">記憶時間</th><th data-i18n="help.th.turn">每回合限時</th><th data-i18n="help.th.hint">提示</th></tr>
+          <tr><td data-i18n="diff.4">簡單</td><td>4 × 4</td><td data-i18n="help.sec10">10 秒</td><td data-i18n="help.sec10">10 秒</td><td data-i18n="help.hint1">1 次</td></tr>
+          <tr><td data-i18n="diff.6">普通</td><td>6 × 6</td><td data-i18n="help.sec20">20 秒</td><td data-i18n="help.sec20">20 秒</td><td data-i18n="help.hint2">2 次</td></tr>
+          <tr><td data-i18n="diff.8">困難</td><td>8 × 8</td><td data-i18n="help.sec30">30 秒</td><td data-i18n="help.sec30">30 秒</td><td data-i18n="help.hint3">3 次</td></tr>
+        </table>
+        <h3 data-i18n="help.h.turn">回合限時</h3>
+        <p data-i18n-html="help.turn">輪到你之後會開始倒數，最後 3 秒會有<b>滴答提醒音</b>。時間到還沒翻完兩張，這一回合就結束換人（單機模式則是扣分並重新開始回合）。</p>
+        <h3 data-i18n="help.h.hint">提示</h3>
+        <p data-i18n-html="help.hint">提示要<b>先自己翻開第一張牌</b>才能按。按下 💡 之後會直接幫你翻出跟它成對的另一張，穩穩拿下一分。用完就沒有囉。</p>
+        <h3 data-i18n="help.h.settings">遊戲設定</h3>
+        <p data-i18n="help.settings">每個畫面右上角的 ⚙️ 都能調整背景音樂與翻牌音效的開關、音量，還可以開關觸控震動與翻牌動畫。</p>
+        <h3 data-i18n="help.h.online">線上對戰</h3>
+        <p data-i18n-html="help.online">在電腦上執行 <code>啟動遊戲.bat</code>，畫面會顯示一組網址。同一個 Wi-Fi 下的平板打開那組網址，就能在大廳看到彼此的房間並開始對戰。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 遊戲設定彈窗 ============ -->
+  <div class="settings-modal" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true">
+    <div class="settings-backdrop" data-settings-close></div>
+    <section class="settings-panel" id="settings-panel" tabindex="-1">
+      <div class="settings-head">
+        <h2 id="settings-title" data-i18n="settings.title">⚙ 遊戲設定</h2>
+        <button class="settings-close" id="settings-close" type="button" aria-label="關閉遊戲設定" data-i18n-attr="aria-label=settings.close">✕</button>
+      </div>
+
+      <div class="settings-group">
+        <h3 data-i18n="settings.sound">聲音</h3>
+        <label class="setting-toggle" for="settings-music">
+          <span><b data-i18n="settings.music">背景音樂</b><small id="settings-music-status">開啟</small></span>
+          <input id="settings-music" type="checkbox" checked>
+        </label>
+        <label class="setting-range" for="settings-music-volume">
+          <span><span data-i18n="settings.musicVol">音樂音量</span> <output id="settings-music-volume-value">100%</output></span>
+          <input id="settings-music-volume" type="range" min="0" max="100" step="5" value="100">
+        </label>
+        <label class="setting-toggle" for="settings-sfx">
+          <span><b data-i18n="settings.sfx">翻牌音效</b><small id="settings-sfx-status">開啟</small></span>
+          <input id="settings-sfx" type="checkbox" checked>
+        </label>
+        <label class="setting-range" for="settings-sfx-volume">
+          <span><span data-i18n="settings.sfxVol">音效音量</span> <output id="settings-sfx-volume-value">100%</output></span>
+          <input id="settings-sfx-volume" type="range" min="0" max="100" step="5" value="100">
+        </label>
+      </div>
+
+      <div class="settings-group">
+        <h3 data-i18n="settings.controls">操作</h3>
+        <label class="setting-toggle" for="settings-haptic">
+          <span><b data-i18n="settings.haptic">觸控震動</b><small data-i18n="settings.hapticDesc">平板翻牌時輕微震動</small></span>
+          <input id="settings-haptic" type="checkbox" checked>
+        </label>
+        <label class="setting-toggle" for="settings-motion">
+          <span><b data-i18n="settings.motion">翻牌動畫</b><small data-i18n="settings.motionDesc">關閉可減少動態效果</small></span>
+          <input id="settings-motion" type="checkbox" checked>
+        </label>
+      </div>
+
+      <div class="settings-foot">
+        <button class="settings-reset" id="settings-reset" type="button" data-i18n="settings.reset">恢復預設</button>
+        <button class="settings-done" id="settings-done" type="button" data-i18n="settings.done">完成</button>
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<script src="js/analytics.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/locales.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/config.js"></script>
+<script src="js/decks/animals.js"></script>
+<script src="js/decks/vehicles.js"></script>
+<script src="js/decks/fruits.js"></script>
+<script src="js/decks/characters.js"></script>
+<script src="js/decks/stationery.js"></script>
+<script src="js/decks/food.js"></script>
+<script src="js/decks/numbers.js"></script>
+<script src="js/decks/phonetics.js"></script>
+<script src="js/decks/sports.js"></script>
+<script src="js/decks/flags.js"></script>
+<script src="js/decks/realistic.js"></script>
+<script src="js/decks/mixed.js"></script>
+<script src="js/svgui.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/game.js"></script>
+<script src="js/latency.js?v=20261016a" data-skin="flip-match"></script>
+<script src="js/online.js"></script>
+<script src="js/app.js"></script>
+<!--SEO:GAMEPLAY-->
+<noscript><div class="seo-gameplay"><section lang="zh-Hant">
+<h2>翻牌配對碰</h2>
+<p>翻開兩張牌找出一樣的圖案，記住位置就能連續拿分。</p>
+<p><strong>玩法模式：</strong>單機挑戰、電腦對戰、線上房間</p>
+<p><strong>操作方式：</strong>點擊卡牌翻面，找出相同圖案</p>
+</section>
+<section lang="zh-Hans">
+<h2>翻牌配对碰</h2>
+<p>翻开两张牌找出一样的图案，记住位置就能连续拿分。</p>
+<p><strong>玩法模式：</strong>单机挑战、电脑对战、线上房间</p>
+<p><strong>操作方式：</strong>点击卡牌翻面，找出相同图案</p>
+</section>
+<section lang="en">
+<h2>Flip Match</h2>
+<p>Flip two cards to find a matching pair. Remember where they are to keep scoring.</p>
+<p><strong>Game modes: </strong>Solo Challenge, vs Computer, Online Room</p>
+<p><strong>How to play: </strong>Tap a card to flip it and find matching pictures</p>
+</section></div></noscript>
+<!--SEO:GAMEPLAY:END-->
+  <script defer src="js/locales/result-share.js"></script>
+  <script defer src="js/result-share.js"></script>
+</body>
+</html>

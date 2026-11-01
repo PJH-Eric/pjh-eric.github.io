@@ -1,0 +1,35 @@
+{
+  "zh-Hant": {
+    "name": "水果連連看",
+    "summary": "找出兩顆一樣的水果，用轉彎不超過兩次的路線把它們連起來消掉。",
+    "modes": [
+      "幼幼班",
+      "單機闖關",
+      "線上搶消",
+      "觀戰"
+    ],
+    "controls": "依序點兩顆一樣的水果，連得起來就消掉"
+  },
+  "zh-Hans": {
+    "name": "水果连连看",
+    "summary": "找出两颗一样的水果，用转弯不超过两次的路线把它们连起来消掉。",
+    "modes": [
+      "幼幼班",
+      "单机闯关",
+      "线上抢消",
+      "观战"
+    ],
+    "controls": "依序点两颗一样的水果，连得起来就消掉"
+  },
+  "en": {
+    "name": "Fruit Link",
+    "summary": "Find two matching fruits and connect them with a path that turns at most twice.",
+    "modes": [
+      "Little Kids Mode",
+      "Solo Levels",
+      "Online Match Race",
+      "Spectate"
+    ],
+    "controls": "Tap two matching fruits in turn; if they connect, they disappear"
+  }
+}

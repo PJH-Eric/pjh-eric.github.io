@@ -1,0 +1,8 @@
+{
+  "name": "html2canvas",
+  "version": "1.4.1",
+  "license": "MIT",
+  "source": "https://github.com/niklasvh/html2canvas/tree/v1.4.1",
+  "download": "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",
+  "sha256": "1cbd90d5fc34f7f4618f354b7aed7f8798d91715ceac322dd1d6838a7f5f8df1"
+}

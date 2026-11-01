@@ -1,0 +1,31 @@
+node_modules/
+npm-debug.log*
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+.chrome-rwd-test/
+coverage/
+dist/
+screenshots/
+
+# Playwright
+test-results/
+playwright-report/
+
+# 可重新產生的測試截圖、暫存與快取
+/shots/
+/.shots/
+/.cache/
+/.pytest_cache/
+**/__pycache__/
+*.pyc
+*.tmp
+*.bak
+*.tsbuildinfo
+/tmp/
+/temp/

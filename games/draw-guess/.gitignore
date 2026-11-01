@@ -1,0 +1,38 @@
+# 相依套件
+node_modules/
+
+# 記錄檔
+*.log
+npm-debug.log*
+
+# 作業系統／編輯器
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+
+# 環境變數（.env.example 要保留在版控裡）
+.env
+.env.local
+
+# 測試產生的暫存檔
+.chrome-rwd-test/
+.chrome-measure/
+screenshots/
+
+# 可重新產生的測試截圖、暫存與快取
+/shots/
+/.shots/
+/test-results/
+/playwright-report/
+/coverage/
+/.cache/
+/.pytest_cache/
+**/__pycache__/
+*.pyc
+*.tmp
+*.bak
+*.tsbuildinfo
+/tmp/
+/temp/

@@ -1,0 +1,707 @@
+/* ===== 水果連連看 — 可愛風主題 =====
+ *
+ * 版面策略：
+ *   左邊一條窄側欄同時放「即時戰況」與「聊天室」，不佔太多空間但一直看得到；
+ *   其餘全部留給盤面，盤面依可用空間等比長到最大。
+ *   窄版（手機、平板直向）側欄改成從左邊滑出的抽屜，盤面吃滿寬度，
+ *   資訊優先順序不變，只是換一種呈現方式。
+ *
+ * 盤面座標：CSS 的 .board 是「含外圈」的 W×H 網格（W=cols+2、H=rows+2），
+ *   外圈永遠空著，連線路徑才能繞到盤面外面 —— 這是連連看的標準規則。
+ *   連線動畫畫在同一個座標系的 SVG 上，所以路徑和格子一定對得準。
+ */
+:root{
+  --ink:#4A3B55;
+  --ink-soft:#7A6A88;
+  --paper:#FFFDF8;
+  --grape:#C9B6F5;  --grape-d:#A48FDB;
+  --mint:#A9E7D2;   --mint-d:#79C6AC;
+  --peach:#FFC2B4;  --peach-d:#E89C8B;
+  --sky:#AED9F5;    --sky-d:#7FB4DA;
+  --lemon:#FFE3A0;  --lemon-d:#E7C263;
+  --rose:#FFB8CF;   --rose-d:#E88CAA;
+  --cream:#FFF0DE;  --cream-d:#E6D2B4;
+  --danger:#D2444F; --danger-bg:#FFE6E8;
+  --ok:#2F8F6B;
+  --line:#DED3EA;
+  --radius:22px;
+  --d:8px;
+  --side-w:206px;
+  --safe-t:env(safe-area-inset-top);
+  --safe-r:env(safe-area-inset-right);
+  --safe-b:env(safe-area-inset-bottom);
+  --safe-l:env(safe-area-inset-left);
+  font-size:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;min-height:100%;margin:0;padding:0}
+body{
+  font-family:"Yuanti TC","圓體-繁","PingFang TC","蘋方-繁","Microsoft JhengHei","Noto Sans TC","Segoe UI",system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(165deg,#FFF1F6 0%,#FFF8EC 48%,#EDF8E8 100%);
+  overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+#bgdeco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#bgdeco span{position:absolute;display:block;border-radius:38%;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-24px) rotate(10deg)}100%{transform:translateY(0) rotate(0)}}
+
+#app{position:relative;z-index:1;height:var(--app-h,100%);min-height:var(--app-h,100dvh)}
+.screen{
+  position:absolute;inset:0;display:none;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+}
+.screen.active{display:block}
+.screen.flexcenter.active{display:flex;align-items:center;justify-content:center}
+.screen#s-game.active{display:block;overflow:hidden}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---------- 立體 SVG 按鈕 ---------- */
+.btn3d{
+  position:relative;border:0;background:none;padding:13px 22px calc(13px + var(--d));
+  font:inherit;font-weight:800;font-size:1.02rem;color:var(--ink);cursor:pointer;
+  letter-spacing:.03em;line-height:1.15;min-height:52px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.btn3d .b3-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.btn3d .b3-face{transition:transform .07s ease}
+.btn3d .b3-lbl{position:relative;z-index:2;display:inline-flex;align-items:center;gap:.4em;transition:transform .07s ease;text-shadow:0 1px 0 rgba(255,255,255,.65)}
+.btn3d.press .b3-face,.btn3d.press .b3-lbl{transform:translateY(calc(var(--d) - 2px))}
+.btn3d[disabled]{opacity:.42;cursor:default}
+.btn3d:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px;border-radius:18px}
+.btn3d.big{font-size:1.2rem;padding:17px 30px calc(17px + var(--d));min-height:68px;--d:10px}
+.btn3d.small{font-size:.9rem;padding:9px 14px calc(9px + var(--d));min-height:46px;--d:6px}
+.btn3d.icononly{padding:10px 12px calc(10px + var(--d));min-width:50px;min-height:50px;font-size:1.2rem;--d:6px}
+.btn3d .ico{font-size:1.1em}
+
+.iconbtn{
+  border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);
+  border-radius:14px;min-width:44px;min-height:44px;font:inherit;font-size:1.05rem;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;
+}
+.iconbtn:active{transform:translateY(2px)}
+.iconbtn:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+
+/* 右上角設定入口：所有畫面共用，固定在安全區內、不擋遊戲控制 */
+/* 右上角工具列：設定鈕＋語言切換鈕並排；整組固定在安全區內 */
+.fab-bar{
+  position:fixed;z-index:70;display:flex;align-items:flex-start;gap:8px;
+  top:calc(10px + var(--safe-t));right:calc(12px + var(--safe-r));
+}
+.settings-fab{--d:6px}
+.settings-fab .b3-lbl{font-size:1.3rem}
+/* 語言切換鈕：與設定鈕同高同風格（粗墨框＋奶油底＋底部厚度），文字由 i18n 核心填入 */
+.lang-toggle{
+  flex:none;min-width:50px;height:calc(50px - 6px);padding:0 8px;margin-bottom:6px;
+  border:3px solid var(--ink);border-radius:16px;background:var(--cream);color:var(--ink);
+  box-shadow:0 6px 0 var(--cream-d);font:inherit;font-weight:900;font-size:.95rem;letter-spacing:.02em;
+  line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:transform .07s ease,box-shadow .07s ease;
+}
+.lang-toggle:hover{background:#FFF6E8}
+.lang-toggle:active{transform:translateY(4px);box-shadow:0 2px 0 var(--cream-d)}
+.lang-toggle:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px}
+.lobby-home-link{
+  position:fixed;z-index:65;top:calc(10px + var(--safe-t));left:calc(12px + var(--safe-l));
+  display:inline-flex;align-items:center;min-height:44px;padding:9px 14px;
+  border:3px solid var(--ink);border-radius:14px;background:var(--cream);color:var(--ink);
+  font-size:.8rem;font-weight:900;text-decoration:none;box-shadow:0 4px 0 var(--cream-d);
+  transition:transform .15s,box-shadow .15s,background .15s;
+}
+.lobby-home-link:hover{background:#FFF6E8;transform:translateY(-2px)}
+.lobby-home-link:active{transform:translateY(3px);box-shadow:0 1px 0 var(--cream-d)}
+.lobby-home-link:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px}
+
+/* ---------- 面板／表單 ---------- */
+.panel{width:min(100%,880px);margin:0 auto;padding:18px 18px 32px;min-height:100%}
+.panel.wide{width:min(100%,1080px)}
+.panel-head{display:flex;align-items:center;gap:12px;margin:6px 0 14px;padding-right:60px}
+.panel-head h2{flex:1;margin:0;text-align:center;font-size:1.45rem;letter-spacing:.05em}
+.panel-head .spacer{flex:0 0 46px}
+.panel-foot{margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lbl{font-size:1rem;margin:20px 0 8px;letter-spacing:.04em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lbl2{font-size:.85rem;font-weight:800;color:var(--ink-soft);margin-bottom:6px}
+.note{margin-top:10px;font-size:.9rem;color:var(--ink-soft);line-height:1.8}
+.note b{color:var(--ink)}
+.hint{margin:6px 0 0;font-size:.8rem;color:var(--ink-soft);line-height:1.6}
+
+.field{
+  width:100%;padding:13px 14px;border:3px solid var(--ink);border-radius:16px;
+  background:var(--paper);font:inherit;font-size:1rem;color:var(--ink);
+  user-select:text;-webkit-user-select:text;
+}
+.field:focus{outline:3px solid var(--sky-d);outline-offset:2px}
+.field.code{text-align:center;letter-spacing:.4em;font-weight:900;font-size:1.4rem;text-transform:uppercase}
+.check{display:flex;align-items:center;gap:9px;margin:10px 0;font-size:.92rem;cursor:pointer;min-height:44px}
+.check input{width:30px;height:30px;accent-color:var(--grape-d);flex:0 0 auto}
+.pill{display:inline-block;background:var(--grape);border:2.5px solid var(--ink);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:800}
+
+.pickcard{
+  border:3px solid var(--ink);border-radius:18px;background:var(--paper);
+  padding:12px 14px;font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  display:flex;flex-direction:column;gap:3px;min-height:64px;
+}
+.pickcard b{font-size:1.02rem}
+.pickcard span{font-size:.8rem;color:var(--ink-soft);line-height:1.5}
+.pickcard[aria-checked="true"]{background:var(--lemon);box-shadow:0 5px 0 var(--lemon-d)}
+.pickcard:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.pickcard.mini{padding:9px 11px;min-height:52px;border-radius:14px}
+.pickcard.mini b{font-size:.92rem}
+.pickcard.mini span{font-size:.74rem}
+
+/* 關卡選單：幼幼班與闖關各自成一區，每一區的卡片填滿一整列。
+   auto-fit 會把空的欄收起來，所以兩張卡的那一區也會平分整列，不留空洞。 */
+.cardpick{display:grid;grid-template-columns:1fr;gap:16px}
+.lvgroup{display:grid;gap:8px}
+.lvgtitle{font-weight:800;font-size:.95rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.lvgtitle small{flex:1 1 260px;font-weight:600;font-size:.78rem;color:var(--ink-soft);line-height:1.55}
+.lvrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.lvcard{gap:7px;justify-content:flex-start}
+.lvcard .lvhead{display:block;font-size:1rem;line-height:1.35}
+.lvcard .lvhead b{font-size:1rem;color:var(--ink)}
+.lvcard .lvmeta{display:flex;flex-wrap:wrap;gap:5px}
+.lvcard .lvmeta i{
+  font-style:normal;border:2px solid var(--line);border-radius:999px;background:#FFF;
+  padding:0 9px;font-size:.78rem;font-weight:700;color:var(--ink);line-height:1.7;
+}
+.lvcard .lvaid{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:.78rem;color:var(--ink-soft)}
+.lvcard .lvaid em{font-style:normal}
+
+.pickcard[aria-checked="true"] .lvmeta i{border-color:var(--lemon-d)}
+/* 太窄的時候一列一張就好，免得三張擠成兩張＋一張的破格 */
+@media (max-width:680px){.lvrow{grid-template-columns:1fr}}
+
+/* 造型主題選單：一張卡＝一個主題，卡上直接放四個造型縮圖 */
+.themepick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.themecard[data-v="mixed"]{grid-column:1 / -1}
+.themecard{
+  border:3px solid var(--ink);border-radius:18px;background:var(--paper);
+  padding:10px;font:inherit;cursor:pointer;color:var(--ink);text-align:center;
+}
+/* 每個主題用很淡的專屬底色，讓選單掃一眼就能分辨類型；選取狀態仍統一用檸檬黃強調 */
+.themecard[data-v="fruits"]{background:#F1F8E9}
+.themecard[data-v="animals"]{background:#FFF0D6}
+.themecard[data-v="food"]{background:#FFF0F2}
+.themecard[data-v="flags"]{background:#EDF6FF}
+.themecard[data-v="mahjong"]{background:#F3F0FA}
+.themecard[data-v="mixed"]{background:#FFF9DF}
+.themecard[aria-checked="true"]{background:var(--lemon);box-shadow:0 5px 0 var(--lemon-d)}
+.themecard:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.themecard .tname{font-weight:800;font-size:.98rem}
+.themecard .tcount{display:block;font-size:.76rem;color:var(--ink-soft);margin-top:1px}
+.themecard .tpics{display:flex;gap:3px;justify-content:center;margin-top:6px}
+.themecard .tpics svg{width:26%;max-width:40px;height:auto;display:block}
+
+@media (max-width:900px){
+  .themepick{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .themecard[data-v="mixed"]{grid-column:auto}
+}
+@media (max-width:600px){.themepick{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.themepick{grid-template-columns:1fr}}
+
+/* 說明頁的主題展示 */
+.themegrid{display:grid;gap:12px;margin-top:8px}
+.themerow{border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:10px 12px}
+.themerow .th{font-weight:800;font-size:.96rem;margin-bottom:6px}
+.themerow .th small{font-weight:600;color:var(--ink-soft);margin-left:6px}
+.themerow .tp{display:flex;gap:4px;flex-wrap:wrap}
+.themerow .tp svg{width:34px;height:34px;display:block}
+
+.htable{width:100%;border-collapse:collapse;margin:8px 0;font-size:.9rem}
+.htable th,.htable td{border:2.5px solid var(--line);padding:8px 10px;text-align:left}
+.htable th{background:var(--cream);font-weight:800}
+
+/* 玩法頁的路徑示範 */
+.pathdemo{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:10px}
+.pathdemo figure{margin:0;border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:10px}
+.pathdemo svg{width:100%;height:auto;display:block}
+.pathdemo figcaption{margin-top:6px;text-align:center;font-size:.84rem;font-weight:800}
+
+/* ---------- 首頁 ---------- */
+.home-wrap{width:min(100%,580px);padding:24px 20px calc(24px + var(--safe-b));text-align:center}
+.logo{margin:0 auto 6px;max-width:380px}
+.logo-svg{width:100%;height:auto;display:block}
+.home-btns{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.home-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.home-row .btn3d{flex:1 1 150px}
+.home-note{margin-top:18px;font-size:.88rem;color:var(--ink-soft);line-height:1.8}
+@media (max-width:600px){ #s-home .home-wrap{padding-top:max(76px,10vh)} }
+
+/* ---------- 大廳 ---------- */
+.conn-row{display:flex;align-items:center;gap:9px;font-size:.88rem;color:var(--ink-soft);margin:4px 0 10px;flex-wrap:wrap}
+.dot{width:12px;height:12px;border-radius:50%;background:#C8BFD1;border:2px solid var(--ink);flex:0 0 auto}
+.dot.ok{background:var(--mint-d)}
+.dot.warn{background:var(--lemon-d)}
+.dot.bad{background:var(--danger)}
+.lobby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px}
+.lobby-box{border:3px solid var(--ink);border-radius:20px;background:var(--paper);padding:14px}
+.lobby-box .btn3d{width:100%;margin-top:10px}
+.lobby-box .lbl{margin-top:0}
+.roomlist{display:grid;gap:10px;margin-top:8px}
+.roomrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:11px 14px}
+.roomrow .rname{flex:1 1 160px;min-width:0;font-weight:800}
+.roomrow .rname small{display:block;font-weight:600;color:var(--ink-soft);font-size:.78rem}
+.roomrow .tag{border:2px solid var(--ink);border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:800;background:var(--cream)}
+.roomrow .tag.playing{background:var(--peach)}
+.roomrow .tag.over{background:var(--cream-d)}
+.empty{padding:22px;text-align:center;color:var(--ink-soft);font-size:.9rem;border:3px dashed var(--line);border-radius:18px}
+
+/* ---------- 我的紀錄 ---------- */
+.bestlist{display:grid;gap:10px}
+.bestrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:11px 14px}
+.bestrow .bn{flex:1 1 130px;font-weight:800}
+.bestrow .bv{font-size:.85rem;color:var(--ink-soft)}
+.bestrow .bv b{color:var(--ink);font-size:1rem}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.statcard{border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:14px;text-align:center}
+.statcard b{display:block;font-size:1.8rem;line-height:1.2}
+.statcard span{font-size:.82rem;color:var(--ink-soft)}
+
+/* ================================================================
+ * 對局畫面
+ * ================================================================ */
+.game-shell{position:absolute;inset:0;display:flex;min-height:0}
+
+/* ---- 左側欄：窄，但戰況與聊天都看得到 ---- */
+.side{
+  flex:0 0 var(--side-w);width:var(--side-w);min-width:0;
+  display:flex;flex-direction:column;min-height:0;
+  background:rgba(255,253,248,.94);border-right:3px solid var(--ink);
+  padding-bottom:var(--safe-b);padding-left:var(--safe-l);
+}
+.side-head{display:flex;align-items:center;gap:6px;padding:8px 8px 6px;border-bottom:2.5px solid var(--line);padding-top:calc(8px + var(--safe-t))}
+.side-tabs{display:flex;gap:5px;flex:1;min-width:0}
+.stab{flex:1;min-width:0;border:2.5px solid var(--ink);background:var(--cream);color:var(--ink);
+  border-radius:12px;padding:8px 4px;font:inherit;font-size:.84rem;font-weight:800;cursor:pointer;position:relative;min-height:40px}
+.stab.on{background:var(--grape);box-shadow:0 3px 0 var(--grape-d)}
+.stab:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.side-close{display:none;flex:0 0 auto;min-width:38px;min-height:38px;font-size:.9rem}
+.unread{position:absolute;top:-7px;right:-6px;background:var(--danger);color:#fff;
+  border:2px solid var(--ink);border-radius:999px;font-size:.66rem;font-weight:900;
+  min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+.side-pane{display:none;flex:1;min-height:0;overflow-y:auto;padding:8px;flex-direction:column;gap:7px}
+.side-pane.on{display:flex}
+.sum-h{margin:6px 0 2px;font-size:.78rem;letter-spacing:.08em;color:var(--ink-soft)}
+.sum-room{font-size:.76rem;color:var(--ink-soft);line-height:1.5;border:2.5px dashed var(--line);
+  border-radius:11px;padding:5px 8px;text-align:center}
+.sum-room b{color:var(--ink);font-size:.94rem;letter-spacing:.1em}
+
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.rankrow{display:grid;grid-template-columns:18px 1fr auto;gap:5px;align-items:center;
+  border:2.5px solid var(--ink);border-radius:12px;background:var(--paper);padding:4px 6px;
+  border-left-width:7px;border-left-color:var(--who,var(--grape-d))}
+.rankrow.me{background:var(--lemon)}
+.rankrow.out{opacity:.5}
+.rankrow .no{font-weight:900;font-size:.9rem;text-align:center}
+.rankrow .nm{font-weight:800;font-size:.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rankrow .sc{font-weight:900;font-size:1rem;text-align:right;font-variant-numeric:tabular-nums;line-height:1.05}
+.rankrow .sc small{display:block;font-size:.62rem;font-weight:700;color:var(--rose-d)}
+.mystat{font-size:.73rem;color:var(--ink-soft);line-height:1.6;text-align:center;
+  border-top:2px dashed var(--line);padding-top:6px}
+.side-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:8px}
+.side-actions .btn3d{flex:1 1 84px;--d:5px;min-height:44px;font-size:.8rem;padding:8px 6px calc(8px + var(--d))}
+
+#pane-chat{padding-bottom:8px}
+.chatlog{flex:1;min-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}
+.msg{font-size:.8rem;line-height:1.55;border-radius:11px;padding:5px 8px;background:var(--paper);
+  border:2px solid var(--line);word-break:break-word;user-select:text;-webkit-user-select:text}
+.msg .who{font-weight:800;font-size:.74rem;color:var(--grape-d);display:block}
+.msg.me{background:var(--lemon);border-color:var(--lemon-d)}
+.msg.sys{background:transparent;border:0;color:var(--ink-soft);font-size:.75rem;text-align:center;padding:2px}
+.msg.spec .who::after{content:" · 觀戰";font-weight:600;color:var(--ink-soft)}
+html[data-lang="en"] .msg.spec .who::after{content:" · Watching"}
+.chatbar{display:flex;gap:6px;margin-top:6px}
+.chatbar .field{padding:9px 11px;font-size:.88rem;border-width:2.5px;border-radius:13px}
+.chatbar .btn3d{flex:0 0 auto;--d:5px;min-height:44px;padding:8px 12px calc(8px + var(--d))}
+
+/* ---- 主舞台：盤面吃掉所有剩下的空間 ---- */
+.stage{position:relative;z-index:1;flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column;
+  padding:0 calc(6px + var(--safe-r)) calc(5px + var(--safe-b)) 6px}
+.hud{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:calc(8px + var(--safe-t)) 62px 6px 0}
+/* 離開與重新開始是一組，永遠黏在一起、一起換行，不會被分到兩排去 */
+.hud-nav{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+/* 圖示按鈕裡的向量圖：跟著按鈕的文字色走，所以和 ◀ 是同一個墨色 */
+.btn-ico{width:1.05em;height:1.05em;display:block;overflow:visible}
+.hud-lbl{font-size:.68rem;color:var(--ink-soft);display:block;line-height:1}
+.hud-time,.hud-score,.hud-left{
+  border:3px solid var(--ink);border-radius:15px;background:var(--paper);
+  padding:4px 12px;display:flex;flex-direction:column;align-items:center;line-height:1.1;min-width:76px;
+}
+.hud-time b,.hud-score b,.hud-left b{font-size:1.4rem;font-variant-numeric:tabular-nums}
+.hud-time.low{background:var(--danger-bg);border-color:var(--danger);animation:pulse .9s infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.hud-stage{border:3px solid var(--ink);border-radius:999px;background:var(--mint);padding:5px 14px;font-weight:800;font-size:.88rem}
+.hud-stage.lv2{background:var(--sky)}
+.hud-stage.lv3{background:var(--lemon)}
+.hud-stage.lv4{background:var(--peach)}
+.hud-stage.lv5{background:var(--rose)}
+.hud-combo{border:3px solid var(--ink);border-radius:999px;background:var(--rose);padding:5px 12px;font-weight:800;font-size:.85rem}
+.hud-combo b{font-size:1.05rem}
+.timebar{height:9px;border:2.5px solid var(--ink);border-radius:999px;background:var(--paper);overflow:hidden;margin:2px 0 6px}
+.timebar span{display:block;height:100%;width:100%;background:var(--mint-d);transition:width .3s linear}
+.timebar span.warn{background:var(--lemon-d)}
+.timebar span.low{background:var(--danger)}
+
+/* ---- 盤面 ---- */
+.board-wrap{
+  position:relative;flex:1 1 auto;min-height:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(4px,1vmin,14px);
+  border:3px solid var(--ink);border-radius:24px;
+  background:linear-gradient(180deg,#FFF7E9 0%,#FBEEDC 60%,#F5E4CD 100%);
+  box-shadow:inset 0 4px 0 rgba(255,255,255,.6);
+  overflow:hidden;container-type:size;
+}
+.board{
+  /* --cols / --rows 由 render.js 寫入，是「不含外圈」的實際列欄。
+     外圈只是給連線路徑繞出去用的留白，做成半格寬就好 ——
+     整整一格太浪費，方塊會被擠小約一成。 */
+  --cols:10;--rows:8;--pad:0.5fr;
+  --ar:calc((var(--cols) + 1) / (var(--rows) + 1));
+  display:grid;
+  grid-template-columns:var(--pad) repeat(var(--cols),1fr) var(--pad);
+  grid-template-rows:var(--pad) repeat(var(--rows),1fr) var(--pad);
+  gap:0;
+  aspect-ratio:var(--ar);
+  width:100%;max-width:100%;max-height:100%;
+  position:relative;
+}
+/* 等比塞進可用空間：寬度取「容器寬」與「容器高 × 長寬比」的小者。
+   只寫 width:100% + max-height 的話，高度被夾住時寬度不會跟著縮，
+   格子會被壓成又寬又扁。 */
+@supports (width:1cqw){
+  .board{width:min(100cqw,calc(100cqh * var(--ar)))}
+}
+/* 格子間距壓到最小，磚塊就能盡量放大；容器查詢讓名稱字級跟著格子走 */
+.cell{position:relative;padding:0.8%;border:0;background:none;margin:0;container-type:inline-size}
+.cell.pad{pointer-events:none}          /* 外面那一圈只是路徑用的留白 */
+.tile{
+  position:absolute;inset:0.8%;padding:0;margin:0;border:0;background:none;cursor:pointer;
+  border-radius:16%;touch-action:manipulation;transition:transform .12s ease,filter .12s ease;
+}
+.tile .tile-svg{width:100%;height:100%;display:block;overflow:visible}
+.tile.mahjong{pointer-events:none}
+.tile.mahjong .tile-svg-mahjong{pointer-events:auto}
+/* 麻將選取框跟著實際牌面走，不使用整個 2×2 牌格的外框。 */
+.tile.mahjong .mahjong-selection{
+  display:none;position:absolute;z-index:2;left:-15%;right:11%;top:-15%;bottom:11%;
+  border:4px solid var(--grape-d);border-radius:20%;pointer-events:none;
+  box-shadow:0 0 0 2px rgba(255,255,255,.85) inset;
+}
+/* 圖案獨立一層：開「顯示名稱」時往上縮，名稱才有自己的位置，不會蓋到圖 */
+.tile .tile-art{transform-box:fill-box;transform-origin:center;transition:transform .15s ease}
+.tile:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px;z-index:4}
+.tile:hover{transform:translateY(-4%)}
+.tile.sel{transform:translateY(-8%) scale(1.08);filter:drop-shadow(0 3px 5px rgba(74,59,85,.45));z-index:5}
+.tile.sel::after{
+  content:"";position:absolute;inset:-7%;border:4px solid var(--grape-d);border-radius:20%;
+  pointer-events:none;box-shadow:0 0 0 2px rgba(255,255,255,.85) inset;
+}
+.tile.mahjong.sel{transform:none;filter:drop-shadow(0 3px 5px rgba(74,59,85,.45));z-index:5}
+.tile.mahjong.sel::after{display:none}
+.tile.mahjong.sel .mahjong-selection{display:block}
+.tile.hint{animation:hintpulse 1s ease-in-out infinite;z-index:5}
+@keyframes hintpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.tile.gone{animation:pop .3s ease-out forwards;pointer-events:none}
+@keyframes pop{0%{transform:scale(1);opacity:1}45%{transform:scale(1.22);opacity:1}100%{transform:scale(.4);opacity:0}}
+.tile.shake{animation:shake .26s}
+@keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-4%,2%)}50%{transform:translate(4%,-2%)}75%{transform:translate(-2%,-1%)}}
+
+/* 名稱標籤：放在磚塊正面下緣的獨立色帶裡，不壓在圖案上。
+   字級用 cqw 跟著格子大小走，格子小就自動變小；下限拉到 7px，
+   平板那種一格 60～80px 的盤面才看得清楚（原本只有 6px 幾乎認不出字）。
+   磚塊正面是 SVG 的 y 2～90，所以色帶擺在 12% 才會落在正面裡，
+   不會跨到下面那條側面厚度上。 */
+.tile .tile-name{
+  position:absolute;left:5%;right:5%;bottom:12%;text-align:center;
+  font-size:clamp(7px,14cqw,13px);font-weight:800;color:var(--ink);
+  background:rgba(255,255,255,.94);border:1px solid rgba(74,59,85,.28);border-radius:999px;
+  line-height:1.25;padding:0 3px;pointer-events:none;display:none;
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+}
+/* 名稱擺不擺得下，只跟「這一格有多大」有關，跟裝置是手機還是平板無關，
+   所以用容器查詢直接問格子（.cell 是 inline-size 容器）：
+   一格 ≥ 56px（平板、桌機的每一關）才顯示，圖案往上縮到 66% 讓位。
+   比這小的格子（手機的入門／日常／大亂）字會被壓到 7px、圖案也得縮到一半，
+   兩邊都認不清楚，所以乾脆不顯示，圖案維持原本大小。
+   麻將牌本來就是整張牌面，一律不顯示名稱。 */
+@container (min-width:56px){
+  body.show-label .tile:not(.mahjong) .tile-name{display:block}
+  body.show-label .tile:not(.mahjong) .tile-art{transform:translateY(-21%) scale(.66)}
+}
+/* 幼幼班的盤面格數少、格子大得多，名稱也跟著放大讓小朋友看得清楚。
+   麻將要排除在外：麻將牌自己就是整張牌面，縮小讓位給名稱會讓整疊牌散開對不齊
+   （牌面本來要彼此緊貼），而且麻將牌本來就不顯示名稱。 */
+body.kids-board .tile:not(.mahjong) .tile-name{display:block;font-size:clamp(11px,10.5cqw,20px)}
+body.kids-board .tile:not(.mahjong) .tile-art{transform:translateY(-20%) scale(.66)}
+/* 幼幼班的字級有 11px 的下限，所以手機上那種比較小的格子要多讓一點；
+   格子夠大時名稱只佔一小條，圖案就可以放大回來。 */
+@container (min-width:110px){
+  body.kids-board .tile:not(.mahjong) .tile-art{transform:translateY(-17%) scale(.72)}
+}
+
+/* 連線動畫：畫在和盤面同一個座標系的 SVG 上（1 單位 = 1 格） */
+.linkline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;overflow:visible}
+.linkline .lk{fill:none;stroke:#3FAF8B;stroke-width:.16;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 0 .06px #fff);animation:linkfade .55s ease-out forwards}
+.linkline .lk-bg{fill:none;stroke:#FFFFFF;stroke-width:.28;stroke-linecap:round;stroke-linejoin:round;
+  opacity:.85;animation:linkfade .55s ease-out forwards}
+.board.stacked>.linkline{z-index:80}
+.linkline .stack-link{stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:.55 .18}
+.linkline .lk.stack-link{stroke:var(--stack-link-color,#19A77C);stroke-width:.24;
+  filter:drop-shadow(0 0 .09px #fff) drop-shadow(0 0 .16px var(--stack-link-color,#19A77C));
+  animation:stacklinkfade .9s ease-out forwards}
+.linkline .lk-bg.stack-link{stroke:#fff;stroke-width:.46;opacity:.98;animation:stacklinkfade .9s ease-out forwards}
+.linkline .stack-link-glow{fill:none;stroke:var(--stack-link-color,#19A77C);stroke-width:.62;opacity:.35;
+  filter:drop-shadow(0 0 .2px var(--stack-link-color,#19A77C));animation:stacklinkglow .9s ease-out forwards}
+@keyframes linkfade{0%{opacity:0}18%{opacity:1}70%{opacity:1}100%{opacity:0}}
+@keyframes stacklinkfade{0%{opacity:0;stroke-dashoffset:1.46}14%{opacity:1}72%{opacity:1;stroke-dashoffset:0}100%{opacity:0}}
+@keyframes stacklinkglow{0%{opacity:0;stroke-width:.18}22%{opacity:.5;stroke-width:.72}68%{opacity:.32;stroke-width:.58}100%{opacity:0;stroke-width:.9}}
+.board.stacked .tile.mahjong-match .tile-svg-mahjong{animation:mahjongmatch .9s ease-out}
+@keyframes mahjongmatch{0%{filter:none}22%{filter:brightness(1.2) drop-shadow(0 0 7px #fff) drop-shadow(0 0 10px #19A77C)}70%{filter:brightness(1.1) drop-shadow(0 0 5px #fff)}100%{filter:none}}
+
+/* 特效層 */
+.fx{position:absolute;inset:0;pointer-events:none;z-index:7;overflow:hidden}
+.flyscore{position:absolute;transform:translate(-50%,-50%);font-weight:900;
+  font-size:clamp(1rem,2.8vmin,1.6rem);color:var(--ok);text-shadow:0 2px 0 #fff,0 0 6px #fff;
+  animation:fly .9s ease-out forwards;white-space:nowrap}
+.flyscore.other{color:var(--grape-d)}
+@keyframes fly{0%{opacity:0;transform:translate(-50%,-20%) scale(.7)}20%{opacity:1;transform:translate(-50%,-60%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-160%) scale(1)}}
+.shout{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+  font-size:clamp(1.5rem,6.5vmin,3.2rem);font-weight:900;color:var(--ink);
+  text-shadow:0 3px 0 #fff,0 0 14px #fff;animation:shout 1s ease-out forwards;text-align:center}
+@keyframes shout{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
+.countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:90;
+  font-size:clamp(3rem,16vmin,8rem);font-weight:900;color:var(--ink);
+  text-shadow:0 4px 0 #fff,0 0 22px #fff;background:rgba(255,253,248,.4)}
+
+/* 窄版的即時排行浮條：盤面等比縮放後周圍一定有留白，把排行貼在那裡 */
+.livebar{display:none}
+.lchip{display:inline-flex;align-items:center;gap:5px;min-width:0;
+  border:2.5px solid var(--ink);border-radius:999px;background:rgba(255,253,248,.94);
+  border-left-width:7px;border-left-color:var(--who,var(--grape-d));
+  padding:2px 9px;font-size:.72rem;font-weight:800;line-height:1.55}
+.lchip.me{background:var(--lemon)}
+.lchip .ln{max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lchip i{font-style:normal;font-variant-numeric:tabular-nums}
+
+/* ---- 盤面上的浮層（等待、結算） ---- */
+.overlay{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;
+  background:rgba(74,59,85,.34);padding:12px;overflow-y:auto}
+.ovcard{width:min(100%,430px);background:var(--paper);border:3.5px solid var(--ink);border-radius:24px;
+  padding:16px;box-shadow:0 10px 0 rgba(74,59,85,.18);max-height:100%;overflow-y:auto}
+.ovcard.wide{width:min(100%,560px)}
+.ovcard h3{margin:0 0 10px;text-align:center;font-size:1.25rem}
+.ovnote{font-size:.84rem;color:var(--ink-soft);line-height:1.65;margin:10px 0 0;text-align:center}
+.ovbtns{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.ovbtns .btn3d{flex:1 1 130px}
+.ov-block{margin-top:10px;border-top:2.5px dashed var(--line);padding-top:9px}
+.ov-pick{display:flex;gap:6px;flex-wrap:wrap}
+.ov-pick .pickcard{flex:1 1 110px}
+.seatlist{display:flex;flex-direction:column;gap:6px}
+.seatrow{display:flex;align-items:center;gap:8px;border:2.5px solid var(--ink);border-radius:14px;
+  background:#fff;padding:7px 10px;font-size:.9rem;border-left-width:8px;border-left-color:var(--who,var(--grape-d))}
+.seatrow .nm{flex:1;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seatrow .tag{border:2px solid var(--ink);border-radius:999px;padding:0 8px;font-size:.72rem;font-weight:800;background:var(--cream)}
+.seatrow .tag.ready{background:var(--mint)}
+.seatrow .tag.host{background:var(--lemon)}
+.seatrow .tag.spec{background:var(--sky)}
+.seatrow .tag.off{background:var(--danger-bg);color:var(--danger)}
+.resulttable{display:flex;flex-direction:column;gap:6px}
+.resrow{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;
+  border:2.5px solid var(--ink);border-radius:14px;background:#fff;padding:7px 10px;
+  border-left-width:8px;border-left-color:var(--who,var(--grape-d))}
+.resrow.win{background:var(--lemon);box-shadow:0 4px 0 var(--lemon-d)}
+.resrow .no{font-weight:900;text-align:center}
+.resrow .nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resrow .nm small{display:block;font-weight:600;font-size:.7rem;color:var(--ink-soft)}
+.resrow .sc{font-weight:900;font-size:1.15rem;text-align:right;font-variant-numeric:tabular-nums}
+.trophy{width:78px;margin:0 auto 4px}
+.trophy-svg{width:100%;height:auto;display:block}
+
+/* 盤面下方的操作列：只有窄版會用到（寬版這兩顆在左側欄裡） */
+.stage-actions{display:none;gap:10px;padding:8px 4px calc(4px + var(--safe-b));justify-content:center}
+.stage-actions .btn3d{flex:1 1 140px;max-width:220px;--d:6px;min-height:52px;font-size:.95rem}
+.stage-actions .btn3d b{font-variant-numeric:tabular-nums}
+
+/* 窄版才用的側欄開關 */
+.side-fab{display:none;position:absolute;left:calc(6px + var(--safe-l));bottom:calc(10px + var(--safe-b));
+  z-index:12;flex-direction:column;gap:7px}
+.side-fab .iconbtn{box-shadow:0 3px 0 rgba(74,59,85,.25)}
+
+/* ---------- 彈窗 ---------- */
+.modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:14px}
+.modal-mask{position:absolute;inset:0;background:rgba(74,59,85,.45)}
+.modal-card{position:relative;width:min(100%,440px);max-height:88dvh;display:flex;flex-direction:column;
+  background:var(--paper);border:3.5px solid var(--ink);border-radius:24px;
+  box-shadow:0 12px 0 rgba(74,59,85,.2);overflow:hidden}
+.modal-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:2.5px solid var(--line)}
+.modal-head h3{margin:0;flex:1;font-size:1.12rem}
+.modal-body{padding:12px 14px;overflow-y:auto;flex:1}
+.modal-foot{display:flex;gap:9px;justify-content:flex-end;padding:10px 14px;border-top:2.5px solid var(--line);flex-wrap:wrap}
+.confirm-card{width:min(100%,420px)}
+.confirm-message{margin:0;line-height:1.75}
+.setrow{display:flex;align-items:center;gap:12px;padding:8px 0;flex-wrap:wrap}
+.setrow label{flex:1;min-width:130px;font-size:.94rem;font-weight:700}
+.setrow label small{display:block;font-weight:600;font-size:.74rem;color:var(--ink-soft)}
+.setrow input[type=range]{flex:1 1 130px;min-width:120px;accent-color:var(--grape-d);height:30px}
+.switch{appearance:none;-webkit-appearance:none;width:56px;height:32px;border:3px solid var(--ink);
+  border-radius:999px;background:var(--cream-d);position:relative;cursor:pointer;flex:0 0 auto;margin:0}
+.switch::after{content:"";position:absolute;top:50%;left:2px;width:22px;height:22px;border-radius:50%;
+  background:var(--paper);border:2.5px solid var(--ink);transform:translateY(-50%);transition:left .16s}
+.switch:checked{background:var(--mint)}
+.switch:checked::after{left:26px}
+.switch:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.sep{border:0;border-top:2.5px dashed var(--line);margin:10px 0}
+.setinfo{font-size:.8rem;color:var(--ink-soft);margin:8px 0;line-height:1.65;word-break:break-all}
+.invite-out{display:flex;gap:7px;margin-top:10px;align-items:center}
+.invite-out .field{font-size:.8rem;padding:9px 11px}
+.invitelist{display:flex;flex-direction:column;gap:6px}
+.invrow{display:flex;align-items:center;gap:8px;border:2.5px solid var(--ink);border-radius:13px;
+  background:#fff;padding:6px 9px;font-size:.78rem;flex-wrap:wrap}
+.invrow .txt{flex:1;min-width:110px;color:var(--ink-soft)}
+.invrow.dead{opacity:.5}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + var(--safe-b) + var(--kb,0px));transform:translateX(-50%);z-index:120;
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:16px;font-size:.9rem;font-weight:700;
+  max-width:min(92vw,420px);text-align:center;line-height:1.5;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+
+/* ================================================================
+ * RWD
+ * 檢查點：平板直向 / 平板橫向 / 桌機寬版 / 手機直向 / 手機橫向。
+ * 側欄一律在左邊；空間不夠時改成抽屜，資訊優先順序不變。
+ * ================================================================ */
+@media (max-width:1180px){ :root{ --side-w:192px } }
+@media (max-width:1020px){ :root{ --side-w:178px } }
+
+/* 窄版（手機、平板直向）：側欄變成從左邊滑出的抽屜 */
+@media (max-width:860px), (orientation:portrait) and (max-width:1024px){
+  .side{
+    position:absolute;left:0;top:0;bottom:0;z-index:20;
+    width:min(84vw,320px);flex-basis:auto;
+    transform:translateX(-102%);transition:transform .22s ease;
+    box-shadow:6px 0 22px rgba(74,59,85,.22);
+  }
+  .side.open{transform:translateX(0)}
+  /* 右上角工具列（設定＋語言）固定在抽屜上方：手機上抽屜右緣會被它蓋住，
+     所以標題列右側要讓出重疊的寬度，分頁與關閉鈕才點得到；寬螢幕算出來是負的，退回 8px */
+  .side-head{padding-right:max(8px,calc(min(84vw,320px) - 100vw + 130px + var(--safe-r)))}
+  .side-close{display:inline-flex}
+  .side-fab{display:flex}
+  .stage{padding-left:calc(8px + var(--safe-l))}
+  .hud{padding-left:0}
+  /* 抽屜收起來的時候，提示與洗牌改放在盤面下方，單手就按得到 */
+  .stage-actions{display:flex}
+  .side-actions{display:none}
+  /* 盤面上方的留白拿來放即時排行（pointer-events:none，不會擋到點擊） */
+  .livebar{display:flex;position:absolute;z-index:8;pointer-events:none;
+    left:8px;right:8px;top:6px;justify-content:center;flex-wrap:wrap;gap:5px}
+}
+
+/* 手機／平板橫向且很矮：HUD 壓扁，排行改成靠左一欄 */
+@media (orientation:landscape) and (max-height:560px){
+  /* 橫向很矮的時候沒有多餘高度，操作列縮回側欄 */
+  .stage-actions{display:none}
+  .livebar{left:6px;right:auto;top:6px;bottom:6px;width:min(26%,140px);
+    flex-direction:column;justify-content:flex-start;align-items:stretch}
+  .lchip .ln{max-width:100%}
+  .hud{padding-top:calc(4px + var(--safe-t));gap:7px;padding-right:54px}
+  .hud-time b,.hud-score b,.hud-left b{font-size:1.15rem}
+  .hud-time,.hud-score,.hud-left{padding:2px 9px;min-width:62px}
+  .hud-stage,.hud-combo{padding:3px 10px;font-size:.78rem}
+  .timebar{height:7px;margin:1px 0 4px}
+  .settings-fab{--d:4px;min-width:42px;min-height:42px;padding:6px 8px calc(6px + var(--d))}
+  .fab-bar{gap:6px}
+  .lang-toggle{min-width:42px;height:calc(42px - 4px);margin-bottom:4px;box-shadow:0 4px 0 var(--cream-d);border-radius:14px;font-size:.85rem}
+}
+
+/* 窄螢幕的 HUD 只有一排的空間：剩餘水果收起來，剩下的全部擠在同一排。
+   改成 nowrap ＋ 允許壓縮，關卡名稱不夠放就截斷 ——
+   讓 HUD 換行的話會直接吃掉一整排盤面高度，小手機上很傷。 */
+@media (max-width:560px){
+  .hud{gap:6px;flex-wrap:nowrap}
+  .hud-left{display:none}
+  .hud-nav{gap:5px}
+  .hud-nav .iconbtn{min-width:40px;min-height:40px;border-radius:12px;font-size:1rem}
+  .hud-time,.hud-score{min-width:0;padding:2px 8px}
+  .hud-stage{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lobby-home-link{top:calc(8px + var(--safe-t));left:calc(8px + var(--safe-l));padding:8px 10px;font-size:.74rem}
+}
+
+@media (max-width:400px){
+  :root{font-size:15px}
+  .home-btns .btn3d.big{font-size:1.05rem;min-height:62px}
+  .panel{padding:14px 12px 28px}
+  .modal-card{border-radius:20px}
+  .hud-time,.hud-score{min-width:0;padding:3px 8px}
+  .hud-time b,.hud-score b{font-size:1.2rem}
+  .hud-stage,.hud-combo{padding:3px 8px;font-size:.76rem}
+}
+
+/* 再窄就放不下關卡名稱了，擠成一條色塊反而更難看；側欄的戰況裡還是看得到 */
+@media (max-width:360px){
+  .hud-stage{display:none}
+}
+
+/* 超寬桌機：側欄不要跟著變胖，盤面也不要無限放大 */
+@media (min-width:1600px){
+  :root{--side-w:236px}
+  .board{max-width:1500px}
+  .board-wrap{padding:0 2vw}
+}
+
+/* 尊重系統的「減少動態」；設定裡也有一份可以手動關 */
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  #bgdeco{display:none}
+}
+body.reduce-motion #bgdeco{display:none}
+body.reduce-motion .tile{transition:none}
+body.reduce-motion .tile.gone,body.reduce-motion .tile.hint,body.reduce-motion .tile.shake{animation:none}
+body.reduce-motion .tile.gone{opacity:0}
+
+/* ================================================================
+ * 手機軟體鍵盤（js/keyboard.js 量測後把 --app-h／--kb 寫在 :root）
+ * 版面是滿版固定高度，鍵盤彈出時瀏覽器不一定會縮版面，底部的聊天輸入框
+ * 就會被鍵盤整條蓋住。--app-h 讓 #app 改用「真正看得到的高度」（見上方
+ * #app 規則），抽屜與各畫面都跟著縮，輸入框自然浮到鍵盤上面；--kb 則給
+ * position:fixed 的提示條（.toast）讓開。沒有鍵盤時兩個變數都不生效。
+ * ================================================================ */
+
+/* iOS 對 font-size < 16px 的欄位聚焦時會自動放大整頁，放大後輸入框常被推出畫面。
+   選擇器要跟原規則同樣具體才蓋得過去。 */
+@media (pointer:coarse){
+  .chatbar .field,.invite-out .field{font-size:16px}
+}
+
+/* ================================================================
+ * 麻將疊疊樂（只有麻將主題會用到）
+ * 網格單位改成「半格」，一張牌佔 2×2 個半格；上面那一層整層往右下偏
+ * 半格，所以一張上層牌會壓住下層的 4 張。誰疊在誰上面用 z-index 決定，
+ * 由 render.js 依層數寫在每個 .cell 上。
+ * ================================================================ */
+.board.stacked .cell.lay{filter:drop-shadow(0 2px 2px rgba(74,59,85,.3));pointer-events:none}
+.board.stacked .tile{inset:0}
+/* 疊牌容器只負責定位與層次，不能攔截下層已解鎖牌的點擊。 */
+.board.stacked .cell.lay .tile{pointer-events:auto}
+.board.stacked .cell.lay .tile.mahjong{pointer-events:none}
+.board.stacked .cell.lay .tile.mahjong .tile-svg-mahjong{pointer-events:auto}
+/* 麻將牌身是直式比例，橫向補滿牌格後相鄰牌才會緊貼；點擊範圍仍維持原本的牌格 */
+.board.stacked .tile .tile-svg-mahjong{transform:scaleX(1.45);transform-origin:center}
+
+/* 被壓住的牌：壓暗但仍然看得出是哪一張（玩家要能先看好再規劃），
+   點不動則靠 pointer-events 與 render.js 拿掉的 tabIndex。 */
+.tile.locked{filter:grayscale(.5) brightness(.84);cursor:default;pointer-events:none}
+.board.stacked .cell.lay .tile.locked{pointer-events:none}
+.board.stacked .cell.lay .tile.mahjong.locked{pointer-events:none}
+.board.stacked .cell.lay .tile.mahjong.locked .tile-svg-mahjong{pointer-events:none}
+.tile.locked .tile-name{opacity:.7}
+
+/* English HUD wraps before the fixed global tools, preserving the score. */
+@media (max-width: 600px) {
+  .hud { padding-right: 116px; flex-wrap: wrap; height: auto; min-height: 58px; }
+  .hud > * { flex-shrink: 0; }
+}

@@ -1,0 +1,464 @@
+{
+  "flip-match": {
+    "at": "2026-10-29T07:10:11.120Z",
+    "commands": [
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      }
+    ],
+    "problems": []
+  },
+  "sudoku": {
+    "at": "2026-10-29T07:10:13.893Z",
+    "commands": [
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      }
+    ],
+    "problems": []
+  },
+  "whack-a-mole": {
+    "at": "2026-10-29T07:10:16.563Z",
+    "commands": [
+      {
+        "cmd": "node scripts/board-check.js",
+        "exit": 0,
+        "count": 36,
+        "sec": 20
+      },
+      {
+        "cmd": "node scripts/browser-check.js",
+        "exit": 0,
+        "count": 577,
+        "sec": 320
+      },
+      {
+        "cmd": "node scripts/invite-nick-check.js",
+        "exit": 0,
+        "count": 6,
+        "sec": 5
+      },
+      {
+        "cmd": "node scripts/leave-check.js",
+        "exit": 0,
+        "count": 10,
+        "sec": 9
+      },
+      {
+        "cmd": "node scripts/reconnect-check.js",
+        "exit": 0,
+        "count": 11,
+        "sec": 30
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      },
+      {
+        "cmd": "node scripts/settings-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 3
+      },
+      {
+        "cmd": "node scripts/sidebar-check.js",
+        "exit": 0,
+        "count": 8,
+        "sec": 4
+      },
+      {
+        "cmd": "node scripts/sync-check.js",
+        "exit": 0,
+        "count": 4,
+        "sec": 2
+      }
+    ],
+    "problems": []
+  },
+  "fruit-link": {
+    "at": "2026-10-29T07:16:51.343Z",
+    "commands": [
+      {
+        "cmd": "node scripts/browser-check.js",
+        "exit": 1,
+        "count": 228,
+        "sec": 204,
+        "tail": "    at main (C:\\Eric\\AI Agent\\all-in-one\\games\\fruit-link\\scripts\\browser-check.js:1206:20)\n\n────────────────────────────\n通過 228 項，失敗 1 項\n截圖存在 C:\\Eric\\AI Agent\\all-in-one\\games\\fruit-link\\screenshots\n❌ 瀏覽器驗證失敗"
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      }
+    ],
+    "problems": [
+      "失敗：node scripts/browser-check.js（結束碼 1）"
+    ]
+  },
+  "stair-kids": {
+    "at": "2026-10-29T07:20:17.975Z",
+    "commands": [
+      {
+        "cmd": "node scripts/e2e-online.js",
+        "exit": 0,
+        "count": 47,
+        "sec": 66
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      }
+    ],
+    "problems": []
+  },
+  "draw-guess": {
+    "at": "2026-10-29T07:21:26.595Z",
+    "commands": [
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      }
+    ],
+    "problems": []
+  },
+  "heart-attack": {
+    "at": "2026-10-29T07:21:29.073Z",
+    "commands": [
+      {
+        "cmd": "node scripts/browser-check.js",
+        "exit": 0,
+        "count": 56,
+        "sec": 42
+      },
+      {
+        "cmd": "node scripts/rwd-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 670
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 3
+      }
+    ],
+    "problems": []
+  },
+  "bomb-squad": {
+    "at": "2026-10-29T07:33:24.634Z",
+    "commands": [
+      {
+        "cmd": "node scripts/browser-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 79
+      },
+      {
+        "cmd": "node scripts/layout-sweep.js",
+        "exit": 1,
+        "count": null,
+        "sec": 37,
+        "tail": "    at C:\\Eric\\AI Agent\\all-in-one\\games\\bomb-squad\\scripts\\layout-sweep.js:57:39 {\r\n  log: [ \"  - waiting for getByText('更多設定').first()\" ],\r\n  name: 'TimeoutError'\r\n}\r\n\r\nNode.js v22.23.2"
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 5
+      }
+    ],
+    "problems": [
+      "失敗：node scripts/layout-sweep.js（結束碼 1）"
+    ]
+  },
+  "rainbow-bubble": {
+    "at": "2026-10-29T07:35:26.386Z",
+    "commands": [
+      {
+        "cmd": "node scripts/browser-check.js",
+        "exit": 1,
+        "count": null,
+        "sec": 42,
+        "tail": "    at C:\\Eric\\AI Agent\\all-in-one\\games\\rainbow-bubble\\scripts\\browser-check.js:57:14 {\n  log: [\n    '  - navigating to \"http://127.0.0.1:3198/\", waiting until \"load\"'\n  ],\n  name: 'Error'\n}"
+      },
+      {
+        "cmd": "node scripts/laser-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 11
+      },
+      {
+        "cmd": "node scripts/natural-check.js",
+        "exit": 1,
+        "count": null,
+        "sec": 91,
+        "tail": "    '  - navigating to \"http://127.0.0.1:3196/\", waiting until \"load\"'\r\n  ],\r\n  name: 'Error'\r\n}\r\n\r\nNode.js v22.23.2"
+      },
+      {
+        "cmd": "node scripts/online-browser-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 236
+      },
+      {
+        "cmd": "node scripts/quest-browser-check.js",
+        "exit": 0,
+        "count": 115,
+        "sec": 56
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 8
+      },
+      {
+        "cmd": "node scripts/swap-hover-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 23
+      },
+      {
+        "cmd": "node scripts/timer-row-check.js",
+        "exit": 1,
+        "count": null,
+        "sec": 133,
+        "tail": "  ok  phone-land 4人：沒有超出視窗\n  ok  phone-land 4人：整組置中（左空 0／右空 0）\n  ok  phone-land 4人：間距小（8、8px）\n  ok  沒有 JS 錯誤\n\n有失敗"
+      }
+    ],
+    "problems": [
+      "失敗：node scripts/browser-check.js（結束碼 1）",
+      "失敗：node scripts/natural-check.js（結束碼 1）",
+      "失敗：node scripts/timer-row-check.js（結束碼 1）"
+    ]
+  },
+  "pool-duel": {
+    "at": "2026-10-29T07:45:28.661Z",
+    "commands": [
+      {
+        "cmd": "node scripts/layout-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 59
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 120
+      }
+    ],
+    "problems": []
+  },
+  "reversi": {
+    "at": "2026-10-29T07:48:32.333Z",
+    "commands": [
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 46
+      },
+      {
+        "cmd": "node tests/browser-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 340
+      }
+    ],
+    "problems": []
+  },
+  "amaze-go": {
+    "at": "2026-10-29T07:54:59.646Z",
+    "commands": [
+      {
+        "cmd": "node scripts/check-countdown.js",
+        "exit": 1,
+        "count": null,
+        "sec": 151,
+        "tail": "page.waitForFunction: Timeout 30000ms exceeded.\n    at checkCountdown (C:\\Eric\\AI Agent\\all-in-one\\games\\amaze-go\\scripts\\check-countdown.js:25:16)\n    at async C:\\Eric\\AI Agent\\all-in-one\\games\\amaze-go\\scripts\\check-countdown.js:126:9 {\n  log: [],\n  name: 'TimeoutError'\n}"
+      },
+      {
+        "cmd": "node scripts/check-expansion.js",
+        "exit": 0,
+        "count": null,
+        "sec": 196
+      },
+      {
+        "cmd": "node scripts/check-initial-zoom.js",
+        "exit": 0,
+        "count": null,
+        "sec": 160
+      },
+      {
+        "cmd": "node scripts/check-levels.js",
+        "exit": 0,
+        "count": null,
+        "sec": 28
+      },
+      {
+        "cmd": "node scripts/check-random.js",
+        "exit": 1,
+        "count": null,
+        "sec": 145,
+        "tail": "  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: '==',\n  diff: 'simple'\n}"
+      },
+      {
+        "cmd": "node scripts/check-replay.js",
+        "exit": 0,
+        "count": null,
+        "sec": 71
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 7
+      }
+    ],
+    "problems": [
+      "失敗：node scripts/check-countdown.js（結束碼 1）",
+      "失敗：node scripts/check-random.js（結束碼 1）"
+    ]
+  },
+  "pinball-hoops": {
+    "at": "2026-10-29T08:07:38.740Z",
+    "commands": [
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 5
+      }
+    ],
+    "problems": []
+  },
+  "shoot-balloon": {
+    "at": "2026-10-29T08:07:44.496Z",
+    "commands": [
+      {
+        "cmd": "node scripts/browser-check.js",
+        "exit": 1,
+        "count": 167,
+        "sec": 85,
+        "tail": "\n── 瀏覽器主控台沒有未處理錯誤\n\n══════════ 結果 ══════════\n通過 167 項，失敗 1 項\n  ✗ 沒有 pageerror／console.error → got 1 want 0"
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 6
+      },
+      {
+        "cmd": "node scripts/shots.js",
+        "exit": 1,
+        "count": null,
+        "sec": 45,
+        "tail": "    '       - <button id=\"b-lang\" type=\"button\" lang=\"zh-Hant\" title=\"語言：繁體中文\" data-tone=\"paper\" aria-haspopup=\"menu\" aria-label=\"語言：繁體中文\" aria-expanded=\"false\" aria-controls=\"b-lang-menu\" class=\"lang-toggle tk tk-icon\" data-language-settings-for=\"language-settings-0\">…</button> from <span data-floating=\"fixed\" class=\"language-controls\">…</span> subtree intercepts pointer events',\n    '     - retrying click action',\n    '       - waiting 500ms'\n  ],\n  name: 'TimeoutError'\n}"
+      }
+    ],
+    "problems": [
+      "失敗：node scripts/browser-check.js（結束碼 1）",
+      "失敗：node scripts/shots.js（結束碼 1）"
+    ]
+  },
+  "maze-roll": {
+    "at": "2026-10-29T08:10:01.273Z",
+    "commands": [
+      {
+        "cmd": "node scripts/ball-shots.js",
+        "exit": 0,
+        "count": null,
+        "sec": 75
+      },
+      {
+        "cmd": "node scripts/e2e-local.js",
+        "exit": 0,
+        "count": null,
+        "sec": 68
+      },
+      {
+        "cmd": "node scripts/e2e-online.js",
+        "exit": 0,
+        "count": null,
+        "sec": 103
+      },
+      {
+        "cmd": "node scripts/mapdbg.js",
+        "exit": 0,
+        "count": null,
+        "sec": 51
+      },
+      {
+        "cmd": "node scripts/mapzoom.js",
+        "exit": 0,
+        "count": null,
+        "sec": 62
+      },
+      {
+        "cmd": "node scripts/mini-shots.js",
+        "exit": 0,
+        "count": null,
+        "sec": 92
+      },
+      {
+        "cmd": "node scripts/server-outage-browser-check.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 27
+      },
+      {
+        "cmd": "node scripts/smoke.js",
+        "exit": 0,
+        "count": null,
+        "sec": 5
+      },
+      {
+        "cmd": "node scripts/theme-shots.js",
+        "exit": 1,
+        "count": null,
+        "sec": 6,
+        "tail": "page.evaluate: Target page, context or browser has been closed\r\n    at C:\\Eric\\AI Agent\\all-in-one\\games\\maze-roll\\scripts\\theme-shots.js:13:16 {\r\n  log: []\r\n}\r\n\r\nNode.js v22.23.2"
+      }
+    ],
+    "problems": [
+      "失敗：node scripts/theme-shots.js（結束碼 1）"
+    ]
+  },
+  "house-stack": {
+    "at": "2026-10-29T08:18:10.029Z",
+    "commands": [
+      {
+        "cmd": "node scripts/browser.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      }
+    ],
+    "problems": []
+  },
+  "snake-3d": {
+    "at": "2026-10-29T08:18:11.128Z",
+    "commands": [],
+    "problems": []
+  },
+  "ice-duel": {
+    "at": "2026-10-29T08:18:11.720Z",
+    "commands": [],
+    "problems": []
+  }
+}

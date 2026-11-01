@@ -1,0 +1,21 @@
+# 每次 push / PR：共用套件同步檢查、共用伺服器煙霧測試、各遊戲驗證。
+name: 測試
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26.12.1"
+          cache: npm
+      - run: npm ci
+      - run: npm run check:sync
+      - run: npm run test:server
+      - run: node packages/net-server/tests/sio.test.js
+      - run: node scripts/verify-games.js

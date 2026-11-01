@@ -1,0 +1,28 @@
+{
+  "name": "fruit-link",
+  "version": "1.0.0",
+  "description": "水果連連看 - 可愛風連連看（幼幼班＋三關單機闖關、最多 6 人共用同一張盤面的線上搶消競速、觀戰、邀請連結、聊天室與即時戰況）",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/server-outage.cjs && node tests/analytics.js && node tests/localization.js && node tests/verify.js && node tests/i18n-hans.js",
+    "test:online": "node scripts/online-check.js",
+    "test:browser": "node scripts/browser-check.js",
+    "verify": "node tests/verify.js && node scripts/online-check.js",
+    "inject": "node scripts/inject-server-url.js",
+    "test:localization": "node tests/localization.js",
+    "test:analytics": "node tests/analytics.js"
+  },
+  "engines": {
+    "node": "^26.12.1"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  },
+  "license": "MIT",
+  "private": true
+}

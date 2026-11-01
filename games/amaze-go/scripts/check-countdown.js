@@ -1,0 +1,150 @@
+/* 需 Playwright 與 Chromium；實際操作本機／線上模式，檢查倒數前後布局。 */
+const assert = require('node:assert/strict');
+const { chromium } = require('playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { server } = require('../server.js');
+
+const output = process.env.COUNTDOWN_SCREENSHOTS || path.join(os.tmpdir(), 'amaze-countdown');
+const sizes = [[320, 568], [360, 640], [393, 786], [568, 320], [844, 390], [768, 1024], [1024, 768], [1440, 900]];
+
+async function layout(page) {
+  return page.evaluate(() => {
+    const bounds = (s) => { const r = document.querySelector(s).getBoundingClientRect(); return [r.x, r.y, r.width, r.height].map((n) => Math.round(n)); };
+    return {
+      board: bounds('#oboard'), area: bounds('#boardView'), header: bounds('#online .topbar'),
+      count: document.querySelector('#count').textContent, timerText: document.querySelector('#otimerText').textContent,
+      viewport: [innerWidth, innerHeight], document: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
+    };
+  });
+}
+
+async function checkCountdown(page, name, width, height) {
+  const samples = [];
+  for (const digit of ['3', '2', '1', '開始！']) {
+    await page.waitForFunction((n) => document.querySelector('#count').textContent === n, digit);
+    await page.waitForTimeout(150);
+    const sample = await layout(page);
+    samples.push(sample);
+    // 與畫面同一時刻取樣，避免負載高時倒數走完才讀到計時。
+    if (/^\d$/.test(sample.count)) assert.equal(sample.timerText, '0:00.00');
+    const timerInHeader = await page.locator('#otimer').evaluate((n) => {
+      const r = n.getBoundingClientRect(), h = n.closest('.topbar').getBoundingClientRect();
+      return !n.hidden && r.left >= h.left && r.right <= h.right && r.top >= h.top && r.bottom <= h.bottom;
+    });
+    assert.ok(timerInHeader, '對戰計時應整合在頂列內');
+    assert.equal(await page.locator('#count').evaluate((n) => getComputedStyle(n).transform), 'none', '覆蓋層不可跟著數字縮放');
+    if (digit !== '開始！') {
+      const removed = await page.evaluate(() => __countdownState.arrows.filter((a) => a.removed).length);
+      assert.equal(await page.locator('#oboard .arrow[tabindex="0"]').count(), 0, '倒數箭頭不可進入鍵盤焦點');
+      await page.keyboard.press('Enter');
+      const area = await page.locator('#oboard').locator('..').boundingBox();
+      await page.touchscreen.tap(area.x + area.width / 2, area.y + area.height / 2);
+      assert.equal(await page.evaluate(() => __countdownState.arrows.filter((a) => a.removed).length), removed, '倒數期間不可操作棋盤');
+    }
+    await page.screenshot({ path: path.join(output, `${name}-${width}x${height}-${digit === '開始！' ? 'start' : digit}.png`) });
+  }
+  await page.locator('#count').waitFor({ state: 'hidden' });
+  assert.match(await page.locator('#otimerText').textContent(), /^\d+:\d{2}\.\d{2}$/);
+  const playing = await layout(page);
+  for (const sample of samples) {
+    assert.deepEqual(sample.board, playing.board, '倒數時棋盤布局改變');
+    assert.deepEqual(sample.area, playing.area, '倒數時遊戲區布局改變');
+    assert.deepEqual(sample.header, playing.header, '倒數時頂欄布局改變');
+    assert.ok(sample.document[0] <= width && sample.document[1] <= height, '倒數造成頁面溢出：' + JSON.stringify(sample));
+  }
+  console.log('✓', name, `${width}x${height}`, '倒數／開始無溢出、背景布局固定、倒數期間禁止操作');
+}
+
+async function finishRound(page) {
+  while (await page.locator('#oresult').isHidden()) {
+    const id = await page.evaluate(() => AmazeRules.freeArrows(__countdownState)[0]);
+    if (id == null) break;
+    await page.locator('#oboard .arrow[data-id="' + id + '"]').press('Enter');
+    await page.waitForFunction((n) => __countdownState.arrows[n].removed, id);
+  }
+  await page.locator('#oresult').waitFor({ state: 'visible' });
+}
+
+async function checkWaitingRoom(page, name, width, height) {
+  assert.equal(await page.locator('#miniScores').isVisible(), false, '等待房間不應把比分疊在房名上');
+  const readable = await page.locator('#roomTitle').evaluate((n) => {
+    const title = n.getBoundingClientRect();
+    const obstacles = ['#leaveBtn', '#versusStatus', '.gear', '.lang-toggle'].map((s) => document.querySelector(s));
+    return title.width >= 64 && obstacles.every((other) => {
+      const r = other.getBoundingClientRect();
+      return !r.width || !r.height || title.right <= r.left || title.left >= r.right || title.bottom <= r.top || title.top >= r.bottom;
+    });
+  });
+  assert.ok(readable, '等待房名應保留可讀寬度，且不被延遲或工具列遮住');
+  await page.screenshot({ path: path.join(output, `${name}-${width}x${height}-waiting.png`) });
+}
+
+(async () => {
+  let browser;
+  try {
+    fs.mkdirSync(output, { recursive: true });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    browser = await chromium.launch({ headless: true });
+    const errors = [];
+    // 僅在測試中觀察真實繪圖狀態，仍由按鈕／鍵盤觸發全部遊戲操作。
+    const observeBoard = () => {
+      let api;
+      Object.defineProperty(window, 'AmazeBoard', {
+        get: () => api,
+        set(value) {
+          api = value;
+          const create = api.create;
+          api.create = (svg, options) => {
+            const board = create(svg, options), draw = board.draw;
+            board.draw = (state) => { if (svg.id === 'oboard') window.__countdownState = state; return draw(state); };
+            return board;
+          };
+        },
+      });
+    };
+    const cases = ['local', 'online'].flatMap((mode) => sizes.map(([width, height]) => ({ mode, width, height })));
+    let next = 0;
+    await Promise.all(Array.from({ length: 8 }, async () => {
+      // 每個情境各用獨立 context，彼此的房間與 localStorage 互不影響。
+      while (next < cases.length) {
+        const { mode, width, height } = cases[next++];
+        const context = await browser.newContext({ viewport: { width, height }, hasTouch: true });
+        await context.addInitScript(observeBoard);
+        const page = await context.newPage();
+        page.on('pageerror', (e) => errors.push(e.message));
+        await page.goto('http://127.0.0.1:' + server.address().port);
+        if (mode === 'local') await page.locator('#vsAiBtn').click();
+        else {
+          await page.locator('#onlineBtn').click();
+          await page.waitForFunction(() => __online.ws && __online.ws.readyState === 1);
+          await page.locator('#createBtn').click();
+          await page.locator('#cmName').fill('倒數版面測試');
+          await page.locator('#cmGo').click();
+          await page.locator('#roomView .seat.empty .seg button[data-v="easy"]').first().click();
+        }
+        for (const lang of ['zh-Hant', 'en']) {
+          await page.evaluate((l) => I18N.setLang(l), lang);
+          await checkWaitingRoom(page, mode + '-' + lang, width, height);
+        }
+        await page.evaluate(() => I18N.setLang('zh-Hant'));
+        assert.equal(await page.locator('#otimer').isVisible(), false, '等待房間不應顯示對局計時');
+        await page.locator('#roomView .row .btn.primary').click();
+        await checkCountdown(page, mode, width, height);
+        if (width === 393) {
+          await finishRound(page);
+          await page.locator('#orAgain').click();
+          await checkCountdown(page, mode + '-next', width, height);
+        }
+        await page.locator('#leaveBtn').click();
+        await context.close();
+      }
+    }));
+    assert.deepEqual(errors, []);
+    console.log('截圖：' + output);
+  } finally {
+    if (browser) await browser.close();
+    server.close();
+  }
+})().then(() => process.exit(0), (e) => { console.error(e); process.exit(1); });

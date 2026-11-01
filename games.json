@@ -1,0 +1,1650 @@
+{
+  "version": 2,
+  "title": "遊戲小小島",
+  "siteUrl": "https://pjh-eric.github.io/game-lobby/",
+  "googleSiteVerification": "rlPZdhvS03EIxWXpZQsbp7esFPkyqIRBqdpBdkF1Tbk",
+  "featuredGameId": "flip-match",
+  "games": [
+    {
+      "id": "flip-match",
+      "title": "翻牌配對碰",
+      "eyebrow": "記憶遊戲",
+      "description": "翻開兩張牌找出一樣的圖案，記住位置就能連續拿分。",
+      "icon": "cards",
+      "accent": "pink",
+      "category": "brain",
+      "tags": [
+        "記憶",
+        "卡牌",
+        "單機",
+        "電腦對戰",
+        "線上雙人"
+      ],
+      "modes": [
+        "單機挑戰",
+        "電腦對戰",
+        "線上房間"
+      ],
+      "controls": "點擊卡牌翻面，找出相同圖案",
+      "launchUrl": "https://pjh-eric.github.io/flip-match/",
+      "localPort": 3001,
+      "projectFolder": "games/flip-match",
+      "badge": "經典",
+      "i18n": {
+        "en": {
+          "title": "Flip Match",
+          "eyebrow": "Memory Game",
+          "description": "Flip two cards to find a matching pair. Remember where they are to keep scoring.",
+          "tags": [
+            "Memory",
+            "Cards",
+            "Solo",
+            "vs Computer",
+            "Online 2-Player"
+          ],
+          "modes": [
+            "Solo Challenge",
+            "vs Computer",
+            "Online Room"
+          ],
+          "controls": "Tap a card to flip it and find matching pictures",
+          "badge": "Classic"
+        },
+        "zh-Hans": {
+          "title": "翻牌配对碰",
+          "eyebrow": "记忆游戏",
+          "description": "翻开两张牌找出一样的图案，记住位置就能连续拿分。",
+          "tags": [
+            "记忆",
+            "卡牌",
+            "单机",
+            "电脑对战",
+            "线上双人"
+          ],
+          "modes": [
+            "单机挑战",
+            "电脑对战",
+            "线上房间"
+          ],
+          "controls": "点击卡牌翻面，找出相同图案",
+          "badge": "经典"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/flip-match/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/flip-match/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-inline",
+      "sourceRepo": "https://github.com/PJH-Eric/flip-match",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "ws-client"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "sudoku",
+      "title": "數獨小學堂",
+      "eyebrow": "安靜動腦",
+      "description": "填滿 9×9 格子，讓每一列、每一行和每一宮都剛好不重複。",
+      "icon": "sudoku",
+      "accent": "lilac",
+      "category": "brain",
+      "tags": [
+        "邏輯",
+        "數字",
+        "單機",
+        "觀戰"
+      ],
+      "modes": [
+        "單機解題",
+        "線上觀戰",
+        "格子留言"
+      ],
+      "controls": "選擇格子，再用數字鍵盤填入",
+      "launchUrl": "https://pjh-eric.github.io/sudoku/",
+      "localPort": 3010,
+      "projectFolder": "games/sudoku",
+      "badge": "耐玩",
+      "i18n": {
+        "en": {
+          "title": "Sudoku School",
+          "eyebrow": "Calm Brain Teaser",
+          "description": "Fill the 9×9 grid so every row, column, and box has each number exactly once.",
+          "tags": [
+            "Logic",
+            "Numbers",
+            "Solo",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo Puzzles",
+            "Online Spectating",
+            "Cell Notes"
+          ],
+          "controls": "Select a cell, then fill it in with the number pad",
+          "badge": "Evergreen"
+        },
+        "zh-Hans": {
+          "title": "数独小学堂",
+          "eyebrow": "安静动脑",
+          "description": "填满 9×9 格子，让每一列、每一行和每一宫都刚好不重复。",
+          "tags": [
+            "逻辑",
+            "数字",
+            "单机",
+            "观战"
+          ],
+          "modes": [
+            "单机解题",
+            "线上观战",
+            "格子留言"
+          ],
+          "controls": "选择格子，再用数字键盘填入",
+          "badge": "耐玩"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/sudoku/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/sudoku/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "sse",
+      "sourceRepo": "https://github.com/PJH-Eric/sudoku",
+      "shared": [
+        "analytics",
+        "i18n",
+        "sio-client",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "sio-compat"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "whack-a-mole",
+      "title": "打地鼠大亂鬥",
+      "eyebrow": "反應挑戰",
+      "description": "看清楚再出手，敲壞地鼠、放過好朋友，累積你的最高連擊。",
+      "icon": "mole",
+      "accent": "lemon",
+      "category": "action",
+      "tags": [
+        "反應",
+        "動作",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單機練習",
+        "多人搶分",
+        "觀戰"
+      ],
+      "controls": "直接點擊冒出的地鼠",
+      "launchUrl": "https://pjh-eric.github.io/whack-a-mole/",
+      "localPort": 3030,
+      "projectFolder": "games/whack-a-mole",
+      "badge": "快手",
+      "i18n": {
+        "en": {
+          "title": "Whack-a-Mole Mayhem",
+          "eyebrow": "Reaction Challenge",
+          "description": "Look first, then strike! Whack the moles, spare your friends, and build your best combo.",
+          "tags": [
+            "Reflex",
+            "Action",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo Practice",
+            "Multiplayer Score Race",
+            "Spectate"
+          ],
+          "controls": "Tap the moles as they pop up",
+          "badge": "Quick Hands"
+        },
+        "zh-Hans": {
+          "title": "打地鼠大乱斗",
+          "eyebrow": "反应挑战",
+          "description": "看清楚再出手，敲坏地鼠、放过好朋友，累积你的最高连击。",
+          "tags": [
+            "反应",
+            "动作",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单机练习",
+            "多人抢分",
+            "观战"
+          ],
+          "controls": "直接点击冒出的地鼠",
+          "badge": "快手"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/whack-a-mole/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/whack-a-mole/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "socketio",
+      "sourceRepo": "https://github.com/PJH-Eric/whack-a-mole",
+      "shared": [
+        "analytics",
+        "i18n",
+        "sio-client",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "sio-compat"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "fruit-link",
+      "title": "水果連連看",
+      "eyebrow": "消除競速",
+      "description": "找出兩顆一樣的水果，用轉彎不超過兩次的路線把它們連起來消掉。",
+      "icon": "fruit",
+      "accent": "lime",
+      "category": "brain",
+      "tags": [
+        "消除",
+        "邏輯",
+        "幼幼班",
+        "單機",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "幼幼班",
+        "單機闖關",
+        "線上搶消",
+        "觀戰"
+      ],
+      "controls": "依序點兩顆一樣的水果，連得起來就消掉",
+      "launchUrl": "https://pjh-eric.github.io/fruit-link/",
+      "localPort": 3040,
+      "projectFolder": "games/fruit-link",
+      "badge": "消除王",
+      "i18n": {
+        "en": {
+          "title": "Fruit Link",
+          "eyebrow": "Matching Race",
+          "description": "Find two matching fruits and connect them with a path that turns at most twice.",
+          "tags": [
+            "Matching",
+            "Logic",
+            "Little Kids",
+            "Solo",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Little Kids Mode",
+            "Solo Levels",
+            "Online Match Race",
+            "Spectate"
+          ],
+          "controls": "Tap two matching fruits in turn; if they connect, they disappear",
+          "badge": "Match King"
+        },
+        "zh-Hans": {
+          "title": "水果连连看",
+          "eyebrow": "消除竞速",
+          "description": "找出两颗一样的水果，用转弯不超过两次的路线把它们连起来消掉。",
+          "tags": [
+            "消除",
+            "逻辑",
+            "幼幼班",
+            "单机",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "幼幼班",
+            "单机闯关",
+            "线上抢消",
+            "观战"
+          ],
+          "controls": "依序点两颗一样的水果，连得起来就消掉",
+          "badge": "消除王"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/fruit-link/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/fruit-link/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "socketio",
+      "sourceRepo": "https://github.com/PJH-Eric/fruit-link",
+      "shared": [
+        "analytics",
+        "i18n",
+        "sio-client",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "sio-compat"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "stair-kids",
+      "title": "小朋友下樓梯",
+      "eyebrow": "反應閃避",
+      "description": "往下踩住階梯，避開天花板與深淵；雙人可互推，也能站在對手頭上。",
+      "icon": "stairs",
+      "accent": "mint",
+      "category": "challenge",
+      "tags": [
+        "反應",
+        "閃避",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上雙人",
+        "觀戰"
+      ],
+      "modes": [
+        "幼幼班",
+        "單機挑戰",
+        "電腦對戰",
+        "線上房間",
+        "觀戰"
+      ],
+      "controls": "只有左右兩個方向（← → 或 A D），沒有跳",
+      "launchUrl": "https://pjh-eric.github.io/stair-kids/",
+      "localPort": 3060,
+      "projectFolder": "games/stair-kids",
+      "badge": "生存",
+      "i18n": {
+        "en": {
+          "title": "Stair Kids",
+          "eyebrow": "Dodge & React",
+          "description": "Step down, dodge the ceiling and abyss; bump a rival or stand on their head in versus mode.",
+          "tags": [
+            "Reflex",
+            "Dodging",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online 2-Player",
+            "Spectate"
+          ],
+          "modes": [
+            "Little Kids Mode",
+            "Solo Challenge",
+            "vs Computer",
+            "Online Room",
+            "Spectate"
+          ],
+          "controls": "Only two directions (← → or A D). No jumping",
+          "badge": "Survival"
+        },
+        "zh-Hans": {
+          "title": "小朋友下楼梯",
+          "eyebrow": "反应闪避",
+          "description": "往下踩住阶梯，避开天花板与深渊；双人可互推，也能站在对手头上。",
+          "tags": [
+            "反应",
+            "闪避",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上双人",
+            "观战"
+          ],
+          "modes": [
+            "幼幼班",
+            "单机挑战",
+            "电脑对战",
+            "线上房间",
+            "观战"
+          ],
+          "controls": "只有左右两个方向（← → 或 A D），没有跳",
+          "badge": "生存"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/stair-kids/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/stair-kids/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/stair-kids",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws"
+      ],
+      "browserServer": {
+        "port": 3060
+      },
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "draw-guess",
+      "title": "你畫我猜",
+      "eyebrow": "畫圖猜謎",
+      "description": "單機自由畫畫、不限時也不計分；線上輪流當畫家，和朋友猜題搶分。",
+      "icon": "drawguess",
+      "accent": "lilac",
+      "category": "turn",
+      "tags": [
+        "畫畫",
+        "派對",
+        "單機",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單機自由畫畫",
+        "線上房間",
+        "觀戰"
+      ],
+      "controls": "畫家用畫筆在畫布作畫，猜題者輸入答案",
+      "launchUrl": "https://pjh-eric.github.io/draw-guess/",
+      "localPort": 3030,
+      "projectFolder": "games/draw-guess",
+      "badge": "派對",
+      "i18n": {
+        "en": {
+          "title": "Draw & Guess",
+          "eyebrow": "Draw and Guess",
+          "description": "Draw freely solo with no timer or scoring, or take turns drawing and guessing with friends online.",
+          "tags": [
+            "Drawing",
+            "Party",
+            "Solo",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo Free Drawing",
+            "Online Room",
+            "Spectate"
+          ],
+          "controls": "The artist draws on the canvas; guessers type their answers",
+          "badge": "Party"
+        },
+        "zh-Hans": {
+          "title": "你画我猜",
+          "eyebrow": "画图猜谜",
+          "description": "单机自由画画、不限时也不计分；线上轮流当画家，和朋友猜题抢分。",
+          "tags": [
+            "画画",
+            "派对",
+            "单机",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单机自由画画",
+            "线上房间",
+            "观战"
+          ],
+          "controls": "画家用画笔在画布作画，猜题者输入答案",
+          "badge": "派对"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/draw-guess/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/draw-guess/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "socketio",
+      "sourceRepo": "https://github.com/PJH-Eric/draw-guess",
+      "shared": [
+        "analytics",
+        "i18n",
+        "sio-client",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "sio-compat"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "heart-attack",
+      "title": "海島心臟病",
+      "eyebrow": "反應挑戰",
+      "description": "輪流翻牌並喊數，牌點和喊數相同時趕快拍下牌堆，考驗你的眼力與手速。",
+      "icon": "heartattack",
+      "accent": "pink",
+      "category": "action",
+      "tags": [
+        "卡牌",
+        "反應",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單機練習",
+        "四段 AI",
+        "線上房間",
+        "觀戰"
+      ],
+      "controls": "牌點和當前喊數相同時，拍紅色拍牌鈕、牌堆或按空白鍵。",
+      "launchUrl": "https://pjh-eric.github.io/heart-attack/",
+      "localPort": 3080,
+      "projectFolder": "games/heart-attack",
+      "badge": "拚手速",
+      "i18n": {
+        "en": {
+          "title": "Heart Attack Island",
+          "eyebrow": "Reaction Challenge",
+          "description": "Flip cards and call out numbers in turn. When the card matches the call, slap the pile fast. Test your eyes and your hands.",
+          "tags": [
+            "Cards",
+            "Reflex",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo Practice",
+            "Four AI Levels",
+            "Online Room",
+            "Spectate"
+          ],
+          "controls": "When the card matches the current call, hit the red slap button, the pile, or the space bar.",
+          "badge": "Speed Race"
+        },
+        "zh-Hans": {
+          "title": "海岛心脏病",
+          "eyebrow": "反应挑战",
+          "description": "轮流翻牌并喊数，牌点和喊数相同时赶快拍下牌堆，考验你的眼力与手速。",
+          "tags": [
+            "卡牌",
+            "反应",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单机练习",
+            "四段 AI",
+            "线上房间",
+            "观战"
+          ],
+          "controls": "牌点和当前喊数相同时，拍红色拍牌钮、牌堆或按空白键。",
+          "badge": "拼手速"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/heart-attack/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/heart-attack/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/heart-attack",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws"
+      ],
+      "browserTimeout": 1800,
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "bomb-squad",
+      "title": "炸彈小隊",
+      "eyebrow": "爆破對戰",
+      "description": "放炸彈、炸磚塊、撿道具，在連鎖爆炸裡活到最後當小隊長！",
+      "icon": "bomb",
+      "accent": "peach",
+      "category": "challenge",
+      "tags": [
+        "動作",
+        "策略",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單機對戰",
+        "四段 AI",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "方向鍵／WASD 移動，空白鍵放炸彈；手機用左下搖桿與炸彈鈕",
+      "launchUrl": "https://pjh-eric.github.io/bomb-squad/",
+      "localPort": 3120,
+      "projectFolder": "games/bomb-squad",
+      "badge": "火爆",
+      "i18n": {
+        "en": {
+          "title": "Bomb Squad",
+          "eyebrow": "Blast Battle",
+          "description": "Drop bombs, blast bricks, grab power-ups, and be the last one standing in the chain explosions!",
+          "tags": [
+            "Action",
+            "Strategy",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo Battle",
+            "Four AI Levels",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Arrow keys / WASD to move, space bar to drop a bomb; on phones use the joystick and bomb button",
+          "badge": "Explosive"
+        },
+        "zh-Hans": {
+          "title": "炸弹小队",
+          "eyebrow": "爆破对战",
+          "description": "放炸弹、炸砖块、捡道具，在连锁爆炸里活到最后当小队长！",
+          "tags": [
+            "动作",
+            "策略",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单机对战",
+            "四段 AI",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "方向键／WASD 移动，空白键放炸弹；手机用左下摇杆与炸弹钮",
+          "badge": "火爆"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/bomb-squad/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/bomb-squad/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/bomb-squad",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws"
+      ],
+      "externalServer": "https://bomb-squad.duckdns.org",
+      "browserServer": {
+        "port": 3120
+      },
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "rainbow-bubble",
+      "title": "彩虹泡泡砲",
+      "eyebrow": "泡泡射擊",
+      "description": "用彩虹砲對準同顏色的泡泡，咻！一次消掉好多好多；3～5 歲也能玩。",
+      "icon": "rainbow",
+      "accent": "sky",
+      "category": "action",
+      "tags": [
+        "射擊",
+        "消除",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "幼幼班",
+        "單機練習",
+        "四段 AI",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "點哪裡泡泡就飛向哪裡；右下角小泡泡可以換泡泡",
+      "launchUrl": "https://pjh-eric.github.io/rainbow-bubble/",
+      "localPort": 3140,
+      "projectFolder": "games/rainbow-bubble",
+      "badge": "療癒",
+      "i18n": {
+        "en": {
+          "title": "Rainbow Bubble Blaster",
+          "eyebrow": "Bubble Shooter",
+          "description": "Aim the rainbow cannon at same-colored bubbles and pop lots at once! Fun for ages 3 to 5, too.",
+          "tags": [
+            "Shooting",
+            "Matching",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Little Kids Mode",
+            "Solo Practice",
+            "Four AI Levels",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Bubbles fly wherever you tap; swap bubbles with the small bubble at the bottom right",
+          "badge": "Cozy"
+        },
+        "zh-Hans": {
+          "title": "彩虹泡泡砲",
+          "eyebrow": "泡泡射击",
+          "description": "用彩虹砲对准同颜色的泡泡，咻！一次消掉好多好多；3～5 岁也能玩。",
+          "tags": [
+            "射击",
+            "消除",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "幼幼班",
+            "单机练习",
+            "四段 AI",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "点哪里泡泡就飞向哪里；右下角小泡泡可以换泡泡",
+          "badge": "疗愈"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/rainbow-bubble/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/rainbow-bubble/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/rainbow-bubble",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "pool-duel",
+      "title": "撞球對決",
+      "eyebrow": "回合運動",
+      "description": "寫實質感的 2 人撞球：簡化九球、八號球、14-1 連續進球。可對電腦或開房間邀朋友，也能觀戰。",
+      "icon": "pool",
+      "accent": "mint",
+      "category": "turn",
+      "additionalCategories": [
+        "sports"
+      ],
+      "tags": [
+        "運動",
+        "策略",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上雙人",
+        "觀戰"
+      ],
+      "modes": [
+        "幼幼班",
+        "單機練習",
+        "四段 AI",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "在桌面拖曳瞄準、拉力度條，按「擊球」出桿；擊球點可展開調旋轉",
+      "launchUrl": "https://pjh-eric.github.io/pool-duel/",
+      "localPort": 3160,
+      "projectFolder": "games/pool-duel",
+      "badge": "滾球",
+      "i18n": {
+        "en": {
+          "title": "Pool Duel",
+          "eyebrow": "Turn-Based Sports",
+          "description": "Realistic 2-player pool: simplified nine-ball, eight-ball, and 14-1 continuous. Play the computer or open a room for a friend, and spectate too.",
+          "tags": [
+            "Sports",
+            "Strategy",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online 2-Player",
+            "Spectate"
+          ],
+          "modes": [
+            "Little Kids Mode",
+            "Solo Practice",
+            "Four AI Levels",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Drag on the table to aim and pull the power bar, then press Shoot; open the cue-ball panel to add spin",
+          "badge": "Roll"
+        },
+        "zh-Hans": {
+          "title": "撞球对决",
+          "eyebrow": "回合运动",
+          "description": "写实质感的 2 人撞球：简化九球、八号球、14-1 连续进球。可对电脑或开房间邀朋友，也能观战。",
+          "tags": [
+            "运动",
+            "策略",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上双人",
+            "观战"
+          ],
+          "modes": [
+            "幼幼班",
+            "单机练习",
+            "四段 AI",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "在桌面拖曳瞄准、拉力度条，按「击球」出杆；击球点可展开调旋转",
+          "badge": "滚球"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/pool-duel/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/pool-duel/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/pool-duel",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws"
+      ],
+      "browserServer": {
+        "port": 3160
+      },
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "reversi",
+      "title": "黑白棋",
+      "eyebrow": "棋類對弈",
+      "description": "木質棋盤與大理石棋子，夾住對手的棋子翻成自己的顏色。可挑戰五段電腦，或開房間邀朋友對戰、觀戰。",
+      "icon": "reversi",
+      "accent": "mint",
+      "category": "turn",
+      "tags": [
+        "棋類",
+        "策略",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上雙人",
+        "觀戰"
+      ],
+      "modes": [
+        "幼幼班",
+        "單機練習",
+        "五段 AI",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "點棋盤上的提示點落子（觸控第一次預覽、再點一次確認），方向鍵加 Enter 也可以",
+      "launchUrl": "https://pjh-eric.github.io/reversi/",
+      "localPort": 3180,
+      "projectFolder": "games/reversi",
+      "badge": "滾球",
+      "i18n": {
+        "en": {
+          "title": "Reversi",
+          "eyebrow": "Board Game",
+          "description": "Wooden board, marble pieces: sandwich your opponent's pieces to flip them to your color. Take on a five-level computer, or open a room to play or spectate with friends.",
+          "tags": [
+            "Board Game",
+            "Strategy",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online 2-Player",
+            "Spectate"
+          ],
+          "modes": [
+            "Little Kids Mode",
+            "Solo Practice",
+            "Five AI Levels",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Tap a hint dot to place a piece (on touch, the first tap previews and the second confirms); arrow keys plus Enter work too",
+          "badge": "Roll"
+        },
+        "zh-Hans": {
+          "title": "黑白棋",
+          "eyebrow": "棋类对弈",
+          "description": "木质棋盘与大理石棋子，夹住对手的棋子翻成自己的颜色。可挑战五段电脑，或开房间邀朋友对战、观战。",
+          "tags": [
+            "棋类",
+            "策略",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上双人",
+            "观战"
+          ],
+          "modes": [
+            "幼幼班",
+            "单机练习",
+            "五段 AI",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "点棋盘上的提示点落子（触控第一次预览、再点一次确认），方向键加 Enter 也可以",
+          "badge": "滚球"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/reversi/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/reversi/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/reversi",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "amaze-go",
+      "title": "箭頭解密",
+      "eyebrow": "益智解謎",
+      "description": "點箭頭讓它沿尖端飛出棋盤，被擋住就會撞回。四段難度闖關，也能和電腦或朋友搶著清空棋盤。",
+      "icon": "arrows",
+      "accent": "sky",
+      "category": "brain",
+      "tags": [
+        "邏輯",
+        "闖關",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "闖關模式",
+        "電腦對戰",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "點擊箭頭讓它飛出棋盤，注意別被其他箭頭擋住",
+      "launchUrl": "https://pjh-eric.github.io/amaze-go/",
+      "localPort": 3080,
+      "projectFolder": "games/amaze-go",
+      "badge": "益智",
+      "i18n": {
+        "en": {
+          "title": "Arrow Escape",
+          "eyebrow": "Puzzle",
+          "description": "Tap an arrow to send it flying off the board in the direction it points; if it is blocked, it bounces back. Four difficulty levels, or race the computer or friends to clear the board.",
+          "tags": [
+            "Logic",
+            "Levels",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Level Mode",
+            "vs Computer",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Tap an arrow to fly it off the board, and watch out for arrows in the way",
+          "badge": "Puzzle"
+        },
+        "zh-Hans": {
+          "title": "箭头解密",
+          "eyebrow": "益智解谜",
+          "description": "点箭头让它沿尖端飞出棋盘，被挡住就会撞回。四段难度闯关，也能和电脑或朋友抢着清空棋盘。",
+          "tags": [
+            "逻辑",
+            "闯关",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "闯关模式",
+            "电脑对战",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "点击箭头让它飞出棋盘，注意别被其他箭头挡住",
+          "badge": "益智"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/amaze-go/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/amaze-go/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-npm",
+      "sourceRepo": "https://github.com/PJH-Eric/amaze-go",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "ws-compat",
+        "ws-client"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "pinball-hoops",
+      "title": "彈珠籃球",
+      "eyebrow": "彈珠投籃",
+      "description": "只有一片彈板，點畫面揮板把球打進會上下移動的籃框。限時衝分，四段難度，也能線上同台競分或觀戰。",
+      "icon": "pinball",
+      "accent": "peach",
+      "category": "sports",
+      "tags": [
+        "運動",
+        "反應",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單機四段難度",
+        "電腦對戰",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "點畫面任何地方（或按空白鍵）揮板，把球打進籃框",
+      "launchUrl": "https://pjh-eric.github.io/pinball-hoops/",
+      "localPort": 3200,
+      "projectFolder": "games/pinball-hoops",
+      "badge": "投籃",
+      "i18n": {
+        "en": {
+          "title": "Pinball Hoops",
+          "eyebrow": "Pinball Basketball",
+          "description": "With just one paddle, tap the screen to swing it and knock the ball into the moving hoop. Beat the clock for points, with four difficulty levels, plus online score battles and spectating.",
+          "tags": [
+            "Sports",
+            "Reflex",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo, 4 Difficulties",
+            "vs Computer",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Tap anywhere (or press the space bar) to swing the paddle and sink the ball",
+          "badge": "Hoops"
+        },
+        "zh-Hans": {
+          "title": "弹珠篮球",
+          "eyebrow": "弹珠投篮",
+          "description": "只有一片弹板，点画面挥板把球打进会上下移动的篮框。限时冲分，四段难度，也能线上同台竞分或观战。",
+          "tags": [
+            "运动",
+            "反应",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单机四段难度",
+            "电脑对战",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "点画面任何地方（或按空白键）挥板，把球打进篮框",
+          "badge": "投篮"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/pinball-hoops/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/pinball-hoops/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/pinball-hoops",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "shoot-balloon",
+      "title": "射氣球",
+      "eyebrow": "夜市射擊",
+      "description": "氣球從攤位後面往上飄，點一下射破加分，白鴿、天燈和炸彈氣球可別射。四段難度，也能線上搶分或觀戰。",
+      "icon": "balloon",
+      "accent": "lemon",
+      "category": "action",
+      "tags": [
+        "射擊",
+        "反應",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單機四段難度",
+        "電腦對戰",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "點氣球射擊（鍵盤：方向鍵移動準星、空白鍵發射）",
+      "launchUrl": "https://pjh-eric.github.io/shoot-balloon/",
+      "localPort": 3220,
+      "projectFolder": "games/shoot-balloon",
+      "badge": "射氣球",
+      "i18n": {
+        "en": {
+          "title": "Balloon Shooter",
+          "eyebrow": "Carnival Shooting",
+          "description": "Balloons float up from behind the stall. Tap to pop them for points, but do not shoot the doves, sky lanterns, or bomb balloons. Four difficulty levels, plus online score battles and spectating.",
+          "tags": [
+            "Shooting",
+            "Reflex",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo, 4 Difficulties",
+            "vs Computer",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Tap a balloon to shoot (keyboard: arrow keys to move the crosshair, space bar to fire)",
+          "badge": "Balloon Pop"
+        },
+        "zh-Hans": {
+          "title": "射气球",
+          "eyebrow": "夜市射击",
+          "description": "气球从摊位后面往上飘，点一下射破加分，白鸽、天灯和炸弹气球可别射。四段难度，也能线上抢分或观战。",
+          "tags": [
+            "射击",
+            "反应",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单机四段难度",
+            "电脑对战",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "点气球射击（键盘：方向键移动准星、空白键发射）",
+          "badge": "射气球"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/shoot-balloon/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/shoot-balloon/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "socketio",
+      "sourceRepo": "https://github.com/PJH-Eric/shoot-balloon",
+      "shared": [
+        "analytics",
+        "i18n",
+        "sio-client",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "sio-compat"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "maze-roll",
+      "title": "迷宮滾球",
+      "eyebrow": "木質玩具迷宮",
+      "description": "推著小球穿過 3D 木質迷宮：同圖競速、搶星星、地板崩塌三種玩法。闖關五種難度各 100 關，也能對電腦、線上對戰或觀戰。",
+      "icon": "maze",
+      "accent": "peach",
+      "category": "challenge",
+      "tags": [
+        "闖關",
+        "3D",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "闖關五難度各100關",
+        "自由練習",
+        "電腦對戰",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "桌機用方向鍵或 WASD；手機、平板用觸控搖桿",
+      "launchUrl": "https://pjh-eric.github.io/maze-roll/",
+      "localPort": 3090,
+      "projectFolder": "games/maze-roll",
+      "badge": "滾球",
+      "i18n": {
+        "en": {
+          "title": "Maze Roll",
+          "eyebrow": "Wooden Toy Maze",
+          "description": "Tilt-free 3D wooden maze: race to the flag, grab the stars, or outlast the crumbling floor. Five difficulties with 100 levels each, plus vs computer, online battles and spectating.",
+          "tags": [
+            "Levels",
+            "3D",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "5 Difficulties x 100 Levels",
+            "Free Practice",
+            "vs Computer",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Arrow keys or WASD on computers; touch joystick on phones and tablets",
+          "badge": "Roll"
+        },
+        "zh-Hans": {
+          "title": "迷宫滚球",
+          "eyebrow": "木质玩具迷宫",
+          "description": "推着小球穿过 3D 木质迷宫：同图竞速、抢星星、地板崩塌三种玩法。闯关五种难度各 100 关，也能对电脑、线上对战或观战。",
+          "tags": [
+            "闯关",
+            "3D",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "闯关五难度各100关",
+            "自由练习",
+            "电脑对战",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "桌机用方向键或 WASD；手机、平板用触控摇杆",
+          "badge": "滚球"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/maze-roll/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/maze-roll/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "ws-npm",
+      "sourceRepo": "https://github.com/PJH-Eric/maze-roll",
+      "shared": [
+        "analytics",
+        "i18n",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "ws-compat",
+        "ws-client"
+      ],
+      "browserSkip": [
+        "audit.js",
+        "mapfit.js",
+        "results.js",
+        "shots.js"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "house-stack",
+      "title": "疊疊高樓",
+      "eyebrow": "吊車疊樓小城市",
+      "description": "操作吊車把樓層一層層疊高，重心不穩就會倒塌；越高風越大，到太空還有無重力。單人挑戰、對電腦輪流，也能線上對戰或觀戰。",
+      "icon": "house",
+      "accent": "sky",
+      "category": "challenge",
+      "tags": [
+        "3D",
+        "反應",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單人挑戰",
+        "對電腦輪流",
+        "線上房間",
+        "觀戰",
+        "邀請連結"
+      ],
+      "controls": "點擊、按空白鍵或觸控螢幕放下樓層，對準下方樓層就能疊高",
+      "launchUrl": "https://pjh-eric.github.io/house-stack/",
+      "localPort": 3090,
+      "projectFolder": "games/house-stack",
+      "badge": "疊高",
+      "i18n": {
+        "en": {
+          "title": "House Stack",
+          "eyebrow": "Crane Tower Builder",
+          "description": "Drop floors from a swinging crane and stack them as high as you can. Balance matters, the wind grows with height, and space adds zero gravity. Play solo, take turns against the computer, or battle and spectate online.",
+          "tags": [
+            "3D",
+            "Reflex",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo Challenge",
+            "Turns vs Computer",
+            "Online Room",
+            "Spectate",
+            "Invite Link"
+          ],
+          "controls": "Click, press Space or tap the screen to drop a floor and line it up with the one below",
+          "badge": "Stack"
+        },
+        "zh-Hans": {
+          "title": "叠叠高楼",
+          "eyebrow": "吊车叠楼小城市",
+          "description": "操作吊车把楼层一层层叠高，重心不稳就会倒塌；越高风越大，到太空还有无重力。单人挑战、对电脑轮流，也能线上对战或观战。",
+          "tags": [
+            "3D",
+            "反应",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单人挑战",
+            "对电脑轮流",
+            "线上房间",
+            "观战",
+            "邀请连结"
+          ],
+          "controls": "点击、按空格键或触控屏幕放下楼层，对准下方楼层就能叠高",
+          "badge": "叠高"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/house-stack/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/house-stack/assets/images/cover.webp",
+      "buildType": "static",
+      "server": "socketio",
+      "sourceRepo": "https://github.com/PJH-Eric/house-stack",
+      "shared": [
+        "sio-client",
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedServer": [
+        "ws",
+        "sio-compat"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "snake-3d",
+      "title": "3D貪吃蛇",
+      "eyebrow": "動物園大賽",
+      "description": "手指或鍵盤自由控制方向，吃果實變長變粗，別撞到石頭和別條蛇；單人衝高分、對戰電腦或最多 8 人線上對戰。",
+      "icon": "caterpillar",
+      "accent": "lime",
+      "category": "action",
+      "tags": [
+        "動作",
+        "3D",
+        "幼幼班",
+        "單機",
+        "電腦對戰",
+        "線上多人",
+        "觀戰"
+      ],
+      "modes": [
+        "單人挑戰",
+        "對戰電腦",
+        "線上多人",
+        "觀戰"
+      ],
+      "controls": "手指拖曳或方向鍵／WASD 控制，按住加速鈕衝刺",
+      "launchUrl": "https://pjh-eric.github.io/snake-3d/",
+      "localPort": 3130,
+      "projectFolder": "games/snake-3d",
+      "badge": "新遊戲",
+      "i18n": {
+        "en": {
+          "title": "3D Snake",
+          "eyebrow": "Zoo Showdown",
+          "description": "Steer freely with your finger or keyboard, eat fruit to grow longer and thicker, and avoid rocks and other snakes. Chase a high score, battle computers or play online with up to 8 players.",
+          "tags": [
+            "Action",
+            "3D",
+            "Little Kids",
+            "Solo",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "modes": [
+            "Solo Challenge",
+            "vs Computer",
+            "Online Multiplayer",
+            "Spectate"
+          ],
+          "controls": "Drag a finger or use arrows / WASD, hold the boost button to sprint",
+          "badge": "New"
+        },
+        "zh-Hans": {
+          "title": "3D贪吃蛇",
+          "eyebrow": "动物园大赛",
+          "description": "手指或键盘自由控制方向，吃果实变长变粗，别撞到石头和别条蛇；单人冲高分、对战电脑或最多 8 人线上对战。",
+          "tags": [
+            "动作",
+            "3D",
+            "幼幼班",
+            "单机",
+            "电脑对战",
+            "线上多人",
+            "观战"
+          ],
+          "modes": [
+            "单人挑战",
+            "对战电脑",
+            "线上多人",
+            "观战"
+          ],
+          "controls": "手指拖曳或方向键／WASD 控制，按住加速钮冲刺",
+          "badge": "新游戏"
+        }
+      },
+      "iconUrl": "https://pjh-eric.github.io/snake-3d/favicon-96.png",
+      "imageUrl": "https://pjh-eric.github.io/snake-3d/assets/images/cover.webp",
+      "buildType": "vite",
+      "server": "ws-custom",
+      "sourceRepo": "https://github.com/PJH-Eric/snake-3d",
+      "shared": [],
+      "sharedServer": [
+        "ws"
+      ],
+      "serverLibDir": "server/lib/net",
+      "serverLibIsolated": true,
+      "verifyCommands": [
+        "server::node tests/verify.js",
+        "server::node tests/rooms.js",
+        "server::node scripts/online-check.js"
+      ],
+      "viteDist": "client/dist",
+      "viteAppDir": "client",
+      "sharedPublic": [
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    },
+    {
+      "id": "ice-duel",
+      "title": "冰壺對決",
+      "projectFolder": "games/ice-duel",
+      "buildType": "vite",
+      "server": "ws-npm",
+      "lobbyListed": true,
+      "shared": [],
+      "sharedServer": [
+        "ws",
+        "ws-compat",
+        "ws-client"
+      ],
+      "serverLibDir": "server/lib",
+      "typescript": true,
+      "onlineCheck": "scripts/online-check.ts",
+      "serverLibIsolated": true,
+      "viteDist": "dist",
+      "sharedPublic": [
+        "result-share",
+        "vendor/html2canvas.min"
+      ],
+      "sharedLocales": [
+        "result-share"
+      ]
+    }
+  ],
+  "i18n": {
+    "en": {
+      "title": "Playful Island"
+    },
+    "zh-Hans": {
+      "title": "游戏小小岛"
+    }
+  }
+}

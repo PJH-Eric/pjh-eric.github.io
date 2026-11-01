@@ -1,0 +1,1567 @@
+/* ===== style.css — 小朋友下樓梯 =====
+ * 版面偏好（規劃書 §7.1）：資訊欄放左邊、刻意小，樓梯畫面盡量大。
+ * 檢查順序：平板直／橫 → 桌機寬 → 手機直／橫。
+ */
+
+:root {
+  --cream: #FFF8EE;
+  --cream-2: #FFEFDA;
+  --ink: #4A3524;
+  --ink-soft: #7A6349;
+  --line: #E8D6BE;
+  --brand: #F2913F;
+  --brand-dark: #C86F22;
+  --pink: #FF8FB1;
+  --blue: #4F86D6;
+  --red: #F2545B;
+  --green: #6FC46A;
+  --radius: 18px;
+  --shadow: 0 6px 0 rgba(0, 0, 0, .10), 0 10px 22px rgba(120, 80, 40, .16);
+  --pad-size: 88px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* hidden 屬性一定要贏過任何 display 設定（.icon-btn 之類的 class 會蓋掉瀏覽器預設） */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--cream) 0%, var(--cream-2) 100%);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+h1, h2, h3 { margin: 0 0 .4em; line-height: 1.25; }
+p { margin: 0 0 .6em; }
+b { font-weight: 700; }
+
+/* ---------- 畫面切換 ---------- */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  /* 用 flex-start ＋ 子元素 margin:auto 來置中：justify-content:center 遇到
+   * 比容器高的內容會把上面裁掉（而且捲不回去），auto margin 不會。 */
+  justify-content: flex-start;
+  padding: calc(16px + var(--safe-t)) 16px calc(16px + var(--safe-b));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* auto margin 只給第一個與最後一個小孩：這樣是「整組置中」，
+ * 不會像每個小孩都給 auto 那樣把標題、按鈕、紀錄整組拉開。 */
+.screen.active > *:first-child:not(.game-wrap):not(.pads) { margin-top: auto; }
+.screen.active > *:last-child:not(.game-wrap):not(.pads) { margin-bottom: auto; }
+.screen.active { display: flex; }
+.screen.game { padding: 0; }
+
+/* 窄螢幕上面板會做到滿寬，左上角的「返回」就會壓到標題 —— 留出它的高度 */
+@media (max-width: 760px) {
+  .screen:not(.game) { padding-top: calc(58px + var(--safe-t)); }
+}
+
+/* 鍵盤操作看得到焦點在哪（原本完全沒有樣式） */
+:focus-visible {
+  outline: 3px solid var(--brand-dark);
+  outline-offset: 2px;
+}
+.pad:focus-visible { outline-offset: -4px; }
+
+.screen-nav {
+  position: fixed;
+  top: calc(10px + var(--safe-t));
+  left: calc(10px + var(--safe-l));
+  z-index: 40;
+}
+.screen-nav[hidden] { display: none; }
+
+.nav-btn {
+  border: 2px solid var(--line);
+  background: #fff;
+  color: var(--ink-soft);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .06);
+}
+.nav-btn:hover { background: var(--cream); }
+.nav-btn[hidden] { display: none; }
+/* 首頁的「← 回遊戲大廳」：跟其他遊戲專案同一個位置與寫法（左上安全區內的一顆連結）。
+ * 它是 <a> 不是 <button>，所以要自己把底線拿掉、把高度撐到 44px（小朋友的手指按得到）。
+ * display 一旦寫死就會蓋掉瀏覽器給 [hidden] 的 display:none，所以上面那條一定要留。 */
+.lobby-home-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+/* ---------- 右上角固定工具 ---------- */
+
+.corner-tools {
+  position: fixed;
+  top: calc(10px + var(--safe-t));
+  right: calc(10px + var(--safe-r));
+  z-index: 60;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: linear-gradient(180deg, #fff 0%, #FFF3E2 100%);
+  color: var(--ink-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .08);
+  padding: 0;
+}
+.icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }
+.icon-btn svg { width: 24px; height: 24px; fill: currentColor; }
+.icon-btn.plain { border-color: transparent; background: transparent; box-shadow: none; }
+.icon-btn.finish-btn {
+  width: auto;
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--brand-dark);
+  background: linear-gradient(180deg, #FFF6E6 0%, #FFE2BC 100%);
+}
+
+/* 語言切換鈕：放在設定鈕旁邊，跟設定鈕同尺寸、同風格（EN／中） */
+.lang-toggle {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  padding: 0;
+  border-radius: 14px;
+  border: 2px solid var(--line);
+  background: linear-gradient(180deg, #fff 0%, #FFF3E2 100%);
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .08);
+}
+.lang-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .08); }
+.lang-toggle:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+/* ---------- 大按鈕（立體：漸層＋內外陰影＋按壓位移） ---------- */
+
+.big-btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 18px;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 15px 26px;
+  min-width: 190px;
+  cursor: pointer;
+  color: var(--ink);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FFE9CC 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .9), var(--shadow);
+  transition: transform .06s, box-shadow .06s;
+}
+.big-btn:active { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, .8), 0 2px 0 rgba(0, 0, 0, .1); }
+.big-btn.primary {
+  color: #fff;
+  background: linear-gradient(180deg, #FFB45E 0%, var(--brand) 60%, var(--brand-dark) 100%);
+}
+.big-btn.ghost {
+  background: #fff;
+  border: 2px solid var(--line);
+  color: var(--ink-soft);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .06);
+}
+.big-btn:disabled { opacity: .5; cursor: not-allowed; }
+.mini-btn {
+  font: inherit;
+  font-size: 13px;
+  border: 0;
+  border-radius: 999px;
+  /* 滑鼠很準，桌機維持緊湊，但 25px 連滑鼠都嫌小，所以給一個 34px 的下限。
+   * 觸控裝置在檔案最後的 @media (pointer: coarse) 裡拉到 44px。 */
+  min-height: 34px;
+  padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--ink-soft);
+  cursor: pointer;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .08);
+}
+.mini-btn.phrase { min-height: 30px; }
+.mini-btn.danger.tiny { min-height: 26px; }
+
+/* ---------- 首頁 ---------- */
+
+.home-art { width: min(340px, 82vw); margin-bottom: 6px; }
+.home-art-svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 8px 16px rgba(150, 100, 50, .18)); }
+.title {
+  font-size: clamp(28px, 7vw, 44px);
+  color: var(--brand-dark);
+  text-shadow: 0 2px 0 #fff, 0 4px 10px rgba(160, 100, 40, .2);
+}
+.subtitle { color: var(--ink-soft); margin-bottom: 18px; text-align: center; }
+.home-buttons { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.home-records {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-align: center;
+  max-width: 480px;
+}
+.home-records .rec-line { display: inline-block; margin: 0 6px; }
+.home-records b { color: var(--brand-dark); }
+
+/* ---------- 面板 ---------- */
+
+.panel {
+  width: min(720px, 100%);
+  background: rgba(255, 255, 255, .82);
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+  margin: auto;
+}
+.panel h2 { color: var(--brand-dark); }
+.hint { color: var(--ink-soft); font-size: 14px; }
+.hint.tiny { font-size: 12.5px; min-height: 1.4em; }
+.panel-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+
+.field { display: block; margin: 14px 0; }
+.field > span { display: block; font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+.field input[type="text"] {
+  font: inherit;
+  width: 100%;
+  max-width: 260px;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* 選角色 */
+/* 一排四個：8 隻角色剛好兩排，不會出現落單的第三排 */
+.char-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.char-opt {
+  border: 2px solid var(--line);
+  background: #fff;
+  border-radius: 16px;
+  padding: 8px 4px 6px;
+  cursor: pointer;
+  text-align: center;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-soft);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .05);
+}
+.char-opt svg { display: block; margin: 0 auto 2px; }
+.char-opt[aria-checked="true"] {
+  border-color: var(--brand);
+  background: #FFF4E4;
+  color: var(--brand-dark);
+  font-weight: 700;
+  box-shadow: 0 3px 0 var(--brand-dark);
+}
+
+/* 選難度 */
+.diff-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; }
+.diff-opt {
+  border: 2px solid var(--line);
+  background: #fff;
+  border-radius: 14px;
+  padding: 10px 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink-soft);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .05);
+}
+.diff-opt strong { display: block; font-size: 16px; color: var(--ink); }
+.diff-opt small { font-size: 12px; }
+.diff-opt[aria-checked="true"] {
+  border-color: var(--brand);
+  background: #FFF4E4;
+  box-shadow: 0 3px 0 var(--brand-dark);
+}
+.diff-opt[aria-checked="true"] strong { color: var(--brand-dark); }
+.diff-note { font-size: 13px; color: var(--ink-soft); margin-top: 8px; min-height: 2.6em; }
+
+.soon-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.soon-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 2px dashed var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, .6);
+}
+.soon-item h3 { margin: 0; font-size: 16px; }
+.soon-item p { margin: 2px 0 0; font-size: 13px; color: var(--ink-soft); }
+/* 可以按的那一項（跟電腦對戰） */
+button.soon-item {
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  border-style: solid;
+  border-color: var(--line);
+  cursor: pointer;
+  width: 100%;
+}
+button.soon-item:hover { background: #fff; border-color: var(--brand); }
+button.soon-item:active { transform: translateY(2px); }
+.badge.go { background: var(--green); }
+
+/* 對手區塊 */
+.side-foe { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.side-foe #hud-foe-name { font-weight: 700; color: var(--red); }
+.side-depth.small-depth strong { font-size: 20px; color: var(--red); }
+
+.badge {
+  background: var(--brand);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ---------- 怎麼玩 ---------- */
+
+.panel.help { max-height: 100%; overflow: auto; -webkit-user-select: text; user-select: text; }
+.help-block { margin: 14px 0; }
+.help-block h3 { color: var(--brand-dark); font-size: 16px; }
+.help-keys { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.kbd {
+  display: inline-block;
+  min-width: 28px;
+  text-align: center;
+  border: 2px solid var(--line);
+  border-bottom-width: 4px;
+  border-radius: 8px;
+  background: #fff;
+  padding: 1px 7px;
+  font-weight: 700;
+  margin-right: 4px;
+}
+.help-steps, .help-diff { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.help-steps li { display: flex; align-items: center; gap: 12px; }
+.help-steps .step-icon { flex: 0 0 auto; }
+.help-steps b { display: block; }
+.help-steps span { font-size: 13.5px; color: var(--ink-soft); }
+.help-ceiling { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+.help-ceiling figure {
+  margin: 0;
+  flex: 1 1 220px;
+  max-width: 300px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.help-ceiling figure svg { display: block; margin: 0 auto 4px; }
+.help-diff li { font-size: 13.5px; }
+.help-diff b { color: var(--brand-dark); }
+
+/* ---------- 遊戲畫面 ---------- */
+
+.game-wrap { position: absolute; inset: 0; display: flex; }
+
+.side {
+  flex: 0 0 268px;
+  background: rgba(255, 255, 255, .78);
+  border-right: 2px solid var(--line);
+  padding: calc(58px + var(--safe-t)) 14px 14px calc(14px + var(--safe-l));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  /* 線上模式多了聊天區，內容有可能比欄位高（矮螢幕、放大字體）。
+   * 原本是 overflow:hidden，超出的部分直接看不見也點不到，所以改成可以捲。 */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+/* 玩家卡：頭像＋暱稱 */
+.side-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.side-avatar {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--line);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.side-avatar svg { display: block; }
+.side-name { font-weight: 700; font-size: 15px; color: var(--brand-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.side-block { display: flex; flex-direction: column; gap: 4px; }
+/* 世界進度條 */
+.world-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .08);
+  overflow: hidden;
+}
+.world-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #FFC46B, var(--brand));
+  transition: width .2s linear;
+}
+/* 這局的即時統計 */
+.side-live { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.block-label { font-size: 12px; margin-bottom: 4px; }
+.live-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.live-list li { display: flex; justify-content: space-between; gap: 8px; color: var(--ink-soft); }
+.live-list b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* 把紀錄與連線狀態推到最底下，左欄才不會上面擠一堆、下面一大片空白 */
+.side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
+.side-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.side-label { color: var(--ink-soft); font-size: 12.5px; flex: 0 0 34px; }
+.side-depth strong { font-size: 30px; color: var(--brand-dark); line-height: 1; }
+.side-depth .unit { color: var(--ink-soft); font-size: 13px; }
+.side-row.small { font-size: 12.5px; color: var(--ink-soft); }
+.chip {
+  background: var(--cream-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-dark);
+}
+.hearts { display: inline-flex; align-items: center; gap: 1px; flex-wrap: wrap; }
+/* 回血時愛心排跳一下。回血很頻繁，所以只做這個局部提示，不做全畫面特效 */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+.hearts.gain { animation: heart-pop .28s ease-out; transform-origin: left center; }
+.hearts .heart { display: block; }
+.hearts.number { gap: 4px; }
+.hearts.number b { font-size: 17px; color: #D6314F; }
+.hearts.number i { font-style: normal; font-size: 12px; color: var(--ink-soft); }
+@keyframes foe-hp-hit {
+  0%, 100% { filter: none; transform: scale(1); }
+  35% { filter: drop-shadow(0 0 5px rgba(214, 49, 79, .8)); transform: scale(1.12); }
+}
+#hud-foe-hp { display: inline-flex; }
+#hud-foe-hp.foe-hit { animation: foe-hp-hit .45s ease-out; transform-origin: left center; }
+
+.stage { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; }
+#canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.actors { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.actor-name {
+  fill: #fff;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: rgba(60, 40, 20, .75);
+  stroke-width: 3px;
+  font-family: inherit;
+}
+
+/* 受傷時整個樓梯畫面閃爍紅色（踩到刺、被天花板的刺頂到）。
+ * 這是不透明度變化不是位移，開了「減少動態」也留著，只是弱一點。 */
+.hurt-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 20;
+  --peak: 1;
+  background:
+    radial-gradient(ellipse at center, rgba(255, 40, 40, 0) 38%, rgba(214, 25, 40, .92) 100%);
+  box-shadow: inset 0 0 0 6px rgba(255, 60, 60, .95);
+}
+
+/* 閃三下再淡掉，才看得出是「閃爍」而不是單純亮一下 */
+@keyframes hurt-blink {
+  0%   { opacity: var(--peak); }
+  16%  { opacity: 0; }
+  32%  { opacity: var(--peak); }
+  48%  { opacity: 0; }
+  64%  { opacity: var(--peak); }
+  100% { opacity: 0; }
+}
+.hurt-flash.blink {
+  animation: hurt-blink .52s ease-out;
+}
+
+/* 疊在樓梯畫面上的提示 */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.overlay[hidden] { display: none; }
+/* 倒數：數字與提示要排成一欄且靠在一起（grid 的 place-items:center 會把兩個
+ * 子元素分別置中，數字被 pop 動畫放大之後提示就掉到很下面去） */
+.overlay.countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.overlay.countdown span {
+  font-size: clamp(64px, 18vw, 150px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 4px 0 var(--brand-dark), 0 10px 26px rgba(0, 0, 0, .3);
+  animation: pop .5s ease-out;
+}
+.overlay.milestone { align-items: start; padding-top: 22%; }
+.overlay.milestone span {
+  font-size: clamp(26px, 7vw, 46px);
+  font-weight: 900;
+  color: #fff;
+  background: rgba(242, 145, 63, .92);
+  border-radius: 999px;
+  padding: 6px 24px;
+  text-shadow: 0 2px 0 var(--brand-dark);
+  animation: shiver .8s ease-out;
+}
+@keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes shiver {
+  0% { transform: scale(.7) rotate(-3deg); opacity: 0; }
+  25% { transform: scale(1.1) rotate(2deg); opacity: 1; }
+  50% { transform: scale(1) rotate(-1.5deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.rotate-tip {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, .94);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 8px 5px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  z-index: 30;
+}
+.rotate-tip[hidden] { display: none; }
+
+/* ---------- 觸控方向鍵 ---------- */
+
+.pads {
+  /* 方向鍵是整個遊戲畫面的固定操作層，不跟著 .stage 的高度或手機瀏覽器
+   * 動態工具列重新排版；固定在 viewport 才能確實落在螢幕底部。 */
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 35;
+}
+/* 方向鍵：拇指是橫著滑的，所以按鍵做成「寬 ＞ 高」，比正方形好按。
+ * --pad-w／--pad-h 由各斷點決定，這裡只管長相。 */
+.pad {
+  position: absolute;
+  pointer-events: auto;
+  width: var(--pad-w, var(--pad-size));
+  height: var(--pad-h, var(--pad-size));
+  border-radius: 26px;
+  border: 2px solid rgba(150, 95, 40, .22);
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .96) 0%, rgba(255, 205, 150, .94) 100%);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, .9), 0 6px 0 rgba(150, 95, 40, .35), 0 10px 20px rgba(0, 0, 0, .2);
+  display: grid;
+  place-items: center;
+  transition: transform .05s, box-shadow .05s;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+/* 箭頭放大：原本 54% 在大按鍵上看起來像一顆空白的糖 */
+.pad svg { width: 46%; height: 62%; color: var(--brand-dark); }
+.pad.pressed, .pad:active {
+  transform: translateY(5px);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, .8), 0 1px 0 rgba(150, 95, 40, .35);
+  background: linear-gradient(180deg, #FFE0B8 0%, #FFC98E 100%);
+}
+/* 橫向：兩顆都在左下（左手拇指操作，右手扶著裝置），中間留間距避免誤觸（規劃書 §7.1）。
+ * --side-w 由 app.js 量出來（資訊欄寬度會隨斷點變）：方向鍵要落在樓梯畫面上，
+ * 不能蓋在左邊的資訊欄上 —— 平板橫向實測就是蓋在「本機最深」那幾行字上面。 */
+/* 底部一樣貼齊（只留 6px 給立體陰影）：手機橫向是兩手捧著、拇指壓在機身下緣，
+ * 按鍵往上抬只會讓拇指要伸長。平板橫向下面另外有規則抬高一點（那是捧在手上的距離）。 */
+.pad-left { left: calc(var(--side-w, 0px) + 18px + var(--safe-l)); bottom: calc(6px + var(--safe-b)); }
+.pad-right { left: calc(var(--side-w, 0px) + 18px + var(--safe-l) + var(--pad-w, var(--pad-size)) + 16px); bottom: calc(6px + var(--safe-b)); }
+.pads.hidden { display: none; }
+
+/* ---------- 暫停與結算 ---------- */
+
+.overlay-full {
+  position: fixed;
+  inset: 0;
+  background: rgba(60, 40, 20, .55);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  z-index: 70;
+}
+.overlay-full[hidden] { display: none; }
+.pause-card {
+  background: var(--cream);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.pause-card h2 { color: var(--brand-dark); }
+
+/* 結算浮層：蓋在樓梯畫面上，樓梯定格留在後面（沿用打地鼠「不另外換路由」的做法） */
+/* 結算浮層。
+ * 用 fixed 而不是 absolute：直向的舞台高度被收過（見 app.js 的 fitStage），
+ * 結算卡比舞台高的時候，absolute ＋ align-items:center 會把卡片的上緣裁掉
+ * （標題與大頭貼整個看不到，實測手機直向就是這樣）。
+ * 桌機的 .game-wrap 有 transform，fixed 會以面板為基準置中，剛好也是我們想要的。 */
+.stage-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 14px;
+  overflow-y: auto;
+  background: rgba(60, 40, 20, .42);
+  backdrop-filter: blur(2px);
+  animation: ov-in .22s ease-out;
+}
+.stage-overlay[hidden] { display: none !important; }
+@keyframes ov-in { from { opacity: 0; } to { opacity: 1; } }
+.ov-card {
+  width: min(100%, 420px);
+  /* auto margin 才是「放得下就置中、放不下就從頂端開始」，不會裁掉上緣 */
+  margin: auto;
+  max-height: 100%;
+  overflow-y: auto;
+  background: var(--cream);
+  border: 2px solid var(--line);
+  border-radius: 22px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+.ov-card h2 { color: var(--brand-dark); font-size: 1.3rem; }
+.ov-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.ov-btns .big-btn { flex: 1 1 130px; min-width: 0; font-size: 16px; padding: 12px 14px; }
+
+/* 矮畫面（手機橫向）把結算卡片壓緊一點，按鈕才不會被推到看不到 */
+@media (max-height: 460px) {
+  .ov-card { padding: 10px 12px; }
+  .ov-card h2 { font-size: 1.05rem; margin-bottom: 2px; }
+  .result-hero .kid-full { height: 74px; width: auto; }
+  .result-stats { padding: 8px 10px; margin-top: 6px; }
+  .result-stats ul { font-size: 12px; }
+  .ov-btns { margin-top: 8px; }
+  .ov-btns .big-btn { padding: 9px 10px; font-size: 14px; }
+}
+
+.panel.result { max-width: 560px; text-align: center; }
+.result-hero { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 6px; }
+.result-hero .kid-full { filter: drop-shadow(0 6px 12px rgba(120, 80, 40, .25)); }
+.result-line { font-size: 15px; color: var(--ink-soft); }
+.result-line b { font-size: 22px; color: var(--brand-dark); }
+.result-line.champ { font-weight: 700; }
+.result-line.champ b { color: var(--green); }
+.result-new { color: var(--pink); font-weight: 800; font-size: 18px; }
+.result-new[hidden] { display: none; }
+.result-stats {
+  text-align: left;
+  background: rgba(255, 255, 255, .7);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+.result-stats h3 { font-size: 15px; color: var(--brand-dark); }
+.result-stats ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; font-size: 13.5px; }
+.result-stats li { display: flex; justify-content: space-between; gap: 8px; }
+.result-stats b { color: var(--ink); }
+
+/* ---------- 設定彈窗 ---------- */
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(60, 40, 20, .5);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  z-index: 80;
+  padding: 16px;
+}
+.modal-mask[hidden] { display: none; }
+/* 卡片本身不捲：標題列固定在上、「完成」固定在下，中間的 .modal-body 才是捲動區。
+ * 手機橫向只有 390px 高，整張一起捲的話標題與關閉鈕都會捲出畫面。 */
+.modal-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--cream);
+  border-radius: 22px;
+  width: min(460px, 100%);
+  max-height: min(88vh, 720px);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.modal-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, var(--cream) 100%);
+  border-bottom: 2px solid var(--line);
+}
+.modal-head h2 { margin: 0; color: var(--brand-dark); font-size: 20px; }
+.modal-titles { flex: 1 1 auto; min-width: 0; }
+.modal-sub { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.35; }
+/* 齒輪徽章：一眼看得出這張卡是「設定」，不用讀字 */
+.modal-badge {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--cream-2);
+  border: 2px solid var(--line);
+  color: var(--brand-dark);
+}
+.modal-badge svg { width: 22px; height: 22px; fill: currentColor; }
+.modal-body { flex: 1 1 auto; overflow: auto; overscroll-behavior: contain; padding: 14px; }
+
+/* ---------- 設定：分組 ---------- */
+
+.set-group + .set-group { margin-top: 16px; }
+.set-group-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 7px 2px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  letter-spacing: .04em;
+}
+.set-group-icon { display: inline-grid; place-items: center; width: 18px; height: 18px; color: var(--brand-dark); }
+.set-group-icon svg { width: 18px; height: 18px; }
+/* 一組設定裝在一張白卡裡：分組的界線用留白與底色講，不要再多畫框線 */
+.set-card {
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2px 12px;
+}
+.set-card-actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px; }
+.set-card-actions .big-btn { flex: 1 1 150px; min-width: 0; font-size: 14.5px; padding: 11px 12px; }
+
+/* 整列都可以按（不用瞄準那顆小方框），所以 .set-row 本身就是 <label> */
+.set-row {
+  position: relative;              /* 真正的 input 要疊在滑軌上（見 .switch-input） */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 9px 0;
+  cursor: pointer;
+}
+.set-row + .set-row, .set-slider + .set-row { border-top: 1px solid var(--line); }
+.set-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.set-text b { font-size: 15px; font-weight: 700; }
+.set-text small { font-size: 12px; color: var(--ink-soft); line-height: 1.35; }
+
+/* 開關：原本是瀏覽器預設的核取方塊，小又看不出「現在是開還是關」。
+ * 真正的 input 留著（鍵盤、螢幕閱讀器、既有的 JS 都靠它），只是把它疊在滑軌上隱形。 */
+.switch-input {
+  /* 蓋在滑軌「正上方」而不是縮成 1px 藏在角落：鍵盤 Tab 過來時瀏覽器要把焦點
+   * 捲進畫面，焦點在哪裡就捲到哪裡 —— 藏在角落會讓整張卡莫名其妙跳一下。 */
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 30px;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.switch {
+  flex: 0 0 auto;
+  position: relative;
+  width: 52px;
+  height: 30px;
+  border-radius: 999px;
+  background: #E4D7C6;
+  border: 2px solid var(--line);
+  transition: background .16s ease;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .12);
+  transition: transform .16s ease;
+}
+.switch-input:checked + .switch { background: var(--brand); border-color: var(--brand-dark); }
+.switch-input:checked + .switch::after { transform: translateX(22px); }
+.switch-input:focus-visible + .switch { outline: 3px solid var(--brand-dark); outline-offset: 2px; }
+.set-row:active .switch::after { transform: scale(.94); }
+.switch-input:checked + .switch:active::after { transform: translateX(22px) scale(.94); }
+
+/* 音量條：關掉聲音的時候整條變灰並停用 —— 原本還拖得動，拖了卻沒有任何反應 */
+.set-slider { display: flex; align-items: center; gap: 10px; padding: 0 0 11px 2px; }
+.set-slider input[type="range"] { flex: 1 1 auto; min-width: 0; accent-color: var(--brand); height: 24px; }
+.set-slider.off { opacity: .45; }
+.set-slider.off input[type="range"] { cursor: not-allowed; }
+.vol-num {
+  flex: 0 0 auto;
+  min-width: 46px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--brand-dark);
+  background: var(--cream-2);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.modal-foot {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px calc(12px + var(--safe-b));
+  border-top: 2px solid var(--line);
+  background: var(--cream);
+}
+.modal-foot .big-btn { flex: 1 1 auto; min-width: 0; font-size: 16px; padding: 12px 14px; }
+
+/* ---------- RWD：平板直向／手機直向 → 資訊欄變上方薄狀態列 ---------- */
+
+@media (orientation: portrait) {
+  .game-wrap { flex-direction: column; }
+  /* 直向壓成上方薄狀態列。重點是「絕對不能橫向溢出」——
+   * 溢出的話難度與世界會被推到畫面外，玩家根本看不到。 */
+  .side {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-right: 0;
+    border-bottom: 2px solid var(--line);
+    padding: calc(6px + var(--safe-t)) 6px 6px calc(10px + var(--safe-l));
+    /* 高度一定要撐到「整顆固定按鈕都塞得進狀態列」。
+     * 直向的場地是滿寬的（沒有牆可以擋，見 render.js 的 offX），而狀態列自然高度只有 38px，
+     * 左上角的「離開房間」與右上角的「設定」都是 fixed 按鈕，原本會有一半垂到樓梯畫面上，
+     * 剛好蓋掉最上面的天花板刺 —— 那是最需要看清楚的東西。
+     * 48px ＝ 按鈕的 4px 上緣 ＋ 40px 高（對局中收小，見下面）＋ 邊框與 2px 餘裕。
+     * 不多讓：狀態列每高 1px，下面留給方向鍵的空白就少 1px。 */
+    min-height: calc(48px + var(--safe-t));
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  /* 直向沒有側欄，只有一條薄狀態列 —— 這些都放不進去。
+   * .side-chat 一定要一起收：對局中的聊天塊有 86px 高的訊息列表與輸入框，
+   * 排進這一條 row 之後會把狀態列撐成三倍高、還把深度與血量擠到設定按鈕底下。
+   * 手機直向的對局就不聊天了（房間裡照樣有完整聊天室與快速短語）。 */
+  .side-who, .side-foot, .side-live, .side-chat, .world-bar, #hud-next { display: none; }
+  /* 直向的薄狀態列只留對手深度，血量與名字擠不下 */
+  .side-foe { margin: 0; padding: 0; border: 0; flex-direction: row; align-items: center; }
+  .side-foe .side-row:not(.side-depth) { display: none; }
+  .side-row { flex: 0 0 auto; gap: 4px; }
+  .side-label { display: none; }              /* 標籤省掉，數字與圖示自己說明得夠清楚 */
+  .side-block { flex-direction: row; align-items: center; }
+  .side-depth strong { font-size: 21px; }
+  .side-depth .unit { font-size: 12px; }
+  /* 狀態列的優先序：深度 ＞ 血量 ＞ 速度倍率 ＞ 世界 ＞ 難度。
+   * 血量以前是可壓縮的（flex: 0 1 auto ＋ overflow:hidden），右邊一擠就整排消失，
+   * 玩到一半看不到血量比看不到世界名稱嚴重得多，所以改成不准壓縮，
+   * 要讓的是難度文字（選單裡就選過了）與世界名稱（可以省略號）。 */
+  #hud-hp-row { flex: 0 0 auto; min-width: 0; }
+  .hearts { flex-wrap: nowrap; }
+  .hearts .heart { width: 13px; height: 13px; flex: 0 0 auto; }
+  #hud-diff { display: none; }
+  #hud-world { max-width: 22vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* 真的放不下的時候由 app.js 的 fitSideBar() 照優先序收（世界 → 速度倍率 → 對手深度）。
+   * 為什麼不能只靠 padding 讓開右上角的設定按鈕：flex 溢出的內容不會替你留 padding-right，
+   * 會直接滑到按鈕底下被蓋掉 —— 內容一定要真的放得下。 */
+  .side .hud-drop { display: none !important; }
+  /* 直向的方向鍵：兩邊各一顆用兩手拇指，寬 ＞ 高（拇指是橫著滑的）。
+   * 高度刻意壓下來（112 → 88）：那一塊每矮 1px，上面的樓梯畫面就多 1px
+   * （fitStage() 會把樓梯畫面收到方向鍵上緣）—— Eric 要的是「遊戲高一點、操作區小一點」。
+   * 寬度只收一點點，橫向的可按面積才不會跟著變小。 */
+  :root { --pad-w: 128px; --pad-h: 88px; }
+  /* 右上角的設定（幼幼班還多一顆「結束這局」）疊在狀態列上，狀態列要讓開它實際的寬度，
+   * 不然世界名稱與速度倍率會被蓋掉。寬度由 app.js 的 measureCorners() 量出來 ——
+   * 幼幼班多一顆按鈕、中文字寬又隨裝置字體變，在這裡抄死一個數字一定會對不上。
+   * ＋20px ＝ 右邊 10px 的邊距再留 10px 間隙；備援值是「設定按鈕 44px ＋ 邊距」。 */
+  .side { padding-right: calc(var(--tools-w, 44px) + 20px + var(--safe-r)); }
+  /* 直向：左鍵左下、右鍵右下（兩手拇指各一邊），而且**貼著螢幕最底部**。
+   * 手是握在機身下緣的，拇指的自然落點就在那裡 —— 這條是 Eric 指定的，
+   * 而且優先於「把樓梯畫面下面那條空白擠掉」：上一版讓方向鍵往上貼齊樓梯畫面下緣
+   * （量出來的 --pad-top），按鍵就浮在畫面中間、不在底部了，拇指要往上撐才按得到。
+   * 那條空白留在操作區裡沒關係，.stage 的 border-bottom 已經畫出分界。
+   * 只留 6px：立體陰影（0 6px 0）要有地方畫，不然按鍵看起來像被裁掉半截。
+   * var(--safe-b) 負責 iPhone 的 home indicator 與 Android 的手勢列，
+   * 那一段本來就不能放東西（放了會被系統手勢吃掉）。 */
+  .pad-left { left: calc(16px + var(--safe-l)); bottom: calc(6px + var(--safe-b)); }
+  .pad-right { left: auto; right: calc(16px + var(--safe-r)); bottom: calc(6px + var(--safe-b)); }
+  /* 遊戲區與操作區之間畫一條分隔，空白才看得出來是「操作區」不是沒畫完 */
+  .stage { border-bottom: 3px solid var(--line); }
+  /* 左上角的「離開房間」是 position: fixed，直向的薄狀態列要讓開左邊，
+   * 不然會蓋掉最重要的深度數字（橫向的資訊欄本來就留了 58px 的上方留白）。
+   * 一樣用量出來的寬度：原本抄死的 104px 比「← 離開房間」實際的 102px ＋ 10px 邊距還窄，
+   * 深度的第一位數本來就已經被壓到。 */
+  body.in-game .side { padding-left: calc(var(--nav-w, 102px) + 20px + var(--safe-l)); }
+
+  /* 對局中把左上角的「離開房間」與右上角的設定收小成 40px 並往上貼：
+   * 一是整顆才塞得進薄狀態列（44px 的按鈕會讓狀態列高到吃掉方向鍵的空間），
+   * 二是玩的時候手指就在螢幕上滑，這兩顆越小越不會誤觸 ——
+   * 線上對局誤觸「離開房間」等於直接判輸（規劃書 §4.4）。
+   * 選單畫面維持 pointer:coarse 的 44px，那裡沒有誤觸的代價。 */
+  body.in-game .screen-nav,
+  body.in-game .corner-tools { top: calc(4px + var(--safe-t)); }
+  body.in-game .corner-tools .icon-btn { height: 40px; border-radius: 12px; }
+  body.in-game #btn-settings { width: 40px; }
+  body.in-game .corner-tools .lang-toggle { width: 40px; height: 40px; border-radius: 12px; font-size: 13px; }
+  body.in-game .corner-tools .icon-btn svg { width: 22px; height: 22px; }
+  body.in-game .nav-btn { min-height: 40px; font-size: 13px; padding-left: 10px; padding-right: 10px; }
+}
+
+/* 很窄的手機（≤ 380px）：再讓一步，難度文字收掉只留速度倍率 */
+@media (orientation: portrait) and (max-width: 380px) {
+  :root { --pad-w: 112px; --pad-h: 80px; }
+  .side { gap: 6px; }
+  .hearts .heart { width: 11px; height: 11px; }
+  /* 「很窄就把世界名稱收掉」不再寫死在這裡：放不放得下由 fitSideBar() 量出來決定，
+   * 380px 的手機在單機還放得下世界名稱，收掉只是白白浪費。 */
+}
+
+/* 手機橫向：高度不足 → 按鍵縮小、資訊欄再收窄 */
+@media (orientation: landscape) and (max-height: 480px) {
+  :root { --pad-w: 84px; --pad-h: 68px; }
+  .side { flex: 0 0 200px; font-size: 13px; padding-top: calc(52px + var(--safe-t)); }
+  .side-depth strong { font-size: 24px; }
+  .side-row.small { display: none; }
+}
+
+/* 桌機寬版：整組置中，寬度由 app.js 的 fitStage() 動態收到「場地 ＋ 兩條窄牆」。
+ *
+ * 資訊欄的寬度在寬螢幕上是「免費的」：場地的像素寬度由視窗高度決定
+ * （要放得下可見高度 ＋ 天花板），資訊欄寬一點不會把場地擠小，
+ * 所以這裡給得夠讓一整排愛心排得下（實測 258px 會換行）。 */
+@media (min-width: 1100px) {
+  .side { flex: 0 0 284px; }
+  .game-wrap {
+    /* 一定要給 width，只給 max-width 的話 absolute + inset 會讓 flex 容器塌成 0 */
+    left: 50%;
+    right: auto;
+    width: 100%;
+    max-width: 1440px;
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 2px var(--line), 0 18px 50px rgba(120, 80, 40, .18);
+  }
+}
+
+/* 手機橫向：高度不足，資訊欄再瘦一點把寬度讓給樓梯 */
+@media (orientation: landscape) and (max-height: 430px) {
+  .side { flex: 0 0 168px; font-size: 12px; gap: 4px; }
+  .side-who, .side-live { display: none; }
+  .side-depth strong { font-size: 20px; }
+  .hearts .heart { width: 12px; height: 12px; }
+}
+
+/* 沒有觸控就不顯示方向鍵（由 app.js 依裝置能力加上 .no-touch，
+ * 不用 hover 媒體查詢猜 —— 觸控筆電與帶鍵盤的平板都會猜錯） */
+.pads.no-touch { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay.countdown span, .overlay.milestone span { animation: none; }
+  .big-btn { transition: none; }
+}
+
+/* ---------- 這一下扣了幾顆（傷害 1～5 隨機，數字要看得到） ---------- */
+
+.dmg-pop {
+  position: absolute;
+  left: 50%;
+  top: 26%;
+  transform: translate(-50%, 0);
+  font-size: 40px;
+  font-weight: 900;
+  color: #FF3B57;
+  text-shadow: 0 2px 0 #fff, 0 0 14px rgba(255, 59, 87, .55);
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+}
+.dmg-pop.big { font-size: 58px; }
+.dmg-pop.pop { animation: dmg-rise .68s cubic-bezier(.2, .8, .3, 1) forwards; }
+.dmg-pop[hidden] { display: none !important; }
+
+@keyframes dmg-rise {
+  0%   { opacity: 0; transform: translate(-50%, 14px) scale(.7); }
+  18%  { opacity: 1; transform: translate(-50%, 0) scale(1.15); }
+  40%  { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -46px) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 減少動態時不用位移，只留淡入淡出（數字本身還是要看得到） */
+  .dmg-pop.pop { animation: dmg-fade .68s linear forwards; }
+  @keyframes dmg-fade {
+    0% { opacity: 0; }
+    20%, 60% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; }
+  }
+}
+
+/* ================= 線上模式：大廳、房間、聊天（M2／M3） ================= */
+
+.panel.wide { max-width: 720px; }
+
+.lobby-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.lobby-head h2 { margin: 0; flex: 1 1 auto; }
+.lobby-me {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, .7);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 12px 3px 4px;
+}
+.lobby-me svg { display: block; border-radius: 50%; }
+
+.lobby-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 4px;
+  flex-wrap: wrap;
+}
+.lobby-bar .grow { flex: 1 1 auto; }
+.online-count { max-width: 100%; padding: 4px 10px; border: 2px solid var(--mint-d); border-radius: 999px; background: #EDFBF5; color: #1F7A5C; font-size: .8rem; font-weight: 900; overflow-wrap: anywhere; }
+
+/* 連線狀態：顏色就是狀態，不用讀字也知道 */
+.net-state {
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 12px;
+  border: 2px solid var(--line);
+  background: #EFEAE2;
+  color: var(--ink-soft);
+}
+.net-state[data-state="online"] { background: #DFF3E0; border-color: #8CC79A; color: #2F7A44; }
+.net-state[data-state="connecting"] { background: #FFF3D6; border-color: #E7C777; color: #8A6416; }
+.net-state[data-state="error"] { background: #FBE1E4; border-color: #E39AA6; color: #A3364A; }
+
+.invite-join-card {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(250px, 1.35fr);
+  gap: 4px 16px;
+  align-items: end;
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 3px solid #E7C777;
+  border-radius: 16px;
+  background: #FFF8E8;
+  box-shadow: 0 3px 0 rgba(167, 125, 61, .16);
+}
+.invite-join-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.invite-join-copy strong { color: var(--brand-dark); font-size: 16px; }
+.invite-join-copy span { color: var(--ink-soft); font-size: 13px; }
+.invite-join-form { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
+.invite-join-form .field { flex: 1 1 150px; margin: 0; }
+.invite-join-form .field input { max-width: none; }
+.invite-join-form .big-btn { flex: 0 1 auto; }
+.invite-join-card > .hint { grid-column: 1 / -1; margin: 4px 0 0; }
+
+.lobby-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.lobby-actions .big-btn { flex: 1 1 180px; }
+
+/* ---------- 房間列表 ---------- */
+
+.room-list, .seat-list, .spec-list, .chat-list { list-style: none; margin: 0; padding: 0; }
+
+.room-list { display: flex; flex-direction: column; gap: 8px; }
+.room-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, .8);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 8px 10px;
+  cursor: pointer;                       /* 整張卡都可以點 */
+  transition: border-color .12s, background .12s;
+}
+.room-item:hover { border-color: var(--brand); background: #fff; }
+.room-item:active { transform: translateY(1px); }
+.room-item-main { flex: 1 1 auto; min-width: 0; }
+.room-item-main b { display: block; font-size: 15px; }
+.room-meta { font-size: 12px; color: var(--ink-soft); }
+.room-tag {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: #DFF3E0;
+  color: #2F7A44;
+}
+.room-tag.full { background: #FFF3D6; color: #8A6416; }
+.room-tag.hot { background: #FBE1E4; color: #A3364A; }
+
+/* ---------- 席位 ---------- */
+
+.seat-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin: 12px 0 6px;
+}
+.seat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, .82);
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  padding: 8px 10px;
+  min-height: 76px;
+}
+.seat.is-ready { border-color: #8CC79A; background: #F1FBF2; }
+.seat.is-off { opacity: .55; }
+.seat.is-empty { border-style: dashed; }
+.seat-face svg { display: block; border-radius: 50%; }
+.seat.is-empty .seat-face { width: 56px; height: 56px; border-radius: 50%; background: rgba(0, 0, 0, .05); }
+.seat-body { flex: 1 1 auto; min-width: 0; }
+.seat-body b { display: block; font-size: 15px; }
+.seat-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+
+.pill {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: #EFEAE2;
+  color: var(--ink-soft);
+}
+.pill.host { background: #FFE9C2; color: #8A6416; }
+.pill.ready { background: #DFF3E0; color: #2F7A44; }
+.pill.off { background: #FBE1E4; color: #A3364A; }
+
+.spec-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.spec {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, .72);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 10px 2px 3px;
+}
+.spec svg { display: block; border-radius: 50%; }
+.spec.is-off { opacity: .5; }
+
+.room-diff { display: flex; gap: 6px; }
+.diff-btn {
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, .8);
+  color: var(--ink);
+  cursor: pointer;
+}
+.diff-btn.on { background: var(--brand); border-color: var(--brand-dark); color: #fff; }
+.diff-btn:disabled { cursor: default; opacity: .75; }
+
+.room-identity {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 4px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .62);
+}
+.room-identity .field { flex: 1 1 180px; margin: 0; }
+.room-identity .field input { max-width: none; }
+.room-identity .hint { flex: 1 1 100%; margin: 0; }
+
+.room-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+.room-actions .big-btn { flex: 0 1 auto; }
+/* 「離開房間」推到最右邊，才不會跟「開始這局」擠在一起被誤按 */
+.room-actions #btn-leave-room { margin-left: auto; }
+
+.invite-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.invite-box { display: flex; gap: 6px; flex: 1 1 320px; min-width: 0; }
+.invite-box input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: #fff;
+}
+
+/* ---------- 聊天室 ---------- */
+
+.chat { border-top: 2px solid var(--line); padding-top: 8px; }
+.chat-list {
+  height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, .6);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+}
+.chat-list.mini { height: 86px; font-size: 12px; padding: 5px; gap: 2px; }
+.chat-line b { color: var(--brand-dark); margin-right: 5px; }
+.chat-line.spec b { color: var(--ink-soft); }
+.chat-sys { color: var(--ink-soft); font-size: 13px; }
+.chat-list.mini .chat-sys { font-size: 11px; }
+
+.chat-phrases { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.chat-phrases.mini { gap: 4px; margin: 5px 0 0; }
+.mini-btn.phrase { font-size: 12px; padding: 3px 9px; }
+.chat-phrases.mini .mini-btn.phrase { font-size: 11px; padding: 2px 7px; }
+
+/* 對局中的聊天框一聚焦，方向鍵就會被輸入框吃掉（input.js 的 typing()）。
+ * 那是必要的（不然打不了字），但玩家要知道自己現在為什麼動不了、怎麼回去。 */
+.chat-typing {
+  display: none;
+  margin: 5px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 700;
+  color: #A3364A;
+}
+.side-chat.typing .chat-typing { display: block; }
+
+.chat-form { display: flex; gap: 6px; }
+.chat-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: #fff;
+}
+
+/* ---------- 觀戰標記 ---------- */
+
+.spectate-tag {
+  position: absolute;
+  left: 50%;
+  top: 8px;
+  transform: translateX(-50%);
+  z-index: 5;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(60, 40, 20, .62);
+  border-radius: 999px;
+  padding: 3px 14px;
+  pointer-events: none;
+}
+.spectate-tag[hidden] { display: none !important; }
+
+/* 手機直向：聊天室矮一點，席位一欄一個 */
+@media (orientation: portrait) and (max-width: 620px) {
+  .invite-join-card { grid-template-columns: 1fr; }
+  .invite-join-card > .hint { grid-column: auto; }
+  .invite-join-form { align-items: stretch; }
+  .invite-join-form .big-btn { flex: 1 1 100%; }
+  .chat-list { height: 118px; }
+  .seat-list { grid-template-columns: 1fr; }
+  .room-actions .big-btn { flex: 1 1 100%; }
+  .room-actions #btn-leave-room { margin-left: 0; }
+}
+
+/* 橫向矮螢幕：對局中的側欄放不下聊天，直接收掉（短語還在房間裡） */
+@media (orientation: landscape) and (max-height: 430px) {
+  .side-chat { display: none; }
+}
+
+/* ---------- 短提示 ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(22px + var(--safe-b));
+  transform: translateX(-50%);
+  z-index: 60;
+  max-width: min(90vw, 460px);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(60, 40, 20, .9);
+  border-radius: 999px;
+  padding: 8px 18px;
+  box-shadow: 0 6px 18px rgba(60, 40, 20, .25);
+  text-align: center;
+}
+.toast.bad { background: #A3364A; }
+.toast[hidden] { display: none !important; }
+
+/* ================= UI／UX 收尾 ================= */
+
+/* 首頁：操作提示（第一次玩的人最需要知道「沒有跳」） */
+.home-keys {
+  margin: -2px 0 14px;
+  font-size: clamp(11px, 2.8vw, 14px);
+  color: var(--ink-soft);
+  text-align: center;
+  white-space: nowrap;
+}
+.home-keys .kbd { min-width: 1.7em; padding: 1px .35em; margin: 0; }
+
+/* 首頁紀錄：一行字改成一顆一顆的小標籤 */
+.home-records { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-width: 460px; }
+.rec-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, .75);
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 11px;
+}
+.rec-chip b { font-size: 15px; color: var(--brand-dark); }
+.rec-chip.soft { border-style: dashed; }
+
+/* 難度卡：名稱 ＋ 兩行數字 ＋ 紀錄，一眼看得出三段差在哪 */
+.diff-opt { display: flex; flex-direction: column; gap: 2px; align-items: stretch; text-align: center; }
+.diff-opt small { font-size: 12px; line-height: 1.45; }
+.diff-opt .diff-hurt { color: #A3364A; font-weight: 700; }
+.foe-picker { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.foe-myth strong { background: linear-gradient(90deg, #7A4DE0, #E0508F, #F2A23F); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.foe-myth[aria-checked="true"] { border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139, 92, 246, .25), var(--shadow); }
+.foe-myth[aria-checked="true"] strong { color: transparent; }
+.diff-opt.on .diff-hurt { color: #C0392B; }
+.diff-opt em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--ink-soft);
+  border-top: 1px dashed var(--line);
+  margin-top: 4px;
+  padding-top: 3px;
+}
+
+/* 空狀態：做成一張虛線卡，才看得出來是「還沒有東西」而不是壞掉 */
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border: 3px dashed var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  background: rgba(255, 255, 255, .45);
+}
+.empty-card b { font-size: 15px; color: var(--ink); }
+.empty-card[hidden] { display: none !important; }
+
+/* 設定：音量看得到數字 */
+.vol-num { font-size: 13px; color: var(--ink-soft); min-width: 42px; text-align: right; }
+
+/* 「清除本機紀錄」是不可逆的，做成兩段式確認 */
+.mini-btn.danger-armed, .big-btn.danger-armed {
+  background: #FBE1E4;
+  border-color: #E39AA6;
+  color: #A3364A;
+}
+
+/* 倒數時的第一次提示 */
+.countdown-tip {
+  /* 提示是要看得懂的字，不是裝飾 —— 給它底色，不然壓在淺色背景上根本讀不到 */
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(60, 40, 20, .82);
+  border-radius: 999px;
+  padding: 5px 16px;
+  white-space: nowrap;
+}
+.countdown-tip[hidden] { display: none !important; }
+
+/* 沒破紀錄時的「還差幾公尺」：語氣要跟「破紀錄了！」分得開 */
+.result-new.near { color: var(--ink-soft); font-weight: 700; }
+
+/* 平板直向：下面空得更多，方向鍵再放大（手比較大、離螢幕比較遠） */
+@media (orientation: portrait) and (min-width: 700px) {
+  :root { --pad-w: 190px; --pad-h: 150px; }
+  .pad { border-radius: 34px; }
+  .pad-left { left: calc(28px + var(--safe-l)); bottom: calc(34px + var(--safe-b)); }
+  .pad-right { right: calc(28px + var(--safe-r)); bottom: calc(34px + var(--safe-b)); }
+}
+
+/* ================= 平板優先（規劃書 §7：平板 ＞ 桌機 ＞ 手機） ================= */
+
+/* 平板橫向：方向鍵原本沿用桌機的 88px 正方形，在平板上又小又是正方形。
+ * 高度夠（≥600px）就放大成寬扁形，並且改成「遊戲畫面底部的兩側」——
+ * 平板是兩手捧著玩，兩顆擠在左下角要用同一根拇指來回撥，很難按
+ * （Eric 指定；規劃書 §7.1 原本寫的「橫向兩顆都在左下」只留給手機橫向，
+ * 那個尺寸右手要扶著裝置）。 */
+@media (orientation: landscape) and (min-height: 600px) {
+  :root { --pad-w: 132px; --pad-h: 106px; }
+  .pad { border-radius: 30px; }
+  .pad-left { left: calc(var(--side-w, 0px) + 20px + var(--safe-l)); bottom: calc(22px + var(--safe-b)); }
+  .pad-right { left: auto; right: calc(20px + var(--safe-r)); bottom: calc(22px + var(--safe-b)); }
+}
+
+/* 平板直向：狀態列有 800 多 px，該顯示的就顯示、該放大的就放大 */
+@media (orientation: portrait) and (min-width: 700px) {
+  .side { font-size: 16px; }
+  #hud-diff { display: inline; }             /* 手機藏起來的難度，平板放得下 */
+  .side-label { display: inline; }           /* 標籤也放得回來，讀起來比較清楚 */
+  .side-depth strong { font-size: 28px; }
+  .hearts .heart { width: 17px; height: 17px; }
+  #hud-world { max-width: none; }
+}
+
+/* 平板（不分方向）：可觸控又夠大 —— 面板與按鈕都放大一級，手指才好按 */
+@media (min-width: 700px) and (pointer: coarse) {
+  .panel { font-size: 16px; }
+  .big-btn { font-size: 19px; padding: 15px 22px; }
+  .mini-btn { font-size: 15px; padding: 7px 14px; }
+  .char-opt { padding: 10px 4px 8px; }
+  .diff-opt { padding: 12px 10px; }
+  .chat-list { height: 190px; }
+  .chat-form input { padding: 10px 14px; }
+  .seat { min-height: 88px; }
+}
+
+/* ================= 觸控裝置的點擊目標大小 =================
+ *
+ * 實測（掃過所有畫面量出來的）：快速短語只有 25px 高、房間的難度按鈕 32px、
+ * 「重新整理」與「產生邀請連結」30px。手指按不到那麼準，小朋友更按不到 ——
+ * 平板是這個遊戲的第一優先裝置，這件事比什麼都重要。
+ *
+ * 只在 pointer: coarse（真的用手指）放大；桌機用滑鼠很準，維持原本的緊湊排版。
+ * 44px 是 Apple 的建議值，Android 是 48dp，取 44 已經夠。
+ */
+@media (pointer: coarse) {
+  .mini-btn,
+  .diff-btn,
+  .nav-btn,
+  .icon-btn.plain {
+    min-height: 44px;
+    padding-top: 0;
+    padding-bottom: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mini-btn.phrase {
+    min-height: 44px;
+    font-size: 14px;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .chat-phrases { gap: 8px; }
+  .chat-phrases.mini { gap: 6px; }
+  .chat-phrases.mini .mini-btn.phrase { min-height: 38px; font-size: 12px; }
+  /* 開關整列都可以點（.set-row 本身就是 label），把整列撐到好按的高度。
+   * 滑軌本身不用再放大：52×30 已經超過 44px 的寬度，整列可點才是關鍵。 */
+  .set-row { min-height: 56px; }
+  .set-slider input[type="range"] { height: 32px; }
+  .invite-box input, .chat-form input { min-height: 44px; }
+  /* 觀戰名單的小頭像列也要好按（有「請他離開」按鈕） */
+  .spec { min-height: 40px; }
+  .mini-btn.danger.tiny { min-height: 38px; }
+}
+
+.char-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.char-opt { min-width: 0; overflow-wrap: anywhere; }
+@media(max-width:360px) { .char-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

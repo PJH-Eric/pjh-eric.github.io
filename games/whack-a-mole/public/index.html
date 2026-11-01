@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-i18n-title="meta.title">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F4EEFF">
+<title>打地鼠大亂鬥｜免費線上多人打地鼠</title>
+<!--SEO:HEAD-->
+<script>window.GAME_ANALYTICS_CONFIG={"measurement_id":"G-PG79WZK8QY","game_id":"whack-a-mole","page_location":"https://pjh-eric.github.io/whack-a-mole/"};</script>
+<meta name="description" data-i18n-content="meta.desc" content="免費線上打地鼠，辨認壞人搶分，小心打到好人會扣分！單機挑戰不同電腦難度，或邀最多五人共用地洞搶打，支援觀戰與聊天室，免下載，手機平板點一下就能玩。">
+<link rel="canonical" href="https://pjh-eric.github.io/whack-a-mole/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="打地鼠大亂鬥｜免費線上多人打地鼠">
+<meta property="og:description" content="免費線上打地鼠，辨認壞人搶分，小心打到好人會扣分！單機挑戰不同電腦難度，或邀最多五人共用地洞搶打，支援觀戰與聊天室，免下載，手機平板點一下就能玩。">
+<meta property="og:url" content="https://pjh-eric.github.io/whack-a-mole/">
+<meta property="og:image" content="https://pjh-eric.github.io/whack-a-mole/assets/images/seo.webp">
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="打地鼠大亂鬥 遊戲封面">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="打地鼠大亂鬥｜免費線上多人打地鼠">
+<meta name="twitter:description" content="免費線上打地鼠，辨認壞人搶分，小心打到好人會扣分！單機挑戰不同電腦難度，或邀最多五人共用地洞搶打，支援觀戰與聊天室，免下載，手機平板點一下就能玩。">
+<meta name="twitter:image" content="https://pjh-eric.github.io/whack-a-mole/assets/images/seo.webp">
+<meta name="twitter:image:alt" content="打地鼠大亂鬥 遊戲封面">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"打地鼠大亂鬥","url":"https://pjh-eric.github.io/whack-a-mole/","description":"免費線上打地鼠，辨認壞人搶分，小心打到好人會扣分！單機挑戰不同電腦難度，或邀最多五人共用地洞搶打，支援觀戰與聊天室，免下載，手機平板點一下就能玩。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"zh-Hant","genre":"反應","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"image":"https://pjh-eric.github.io/whack-a-mole/assets/images/seo.webp","thumbnailUrl":"https://pjh-eric.github.io/whack-a-mole/assets/images/seo.webp","isPartOf":{"@type":"WebSite","url":"https://pjh-eric.github.io/game-lobby/"}}</script>
+<!--SEO:END-->
+<link rel="stylesheet" href="css/style.css?v=20261016i18n">
+<link rel="stylesheet" href="css/latency.css?v=20261002c">
+
+<link rel="icon" type="image/png" sizes="96x96" href="favicon-96.png">
+<link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="stylesheet" href="css/server-outage.css?v=20261026">
+<script src="js/server-outage.js?v=20261026"></script>
+</head>
+<body>
+<div id="bgdeco" aria-hidden="true"></div>
+
+<div id="app">
+
+  <!-- 所有畫面共用的右上角設定入口，固定在安全區內 -->
+  <button class="btn3d icononly settings-fab" data-color="cream" id="b-settings" type="button"
+          data-i18n-attr="title=settings.open;aria-label=settings.open" title="開啟遊戲設定" aria-label="開啟遊戲設定" aria-haspopup="dialog"
+          aria-controls="settings-modal" aria-expanded="false">⚙</button>
+
+  <!-- ============================== 主選單 ============================== -->
+  <section class="screen flexcenter active" id="s-home" aria-label="主選單" data-i18n-attr="aria-label=home.aria">
+    <a class="lobby-home-link" href="https://pjh-eric.github.io/game-lobby/" aria-label="回遊戲大廳" data-i18n-attr="aria-label=nav.lobbyAria" data-i18n="nav.lobby">← 回遊戲大廳</a>
+    <div class="home-wrap">
+      <div class="home-art" aria-hidden="true">
+        <img src="assets/images/cover.webp" width="1200" height="675" alt="" fetchpriority="high" decoding="async">
+      </div>
+      <div class="home-content">
+        <h1 class="home-title" data-i18n="home.title">打地鼠大亂鬥</h1>
+        <div class="home-btns">
+          <button class="btn3d big" data-color="mint" id="b-solo"><span class="ico">🔨</span><span data-i18n="home.solo">單機練習（打電腦）</span></button>
+          <button class="btn3d big" data-color="grape" id="b-online"><span class="ico">🌐</span><span data-i18n="home.online">線上對戰（最多 5 人）</span></button>
+          <div class="home-row">
+            <button class="btn3d" data-color="sky" id="b-help"><span class="ico">📖</span><span data-i18n="home.help">地鼠圖鑑</span></button>
+            <button class="btn3d" data-color="lemon" id="b-stats"><span class="ico">🏅</span><span data-i18n="home.stats">我的戰績</span></button>
+          </div>
+        </div>
+        <p class="home-note" data-i18n-html="home.note">壞地鼠敲下去加分，好人敲下去扣分。預設 60 秒一局，也可以選 60／75／90 秒，分三階段愈來愈快。線上模式全部人共用同一組地洞，同一隻地鼠<b>誰先敲到誰得分</b>。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 單機設定 ============================== -->
+  <section class="screen" id="s-solo" aria-label="單機練習設定" data-i18n-attr="aria-label=solo.aria">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 data-i18n="solo.title">單機練習</h2><span class="spacer"></span>
+      </div>
+
+      <h3 class="lbl" data-i18n="solo.name">你的名字</h3>
+      <input class="field" id="solo-nick" type="text" maxlength="12" data-i18n-attr="placeholder=nick.placeholder" placeholder="打地鼠高手" autocomplete="nickname">
+
+      <h3 class="lbl" data-i18n="solo.level">難度</h3>
+      <div class="cardpick" id="opt-ai" role="radiogroup" aria-label="選擇難度" data-i18n-attr="aria-label=solo.levelAria"></div>
+      <p class="hint" data-i18n-html="solo.levelHint">難度同時決定<b>地鼠冒出來的速度與停留時間</b>，以及電腦對手的強弱。覺得太快就往下選一級。</p>
+
+      <h3 class="lbl" data-i18n="solo.aiCount">要幾個電腦對手？</h3>
+      <div class="cardpick tight" id="opt-aicount" role="radiogroup" aria-label="電腦對手數量" data-i18n-attr="aria-label=solo.aiCountAria">
+        <button class="pickcard" data-v="0" type="button" role="radio" aria-checked="false"><b>0</b><span data-i18n="solo.ai0">只有我，挑戰高分</span></button>
+        <button class="pickcard" data-v="1" type="button" role="radio" aria-checked="false"><b>1</b><span data-i18n="solo.ai1">一對一</span></button>
+        <button class="pickcard" data-v="2" type="button" role="radio" aria-checked="true"><b>2</b><span data-i18n="solo.ai2">三人混戰</span></button>
+        <button class="pickcard" data-v="4" type="button" role="radio" aria-checked="false"><b>4</b><span data-i18n="solo.ai4">滿場五人</span></button>
+      </div>
+
+      <h3 class="lbl" data-i18n="solo.round">一局多長</h3>
+      <div class="cardpick tight" id="opt-round" role="radiogroup" aria-label="一局長度" data-i18n-attr="aria-label=solo.roundAria"></div>
+
+      <h3 class="lbl" data-i18n="solo.board">盤面大小</h3>
+      <div class="cardpick tight" id="opt-board" role="radiogroup" aria-label="盤面大小" data-i18n-attr="aria-label=solo.board"></div>
+      <p class="hint" data-i18n-html="solo.boardHint">洞愈多，同時冒出來的地鼠也愈多、冒得愈快。選幾乘幾就是幾乘幾，手機、平板、桌機都一樣，只有盤面大小會自動縮放。</p>
+
+      <p class="note" data-i18n="solo.note">單機和線上用的是同一套規則與同一套電腦對手程式，練熟了直接上線打。</p>
+      <div class="panel-foot">
+        <button class="btn3d big" data-color="mint" id="b-solo-start"><span class="ico">🔨</span><span data-i18n="solo.start">開始練習</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 線上大廳 ============================== -->
+  <section class="screen" id="s-lobby" aria-label="線上大廳" data-i18n-attr="aria-label=lobby.aria">
+    <div class="panel wide">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 data-i18n="lobby.title">線上大廳</h2><span class="spacer"></span>
+      </div>
+
+      <div class="conn-row">
+        <span class="dot" id="conn-dot" aria-hidden="true"></span>
+        <span id="conn-text" data-i18n="conn.idle">尚未連線</span>
+        <button class="btn3d small" data-color="sky" id="b-reconnect" hidden><span data-i18n="conn.reconnect">重新連線</span></button>
+      </div>
+
+      <h3 class="lbl" id="lobby-nick-label" data-i18n="lobby.nick">玩家暱稱</h3>
+      <input class="field" id="lobby-nick" type="text" maxlength="12" data-i18n-attr="placeholder=nick.placeholder" placeholder="打地鼠高手"
+             autocomplete="nickname" aria-labelledby="lobby-nick-label">
+
+      <div class="lobby-grid">
+        <div class="lobby-box">
+          <h3 class="lbl" data-i18n="lobby.newRoom">開一間新房</h3>
+          <input class="field" id="room-name" type="text" maxlength="24" data-i18n-attr="placeholder=lobby.roomNamePh" placeholder="房間名稱（可留空）">
+          <label class="check"><input type="checkbox" id="room-private"><span data-i18n="lobby.private">私人房間（只能用邀請連結進來）</span></label>
+          <button class="btn3d" data-color="grape" id="b-create"><span class="ico">🏠</span><span data-i18n="lobby.create">建立房間</span></button>
+        </div>
+        <div class="lobby-box">
+          <h3 class="lbl" data-i18n="lobby.joinCode">用房號加入</h3>
+          <input class="field code" id="join-code" type="text" maxlength="5" placeholder="ABCDE"
+                 inputmode="text" autocapitalize="characters" autocomplete="off">
+          <button class="btn3d" data-color="mint" id="b-join"><span class="ico">🚪</span><span data-i18n="lobby.join">加入房間</span></button>
+          <p class="hint" data-i18n="lobby.codeHint">房號不含容易看錯的 0、O、1、I。</p>
+        </div>
+      </div>
+
+      <h3 class="lbl"><span data-i18n="lobby.public">公開房間</span> <span class="pill" id="rooms-count">0</span></h3>
+      <p class="lobby-online-count" id="lobby-online-count" role="status" aria-live="polite" hidden></p>
+      <div class="roomlist" id="room-list" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ============================== 對戰畫面 ============================== -->
+  <!-- 單機與線上共用同一個畫面：左側是窄窄的摘要／聊天欄，其餘全部留給盤面。 -->
+  <section class="screen" id="s-game" aria-label="對戰畫面" data-i18n-attr="aria-label=game.aria">
+    <div class="game-shell" id="game-shell">
+
+      <!-- 左側欄：寬版固定顯示，窄版變成從左邊滑出的抽屜 -->
+      <aside class="side" id="side" aria-label="對戰資訊與聊天" data-i18n-attr="aria-label=side.aria">
+        <div class="side-head">
+          <div class="side-tabs" role="tablist" aria-label="側欄分頁" data-i18n-attr="aria-label=side.tabs">
+            <button class="stab on" id="tab-sum" role="tab" aria-selected="true" aria-controls="pane-sum" data-pane="sum" data-i18n="side.sum">摘要</button>
+            <button class="stab" id="tab-chat" role="tab" aria-selected="false" aria-controls="pane-chat" data-pane="chat"><span data-i18n="side.chat">聊天</span><span class="unread" id="chat-unread" hidden>0</span></button>
+            <button class="stab" id="tab-dex" role="tab" aria-selected="false" aria-controls="pane-dex" data-pane="dex" data-i18n="side.dex">圖鑑</button>
+          </div>
+          <button class="iconbtn side-close" id="b-side-close" type="button" aria-label="收起側欄" data-i18n-attr="aria-label=side.close">✕</button>
+        </div>
+
+        <!-- 即時統計摘要：只留看得出勝負與自己表現的最小資訊，
+             階段和剩餘時間交給上方 HUD，不重複佔側欄空間。 -->
+        <div class="side-pane on" id="pane-sum" role="tabpanel" aria-labelledby="tab-sum">
+          <div class="sum-room" id="sum-room"></div>
+          <ol class="rank" id="rank-list" aria-live="polite"></ol>
+          <div class="mystat" id="my-stat"></div>
+        </div>
+
+        <!-- 房間聊天室 -->
+        <div class="side-pane" id="pane-chat" role="tabpanel" aria-labelledby="tab-chat">
+          <div class="chatlog" id="chat-log" aria-live="polite" aria-label="聊天訊息" data-i18n-attr="aria-label=chat.log"></div>
+          <form class="chatbar" id="chat-form" autocomplete="off">
+            <input class="field" id="chat-input" type="text" maxlength="120" placeholder="說點什麼…" aria-label="輸入聊天訊息" data-i18n-attr="placeholder=chat.placeholder;aria-label=chat.input">
+            <button class="btn3d small" data-color="grape" id="b-chat-send" type="submit" aria-label="送出" data-i18n-attr="aria-label=chat.send">➤</button>
+          </form>
+          <p class="hint" id="chat-hint" data-i18n="chat.soloHint">單機模式沒有聊天室。</p>
+        </div>
+
+        <!-- 地鼠速查 -->
+        <div class="side-pane" id="pane-dex" role="tabpanel" aria-labelledby="tab-dex">
+          <div class="dex mini" id="dex-mini"></div>
+        </div>
+
+        <!-- 操作列獨立於分頁，切換摘要／聊天／圖鑑時仍固定在側欄底部。 -->
+        <div class="side-actions" id="side-actions"></div>
+      </aside>
+
+      <!-- 主舞台：盤面盡量大 -->
+      <div class="stage" id="stage">
+        <div class="hud" id="hud">
+          <button class="iconbtn hud-back" id="b-pause" type="button" hidden title="暫停" aria-label="暫停" data-act="pause-open" data-i18n-attr="title=hud.pause;aria-label=hud.pause"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.5" fill="currentColor"/></svg></button>
+          <button class="iconbtn hud-back" id="b-quit" type="button" title="離開這一局" aria-label="離開這一局" data-i18n-attr="title=hud.quit;aria-label=hud.quit">◀</button>
+          <div class="hud-time" id="hud-time">
+            <span class="hud-lbl" data-i18n="hud.remain">剩餘</span>
+            <b id="hud-clock">60</b>
+            <span class="hud-unit" data-i18n="hud.unit">秒</span>
+          </div>
+          <div class="hud-stage" id="hud-stage">熱身</div>
+          <div class="hud-score">
+            <span class="hud-lbl" data-i18n="hud.score">我的分數</span>
+            <b id="hud-score">0</b>
+          </div>
+        </div>
+
+        <div class="timebar" aria-hidden="true"><span id="timebar-fill"></span></div>
+        <div class="comborow">
+          <div class="combobar t0" id="combobar" aria-hidden="true"><span id="combobar-fill"></span><i></i><i></i><i></i><i></i></div>
+          <div class="hud-combo" id="hud-combo" hidden><b id="hud-combo-n">0</b> <span data-i18n="hud.combo">連擊</span></div>
+          <div class="hud-buff" id="hud-buff" hidden data-i18n="hud.buff">🌈 加倍中</div>
+        </div>
+
+        <div class="board-wrap" id="board-wrap">
+          <div class="board" id="board"></div>
+          <div class="fx" id="fx" aria-hidden="true"></div>
+
+          <!-- 窄版把即時排行貼在盤面周圍的空白處：手機不用開抽屜也看得到誰領先。
+               內容和側欄的排行一樣，所以對螢幕閱讀器隱藏，不重複唸一次。 -->
+          <div class="livebar" id="live-bar" aria-hidden="true"></div>
+
+          <!-- 等待／準備／結算都用蓋在盤面上的浮層，不另外換路由 -->
+          <div class="overlay" id="ov-wait" hidden>
+            <div class="ovcard">
+              <h3 id="ov-wait-title" data-i18n="wait.title">準備開始</h3>
+              <div class="seatlist" id="seat-list"></div>
+              <div class="ai-manage" id="ai-manage" hidden>
+                <span class="lbl2" data-i18n="wait.ai">電腦對手</span>
+                <div class="ai-add" id="ai-add"></div>
+              </div>
+              <div class="ai-manage" id="round-manage" hidden>
+                <span class="lbl2" data-i18n="solo.round">一局多長</span>
+                <div class="ai-add" id="round-pick" role="radiogroup" aria-label="一局長度" data-i18n-attr="aria-label=solo.roundAria"></div>
+              </div>
+              <div class="ai-manage" id="pace-manage" hidden>
+                <span class="lbl2" data-i18n="solo.level">難度</span>
+                <div class="ai-add" id="pace-pick" role="radiogroup" aria-label="難度" data-i18n-attr="aria-label=solo.level"></div>
+              </div>
+              <div class="ai-manage" id="board-manage" hidden>
+                <span class="lbl2" data-i18n="solo.board">盤面大小</span>
+                <div class="ai-add" id="board-pick" role="radiogroup" aria-label="盤面大小" data-i18n-attr="aria-label=solo.board"></div>
+              </div>
+              <p class="ovnote" id="ov-wait-note"></p>
+              <div class="ovbtns" id="ov-wait-btns"></div>
+            </div>
+          </div>
+
+          <div class="overlay" id="ov-result" hidden>
+            <div class="ovcard wide" data-result-share>
+              <div class="trophy" id="ov-trophy"></div>
+              <h3 id="ov-result-title" data-i18n="result.timeUpBang">時間到！</h3>
+              <div class="resulttable" id="result-table"></div>
+              <div class="rstats" id="result-stats" hidden></div>
+              <div class="rnew" id="result-new" hidden></div>
+              <div class="ovbtns" id="ov-result-btns"></div>
+            </div>
+          </div>
+
+          <div class="overlay" id="ov-pause" hidden role="dialog" aria-modal="true" aria-labelledby="ov-pause-title">
+            <div class="ovcard pausecard">
+              <h3 id="ov-pause-title" data-i18n="pause.title">暫停中</h3>
+              <div class="ovbtns col">
+                <button class="btn3d big" data-color="mint" id="b-resume" type="button" data-act="pause-resume"><span data-i18n="pause.resume">繼續</span></button>
+                <button class="btn3d" data-color="sky" type="button" data-act="pause-restart"><span data-i18n="pause.restart">重新開始</span></button>
+                <button class="btn3d" data-color="cream" type="button" data-act="pause-home"><span data-i18n="pause.home">回首頁</span></button>
+              </div>
+              <p class="ovnote" data-i18n="pause.hint">按 Esc 也可以繼續</p>
+            </div>
+          </div>
+
+          <div class="countdown" id="countdown" hidden aria-live="assertive"></div>
+        </div>
+      </div>
+
+      <!-- 窄版才出現的左側浮動開關 -->
+      <div class="side-fab" id="side-fab">
+        <button class="iconbtn" id="b-open-sum" type="button" aria-label="打開即時統計" data-i18n-attr="aria-label=side.openSum">📊</button>
+        <button class="iconbtn" id="b-open-chat" type="button" aria-label="打開聊天室" data-i18n-attr="aria-label=side.openChat">💬<span class="unread" id="chat-unread2" hidden>0</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 地鼠圖鑑 ============================== -->
+  <section class="screen" id="s-help" aria-label="地鼠圖鑑與玩法" data-i18n-attr="aria-label=help.aria">
+    <div class="panel wide">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 data-i18n="help.title">地鼠圖鑑</h2><span class="spacer"></span>
+      </div>
+
+      <ol class="steps">
+        <li data-i18n-html="help.s1"><b>敲壞人、放過好人。</b>壞地鼠敲下去加分，好人（小雞、兔子、農夫、貓店長）敲下去<b>扣分</b>，看清楚再下手。</li>
+        <li data-i18n-html="help.s2"><b>預設 60 秒一局，可選 60／75／90 秒，分三階段。</b>熱身 → 加速 → 狂亂，地鼠愈冒愈快、停留愈短，稀有的高分地鼠也愈後面才出現。</li>
+        <li data-i18n-html="help.s3"><b>連擊有加成。</b>連續敲中壞人每 5 連擊 +10%，最多 +50%；敲到好人連擊歸零。</li>
+        <li data-i18n-html="help.s4"><b>線上是共用盤面。</b>最多 5 個人看同一組地洞，同一隻地鼠<b>誰先敲到誰得分</b>，慢一步就沒了。</li>
+        <li data-i18n-html="help.s5"><b>難度會改變地鼠速度。</b>超級新手／簡單／普通／困難，決定地鼠冒多快、停多久，也決定電腦對手多強。覺得太快就往下選一級。</li>
+        <li data-i18n-html="help.s6"><b>盤面大小可以調。</b>9 到 36 個地洞（以正方形為主），單機在設定裡選、線上由房主決定。</li>
+        <li data-i18n-html="help.s7"><b>敲空不扣分。</b>敲到空地洞只是浪費時間，不會扣分，但會拉低命中率。</li>
+      </ol>
+
+      <h3 class="lbl" data-i18n="help.bad">壞人 — 敲下去加分</h3>
+      <div class="dex" id="dex-bad"></div>
+      <h3 class="lbl" data-i18n="help.good">好人 — 千萬不要敲</h3>
+      <div class="dex" id="dex-good"></div>
+
+      <h3 class="lbl" data-i18n="help.controls">操作方式</h3>
+      <ul class="plain">
+        <li data-i18n-html="help.c1"><b>觸控／滑鼠：</b>直接按地洞，按下去就算，不用等放開。用滑鼠時游標會變成小鐵鎚（可以在 ⚙ 設定裡關掉）。</li>
+        <li data-i18n-html="help.c2"><b>鍵盤：</b>用 Tab 或方向鍵移到地洞，按 Enter 或空白鍵敲下去。</li>
+        <li data-i18n-html="help.c3"><b>螢幕閱讀器：</b>每個地洞都會唸出目前是哪一種地鼠、加分還是扣分。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================== 我的戰績 ============================== -->
+  <section class="screen" id="s-stats" aria-label="我的戰績" data-i18n-attr="aria-label=stats.aria">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="common.back">◀ 返回</span></button>
+        <h2 data-i18n="stats.title">我的戰績</h2><span class="spacer"></span>
+      </div>
+      <div class="statgrid" id="stat-grid"></div>
+      <h3 class="lbl" data-i18n="stats.records">各難度紀錄</h3>
+      <div class="reclist" id="rec-list"></div>
+      <h3 class="lbl" data-i18n="stats.badges">成就徽章</h3>
+      <div class="badgegrid" id="badge-grid"></div>
+      <p class="note" data-i18n="stats.note">戰績只存在這台裝置的瀏覽器裡，沒有上傳到任何伺服器；換裝置或清掉瀏覽器資料就會歸零。</p>
+      <div class="panel-foot">
+        <button class="btn3d small" data-color="cream" id="b-stats-reset"><span data-i18n="stats.reset">清除本機戰績</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 設定彈窗 ============================== -->
+  <div class="modal" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+    <div class="modal-mask" data-close-modal></div>
+    <div class="modal-card" role="document">
+      <div class="modal-head">
+        <h3 id="settings-title" data-i18n="settings.title">遊戲設定</h3>
+        <button class="iconbtn" id="b-settings-close" type="button" aria-label="關閉設定" data-i18n-attr="aria-label=settings.close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="setrow">
+          <label for="set-music" data-i18n="settings.music">背景音樂</label>
+          <input type="checkbox" id="set-music" class="switch">
+        </div>
+        <div class="setrow">
+          <label for="set-music-vol" data-i18n="settings.musicVol">音樂音量</label>
+          <input type="range" id="set-music-vol" min="0" max="100" step="5">
+        </div>
+        <div class="setrow">
+          <label for="set-sfx" data-i18n="settings.sfx">遊戲音效</label>
+          <input type="checkbox" id="set-sfx" class="switch">
+        </div>
+        <div class="setrow">
+          <label for="set-sfx-vol" data-i18n="settings.sfxVol">音效音量</label>
+          <input type="range" id="set-sfx-vol" min="0" max="100" step="5">
+        </div>
+        <div class="setrow">
+          <label for="set-chatcue" data-i18n="settings.chatcue">聊天提示音</label>
+          <input type="checkbox" id="set-chatcue" class="switch">
+        </div>
+        <hr class="sep">
+        <div class="setrow">
+          <label for="set-haptic"><span data-i18n="settings.haptic">震動回饋</span><small data-i18n="settings.hapticSub">手機／平板才有作用</small></label>
+          <input type="checkbox" id="set-haptic" class="switch">
+        </div>
+        <div class="setrow">
+          <label for="set-motion"><span data-i18n="settings.motion">減少動態</span><small data-i18n="settings.motionSub">關掉升降與晃動動畫</small></label>
+          <input type="checkbox" id="set-motion" class="switch">
+        </div>
+        <div class="setrow">
+          <label for="set-mark"><span data-i18n="settings.mark">分數標記放大</span><small data-i18n="settings.markSub">色彩辨識不便時比較好認好人壞人</small></label>
+          <input type="checkbox" id="set-mark" class="switch">
+        </div>
+        <div class="setrow">
+          <label for="set-hammer"><span data-i18n="settings.hammer">鐵鎚滑鼠游標</span><small data-i18n="settings.hammerSub">對局時把滑鼠變成小槌子，觸控裝置沒有影響</small></label>
+          <input type="checkbox" id="set-hammer" class="switch">
+        </div>
+        <div class="setrow hamset">
+          <label><span data-i18n="settings.hammerStyle">槌子外觀</span><small data-i18n="settings.hammerStyleSub">游標、敲擊動畫與結算畫面都會換成這把槌子</small></label>
+          <button type="button" class="hamstage" id="ham-stage" data-i18n-attr="aria-label=hammer.try" aria-label="點一下試揮"><span class="hamhole"></span><span class="hamidle" id="ham-idle"></span><span class="hamtry" data-i18n="hammer.try">點一下試揮</span></button>
+          <div class="hamopts" id="ham-opts" role="radiogroup" aria-label="槌子外觀" data-i18n-attr="aria-label=settings.hammerStyle"></div>
+        </div>
+        <div class="setrow"><span class="setlbl" data-i18n="settings.lang">語言</span><span id="set-lang-slot"></span></div>
+        <p class="setinfo" id="set-audio-note"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn3d small" data-color="cream" id="b-settings-reset"><span data-i18n="settings.reset">恢復預設</span></button>
+        <button class="btn3d small" data-color="mint" id="b-settings-ok"><span data-i18n="settings.done">完成</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== 遊戲內確認彈窗 ============================== -->
+  <div class="modal" id="confirm-modal" role="dialog" aria-modal="true"
+       aria-labelledby="confirm-title" aria-describedby="confirm-message" hidden>
+    <div class="modal-mask" data-close-modal></div>
+    <div class="modal-card confirm-card" role="document">
+      <div class="modal-head">
+        <h3 id="confirm-title" data-i18n="confirm.title">請確認</h3>
+        <button class="iconbtn" id="b-confirm-close" type="button" aria-label="取消" data-i18n-attr="aria-label=common.cancel">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="confirm-message" id="confirm-message"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn3d small" data-color="cream" id="b-confirm-cancel" type="button"><span data-i18n="common.cancel">取消</span></button>
+        <button class="btn3d small" data-color="mint" id="b-confirm-ok" type="button"><span data-i18n="common.ok">確定</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== 邀請彈窗 ============================== -->
+  <div class="modal" id="invite-modal" role="dialog" aria-modal="true" aria-labelledby="invite-title" hidden>
+    <div class="modal-mask" data-close-modal></div>
+    <div class="modal-card" role="document">
+      <div class="modal-head">
+        <h3 id="invite-title" data-i18n="invite.title">邀請朋友</h3>
+        <button class="iconbtn" id="b-invite-close" type="button" aria-label="關閉" data-i18n-attr="aria-label=common.close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="setinfo" data-i18n="invite.info">邀請連結會指定進來的身分，有使用次數與有效期限，也可以隨時撤銷。</p>
+        <div class="setrow">
+          <label for="inv-role" data-i18n="invite.role">進來的身分</label>
+          <select id="inv-role" class="field slim">
+            <option value="player" data-i18n="invite.rolePlayer">玩家（席位滿了會自動轉觀戰）</option>
+            <option value="spectator" data-i18n="invite.roleSpec">只能觀戰</option>
+          </select>
+        </div>
+        <div class="setrow">
+          <label for="inv-ttl" data-i18n="invite.ttl">有效期限</label>
+          <select id="inv-ttl" class="field slim">
+            <option value="10" data-i18n="invite.ttl10">10 分鐘</option>
+            <option value="30" selected data-i18n="invite.ttl30">30 分鐘</option>
+            <option value="120" data-i18n="invite.ttl120">2 小時</option>
+          </select>
+        </div>
+        <div class="setrow">
+          <label for="inv-uses" data-i18n="invite.uses">可以用幾次</label>
+          <select id="inv-uses" class="field slim">
+            <option value="1" data-i18n="invite.uses1">1 次</option>
+            <option value="5" selected data-i18n="invite.uses5">5 次</option>
+            <option value="20" data-i18n="invite.uses20">20 次</option>
+          </select>
+        </div>
+        <button class="btn3d small" data-color="grape" id="b-invite-make"><span data-i18n="invite.make">產生邀請連結</span></button>
+        <div class="invite-out" id="invite-out" hidden>
+          <input class="field" id="invite-url" type="text" readonly aria-label="邀請連結" data-i18n-attr="aria-label=invite.url">
+          <button class="btn3d small" data-color="mint" id="b-invite-copy"><span data-i18n="invite.copy">複製</span></button>
+        </div>
+        <h4 class="sum-h" data-i18n="invite.active">目前有效的邀請</h4>
+        <div class="invitelist" id="invite-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn3d small" data-color="cream" id="b-invite-done"><span data-i18n="common.close">關閉</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+
+<script src="js/analytics.js"></script>
+<script src="js/i18n.js?v=20261016i18n"></script>
+<script src="js/locales.js?v=20261016i18n"></script>
+<script src="js/ui-locales.js"></script>
+<script src="js/keyboard.js?v=20261016i18n"></script>
+<script src="js/config.js?v=20261016i18n"></script>
+<script src="js/rng.js?v=20261016i18n"></script>
+<script src="js/rules.js?v=20261016i18n"></script>
+<script src="js/ai.js?v=20261016i18n"></script>
+<script src="js/storage.js?v=20261016i18n"></script>
+<script src="js/audio.js?v=20261016i18n"></script>
+<script src="js/svgui.js?v=20261016i18n"></script>
+<script src="js/render.js?v=20261016i18n"></script>
+<script src="js/latency.js?v=20261002c" data-skin="whack-a-mole"></script>
+<script src="js/sio-client.js"></script>
+<script src="js/online.js?v=20261016i18n"></script>
+<script src="js/localize.js"></script>
+<script src="js/app.js?v=20261016i18n"></script>
+<!--SEO:GAMEPLAY-->
+<noscript><div class="seo-gameplay"><section lang="zh-Hant">
+<h2>打地鼠大亂鬥</h2>
+<p>看清楚再出手，敲壞地鼠、放過好朋友，累積你的最高連擊。</p>
+<p><strong>玩法模式：</strong>單機練習、多人搶分、觀戰</p>
+<p><strong>操作方式：</strong>直接點擊冒出的地鼠</p>
+</section>
+<section lang="zh-Hans">
+<h2>打地鼠大乱斗</h2>
+<p>看清楚再出手，敲坏地鼠、放过好朋友，累积你的最高连击。</p>
+<p><strong>玩法模式：</strong>单机练习、多人抢分、观战</p>
+<p><strong>操作方式：</strong>直接点击冒出的地鼠</p>
+</section>
+<section lang="en">
+<h2>Whack-a-Mole Mayhem</h2>
+<p>Look first, then strike! Whack the moles, spare your friends, and build your best combo.</p>
+<p><strong>Game modes: </strong>Solo Practice, Multiplayer Score Race, Spectate</p>
+<p><strong>How to play: </strong>Tap the moles as they pop up</p>
+</section></div></noscript>
+<!--SEO:GAMEPLAY:END-->
+  <script defer src="js/locales/result-share.js"></script>
+  <script defer src="js/result-share.js"></script>
+</body>
+</html>

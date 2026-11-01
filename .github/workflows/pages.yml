@@ -1,0 +1,40 @@
+# 把大廳＋全部遊戲前端組成 site-dist/ 佈署到 GitHub Pages（單一工作流程）。
+# repo 變數 GAME_SERVER_URL 填共用伺服器網址（例如 https://game-island-server.onrender.com，結尾不要斜線），
+# 每款遊戲會被注入 <GAME_SERVER_URL>/g/<遊戲id>。
+name: 佈署到 GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26.12.1"
+          cache: npm
+      - run: npm ci
+      - run: npm run build:vite
+        env:
+          GAME_SERVER_URL: ${{ vars.GAME_SERVER_URL }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site-dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4

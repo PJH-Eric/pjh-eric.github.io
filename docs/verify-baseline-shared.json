@@ -1,0 +1,92 @@
+{
+  "flip-match": {
+    "../..::tsx scripts/online-via-shared.js flip-match": {
+      "count": 11
+    }
+  },
+  "sudoku": {
+    "../..::tsx scripts/online-via-shared.js sudoku": {
+      "count": null
+    }
+  },
+  "whack-a-mole": {
+    "../..::tsx scripts/online-via-shared.js whack-a-mole": {
+      "count": 98
+    }
+  },
+  "fruit-link": {
+    "../..::tsx scripts/online-via-shared.js fruit-link": {
+      "count": 43
+    }
+  },
+  "stair-kids": {
+    "../..::tsx apps/game-server/tests/online-extra.js": {
+      "count": 7
+    }
+  },
+  "draw-guess": {
+    "../..::tsx scripts/online-via-shared.js draw-guess": {
+      "count": 124
+    }
+  },
+  "heart-attack": {
+    "../..::tsx scripts/online-via-shared.js heart-attack": {
+      "count": 56
+    }
+  },
+  "bomb-squad": {
+    "../..::tsx scripts/online-via-shared.js bomb-squad": {
+      "count": null
+    }
+  },
+  "rainbow-bubble": {
+    "../..::tsx scripts/online-via-shared.js rainbow-bubble": {
+      "count": null
+    }
+  },
+  "pool-duel": {
+    "../..::tsx scripts/online-via-shared.js pool-duel": {
+      "count": 34
+    }
+  },
+  "reversi": {
+    "../..::tsx scripts/online-via-shared.js reversi": {
+      "count": null
+    }
+  },
+  "amaze-go": {
+    "../..::tsx apps/game-server/tests/online-extra.js": {
+      "count": 7
+    }
+  },
+  "pinball-hoops": {
+    "../..::tsx scripts/online-via-shared.js pinball-hoops": {
+      "count": 13
+    }
+  },
+  "shoot-balloon": {
+    "../..::tsx scripts/online-via-shared.js shoot-balloon": {
+      "count": 67
+    }
+  },
+  "maze-roll": {
+    "../..::tsx scripts/online-via-shared.js maze-roll": {
+      "count": null
+    }
+  },
+  "house-stack": {
+    "../..::tsx scripts/online-via-shared.js house-stack": {
+      "count": 22
+    }
+  },
+  "snake-3d": {
+    "../..::tsx scripts/online-via-shared.js snake-3d": {
+      "count": null
+    }
+  },
+  "ice-duel": {
+    "../..::tsx scripts/online-via-shared.js ice-duel": {
+      "count": null
+    }
+  }
+}

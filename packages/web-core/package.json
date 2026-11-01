@@ -1,0 +1,8 @@
+{
+  "name": "@pjh/web-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "全遊戲共用的前端核心：GA4 事件封裝（analytics.js）與多語系引擎（i18n.js）",
+  "files": ["analytics.js", "i18n.js", "result-share.js", "locales", "vendor"],
+  "license": "MIT"
+}

@@ -1,0 +1,1039 @@
+/* ===== 打地鼠大亂鬥 — 可愛風主題 =====
+ *
+ * 版面策略（依使用者要求）：
+ *   左邊一條窄窄的側欄同時放「即時統計摘要」和「聊天室」，不佔太多空間但看得到；
+ *   其餘全部留給盤面，盤面依可用空間自動長到最大。
+ *   窄版（手機、平板直向）側欄改成從左邊滑出的抽屜，盤面吃滿整個寬度，
+ *   資訊優先順序不變，只是換一種呈現方式。
+ */
+:root{
+  --ink:#4A3B55;
+  --ink-soft:#7A6A88;
+  --paper:#FFFDF8;
+  --grape:#C9B6F5;  --grape-d:#A48FDB;
+  --mint:#A9E7D2;   --mint-d:#79C6AC;
+  --peach:#FFC2B4;  --peach-d:#E89C8B;
+  --sky:#AED9F5;    --sky-d:#7FB4DA;
+  --lemon:#FFE3A0;  --lemon-d:#E7C263;
+  --rose:#FFB8CF;   --rose-d:#E88CAA;
+  --cream:#FFF0DE;  --cream-d:#E6D2B4;
+  --soil:#A87D4E;   --soil-d:#6B4E30;   --soil-hole:#3B2A1E;
+  --grass:#8FBF7A;
+  --danger:#D2444F; --danger-bg:#FFE6E8;
+  --ok:#2F8F6B;
+  --line:#DED3EA;
+  --radius:22px;
+  --d:8px;
+  --side-w:206px;
+  --safe-t:env(safe-area-inset-top);
+  --safe-r:env(safe-area-inset-right);
+  --safe-b:env(safe-area-inset-bottom);
+  --safe-l:env(safe-area-inset-left);
+  font-size:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;min-height:100%;margin:0;padding:0}
+body{
+  font-family:"Yuanti TC","圓體-繁","PingFang TC","蘋方-繁","Microsoft JhengHei","Noto Sans TC","Segoe UI",system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(165deg,#F4EEFF 0%,#FFF7EC 46%,#EAF7E6 100%);
+  overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+#bgdeco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#bgdeco span{position:absolute;display:block;border-radius:34%;opacity:.35;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-24px) rotate(10deg)}100%{transform:translateY(0) rotate(0)}}
+
+#app{position:relative;z-index:1;height:100%;min-height:100dvh}
+.screen{
+  position:absolute;inset:0;display:none;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+}
+.screen.active{display:block}
+.screen.flexcenter.active{display:flex;align-items:center;justify-content:center}
+.screen#s-game.active{display:block;overflow:hidden}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---------- 立體 SVG 按鈕 ---------- */
+.btn3d{
+  position:relative;border:0;background:none;padding:13px 22px calc(13px + var(--d));
+  font:inherit;font-weight:800;font-size:1.02rem;color:var(--ink);cursor:pointer;
+  letter-spacing:.03em;line-height:1.15;min-height:52px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.btn3d .b3-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.btn3d .b3-face{transition:transform .07s ease}
+.btn3d .b3-lbl{position:relative;z-index:2;display:inline-flex;align-items:center;gap:.4em;transition:transform .07s ease;text-shadow:0 1px 0 rgba(255,255,255,.65)}
+.btn3d.press .b3-face,.btn3d.press .b3-lbl{transform:translateY(calc(var(--d) - 2px))}
+.btn3d[disabled]{opacity:.42;cursor:default}
+.btn3d:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px;border-radius:18px}
+.btn3d.big{font-size:1.2rem;padding:17px 30px calc(17px + var(--d));min-height:68px;--d:10px}
+.btn3d.small{font-size:.9rem;padding:9px 14px calc(9px + var(--d));min-height:46px;--d:6px}
+.btn3d.icononly{padding:10px 12px calc(10px + var(--d));min-width:50px;min-height:50px;font-size:1.2rem;--d:6px}
+.btn3d .ico{font-size:1.1em}
+
+.iconbtn{
+  border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);
+  border-radius:14px;min-width:42px;min-height:42px;font:inherit;font-size:1.05rem;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;
+}
+.iconbtn:active{transform:translateY(2px)}
+.iconbtn:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+
+/* 右上角設定入口：所有畫面共用，固定在安全區內 */
+.settings-fab{
+  position:fixed;z-index:70;
+  top:calc(10px + var(--safe-t));
+  right:calc(12px + var(--safe-r));
+  --d:6px;
+}
+.settings-fab .b3-lbl{font-size:1.25rem}
+.lobby-home-link{position:fixed;z-index:65;top:calc(10px + var(--safe-t));left:calc(12px + var(--safe-l));display:inline-flex;align-items:center;min-height:44px;padding:9px 14px;border:3px solid var(--ink);border-radius:14px;background:var(--cream);color:var(--ink);font-size:.8rem;font-weight:900;text-decoration:none;box-shadow:0 4px 0 var(--cream-d);transition:transform .15s,box-shadow .15s,background .15s}
+.lobby-home-link:hover{background:#FFF6E8;transform:translateY(-2px)}
+.lobby-home-link:active{transform:translateY(3px);box-shadow:0 1px 0 var(--cream-d)}
+.lobby-home-link:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px}
+@media (max-width:600px){
+  #s-home .home-wrap{padding-top:max(70px,10vh)}
+  .lobby-home-link{top:calc(8px + var(--safe-t));left:calc(8px + var(--safe-l));padding:8px 10px;font-size:.74rem}
+}
+
+/* ---------- 面板／表單 ---------- */
+.panel{width:min(100%,860px);margin:0 auto;padding:18px 18px 32px;min-height:100%}
+.panel.wide{width:min(100%,1080px)}
+.panel-head{display:flex;align-items:center;gap:12px;margin:6px 0 14px;padding-right:60px}
+.panel-head h2{flex:1;margin:0;text-align:center;font-size:1.45rem;letter-spacing:.05em}
+.panel-head .spacer{flex:0 0 46px}
+.panel-foot{margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lbl{font-size:1rem;margin:20px 0 8px;letter-spacing:.04em}
+.lbl2{font-size:.85rem;font-weight:800;color:var(--ink-soft)}
+.note{margin-top:16px;font-size:.88rem;color:var(--ink-soft);line-height:1.7}
+.hint{margin:6px 0 0;font-size:.8rem;color:var(--ink-soft)}
+.plain{margin:8px 0;padding-left:1.2em;line-height:1.8;font-size:.92rem}
+.steps{margin:8px 0 18px;padding-left:1.3em;line-height:1.8;font-size:.95rem}
+.steps li{margin-bottom:6px}
+
+.field{
+  width:100%;padding:13px 14px;border:3px solid var(--ink);border-radius:16px;
+  background:var(--paper);font:inherit;font-size:1rem;color:var(--ink);
+  user-select:text;-webkit-user-select:text;
+}
+.field:focus{outline:3px solid var(--sky-d);outline-offset:2px}
+.field.code{text-align:center;letter-spacing:.4em;font-weight:900;font-size:1.4rem;text-transform:uppercase}
+.field.slim{padding:9px 12px;font-size:.92rem;width:auto;min-width:150px}
+.check{display:flex;align-items:center;gap:9px;margin:10px 0;font-size:.92rem;cursor:pointer}
+.check{min-height:44px}
+.check input{width:30px;height:30px;accent-color:var(--grape-d);flex:0 0 auto}
+.pill{display:inline-block;background:var(--grape);border:2.5px solid var(--ink);border-radius:999px;padding:1px 10px;font-size:.8rem;font-weight:800}
+
+.cardpick{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.cardpick.tight{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.pickcard{
+  border:3px solid var(--ink);border-radius:18px;background:var(--paper);
+  padding:12px 14px;font:inherit;text-align:left;cursor:pointer;color:var(--ink);
+  display:flex;flex-direction:column;gap:3px;min-height:64px;
+}
+.pickcard b{font-size:1.02rem}
+.pickcard span{font-size:.8rem;color:var(--ink-soft);line-height:1.5}
+.pickcard[aria-checked="true"]{background:var(--lemon);box-shadow:0 5px 0 var(--lemon-d)}
+.pickcard:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+
+/* ---------- 首頁 ---------- */
+#s-home{background:radial-gradient(ellipse at top left,#ffe49a 0%,#fff7e9 52%,#e8f3d9 100%)}
+#s-home.flexcenter.active{align-items:safe center}
+.home-wrap{width:min(100%,1180px);padding:88px 28px calc(36px + var(--safe-b));display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);align-items:center;gap:36px;text-align:center}
+.home-art{min-width:0;overflow:hidden;border:5px solid #fff8e9;border-radius:32px;box-shadow:0 12px 0 #d9b570,0 20px 40px #79532824;transform:rotate(-2deg)}
+.home-art img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+.home-content{min-width:0}
+.home-title{margin:0 0 20px;font-size:clamp(1.8rem,3.4vw,2.65rem);line-height:1.25;color:#573c31;text-wrap:balance}
+@media(max-width:760px){
+  .home-wrap{width:min(100%,560px);grid-template-columns:1fr;gap:24px;padding:84px 22px calc(28px + var(--safe-b))}
+  .home-art{border-radius:24px;transform:none}
+  .home-title{margin-bottom:12px;font-size:1.85rem}
+}
+@media(max-height:500px) and (min-width:601px){
+  .home-wrap{gap:24px;padding-top:76px;padding-bottom:24px}
+  .home-title{font-size:1.6rem;margin-bottom:8px}
+}
+.logo{margin:0 auto 6px;max-width:340px}
+.logo-svg{width:100%;height:auto;display:block}
+.home-btns{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.home-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.home-row .btn3d{flex:1 1 150px}
+.home-note{margin-top:18px;font-size:.88rem;color:var(--ink-soft);line-height:1.8}
+
+/* ---------- 大廳 ---------- */
+.conn-row{display:flex;align-items:center;gap:9px;font-size:.88rem;color:var(--ink-soft);margin:4px 0 10px}
+.dot{width:12px;height:12px;border-radius:50%;background:#C8BFD1;border:2px solid var(--ink);flex:0 0 auto}
+.dot.ok{background:var(--mint-d)}
+.dot.warn{background:var(--lemon-d)}
+.dot.bad{background:var(--danger)}
+.lobby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px}
+.lobby-box{border:3px solid var(--ink);border-radius:20px;background:var(--paper);padding:14px}
+.lobby-box .btn3d{width:100%;margin-top:10px}
+.lobby-box .lbl{margin-top:0}
+.roomlist{display:grid;gap:10px;margin-top:8px}
+.lobby-online-count{width:fit-content;max-width:100%;margin:0 0 8px;padding:5px 11px;border:2.5px solid var(--mint-d);border-radius:999px;background:#E7F8EF;color:#276749;font-size:.82rem;font-weight:900;overflow-wrap:anywhere}
+.roomrow{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:11px 14px;
+}
+.roomrow .rname{flex:1 1 160px;min-width:0;font-weight:800}
+.roomrow .rname small{display:block;font-weight:600;color:var(--ink-soft);font-size:.78rem}
+.roomrow .rmeta{font-size:.82rem;color:var(--ink-soft)}
+.roomrow .tag{border:2px solid var(--ink);border-radius:999px;padding:1px 9px;font-size:.75rem;font-weight:800;background:var(--cream)}
+.roomrow .tag.playing{background:var(--peach)}
+.roomrow .tag.over{background:var(--cream-d)}
+.empty{padding:22px;text-align:center;color:var(--ink-soft);font-size:.9rem;border:3px dashed var(--line);border-radius:18px}
+
+/* ---------- 圖鑑 ---------- */
+.dex{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.dexcard{
+  border:3px solid var(--ink);border-radius:18px;background:var(--paper);
+  padding:10px;display:flex;gap:9px;align-items:center;
+}
+.dexcard.good{background:#F1FBF4}
+.dexcard .pic{flex:0 0 54px;width:54px;height:54px}
+.dexcard .pic svg{width:100%;height:100%;display:block}
+.dexcard .txt{min-width:0}
+.dexcard .nm{font-weight:800;font-size:.94rem}
+.dexcard .pt{font-weight:900;font-size:.9rem;color:var(--ok)}
+.dexcard.good .pt{color:var(--danger)}
+.dexcard .ds{font-size:.74rem;color:var(--ink-soft);line-height:1.45}
+.dex.mini{grid-template-columns:1fr;gap:7px}
+.dex.mini .dexcard{padding:7px;border-width:2.5px;border-radius:14px}
+.dex.mini .pic{flex:0 0 40px;width:40px;height:40px}
+.dex.mini .nm{font-size:.85rem}
+.dex.mini .ds{display:none}
+
+/* ---------- 戰績 ---------- */
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.statcard{border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:14px;text-align:center}
+.statcard b{display:block;font-size:1.8rem;line-height:1.2}
+.statcard span{font-size:.82rem;color:var(--ink-soft)}
+
+/* ================================================================
+ * 對戰畫面
+ * ================================================================ */
+.game-shell{position:absolute;inset:0;display:flex;min-height:0}
+
+/* ---- 左側欄：窄，但摘要與聊天都看得到 ---- */
+.side{
+  flex:0 0 var(--side-w);width:var(--side-w);min-width:0;
+  display:flex;flex-direction:column;min-height:0;
+  background:rgba(255,253,248,.94);
+  border-right:3px solid var(--ink);
+  padding-bottom:var(--safe-b);padding-left:var(--safe-l);
+}
+.side-head{display:flex;align-items:center;gap:6px;padding:8px 8px 6px;border-bottom:2.5px solid var(--line);padding-top:calc(8px + var(--safe-t))}
+.side-tabs{display:flex;gap:5px;flex:1;min-width:0}
+.stab{
+  flex:1;min-width:0;border:2.5px solid var(--ink);background:var(--cream);color:var(--ink);
+  border-radius:12px;padding:7px 4px;font:inherit;font-size:.82rem;font-weight:800;cursor:pointer;position:relative;
+}
+.stab.on{background:var(--grape);box-shadow:0 3px 0 var(--grape-d)}
+.stab:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.side-close{display:none;flex:0 0 auto;min-width:36px;min-height:36px;font-size:.9rem}
+.unread{
+  position:absolute;top:-7px;right:-6px;background:var(--danger);color:#fff;
+  border:2px solid var(--ink);border-radius:999px;font-size:.66rem;font-weight:900;
+  min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;
+}
+.side-pane{display:none;flex:1;min-height:0;overflow-y:auto;padding:8px;flex-direction:column;gap:7px}
+.side-pane.on{display:flex}
+.sum-h{margin:6px 0 2px;font-size:.78rem;letter-spacing:.08em;color:var(--ink-soft);text-transform:none}
+.sum-room{font-size:.76rem;color:var(--ink-soft);line-height:1.4;border:2.5px dashed var(--line);
+  border-radius:11px;padding:5px 8px;text-align:center}
+.sum-room b{color:var(--ink);font-size:.92rem;letter-spacing:.1em}
+
+/* 即時排行 */
+.rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.rankrow{
+  display:grid;grid-template-columns:18px 1fr auto;gap:5px;align-items:center;
+  border:2.5px solid var(--ink);border-radius:12px;background:var(--paper);padding:4px 6px;
+  border-left-width:7px;border-left-color:var(--who,var(--grape-d));
+}
+.rankrow.me{background:var(--lemon)}
+.rankrow.out{opacity:.5}
+.rankrow .no{font-weight:900;font-size:.9rem;text-align:center}
+.rankrow .nm{font-weight:800;font-size:.84rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rankrow .sc{font-weight:900;font-size:1rem;text-align:right;font-variant-numeric:tabular-nums;line-height:1.05}
+.rankrow .sc small{display:block;font-size:.62rem;font-weight:700;color:var(--rose-d)}
+
+.mystat{font-size:.73rem;color:var(--ink-soft);line-height:1.55;text-align:center;
+  border-top:2px dashed var(--line);padding-top:6px}
+.side-actions{display:flex;flex:0 0 auto;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:8px}
+.side-actions .btn3d{flex:1 1 76px;--d:5px;min-height:42px;font-size:.78rem;padding:7px 6px calc(7px + var(--d))}
+
+/* 聊天室 */
+#pane-chat{padding-bottom:8px}
+.chatlog{flex:1;min-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding-right:2px}
+.msg{font-size:.8rem;line-height:1.55;border-radius:11px;padding:5px 8px;background:var(--paper);border:2px solid var(--line);word-break:break-word;user-select:text;-webkit-user-select:text}
+.msg .who{font-weight:800;font-size:.74rem;color:var(--grape-d);display:block}
+.msg.me{background:var(--lemon);border-color:var(--lemon-d)}
+.msg.sys{background:transparent;border:0;color:var(--ink-soft);font-size:.75rem;text-align:center;padding:2px}
+.msg.spec .who::after{content:" · 觀戰";font-weight:600;color:var(--ink-soft)}
+.chatbar{display:flex;gap:6px;margin-top:6px}
+.chatbar .field{padding:9px 11px;font-size:.88rem;border-width:2.5px;border-radius:13px}
+.chatbar .btn3d{flex:0 0 auto;--d:5px;min-height:42px;padding:8px 12px calc(8px + var(--d))}
+
+/* ---- 主舞台：盤面吃掉所有剩下的空間 ---- */
+.stage{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column;
+  padding:0 calc(6px + var(--safe-r)) calc(5px + var(--safe-b)) 6px}
+.hud{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:calc(8px + var(--safe-t)) 62px 6px 0;
+}
+.hud-back{flex:0 0 auto}
+.hud-lbl{font-size:.68rem;color:var(--ink-soft);display:block;line-height:1}
+.hud-unit{font-size:.72rem;color:var(--ink-soft)}
+.hud-time,.hud-score{
+  border:3px solid var(--ink);border-radius:15px;background:var(--paper);
+  padding:4px 12px;display:flex;flex-direction:column;align-items:center;line-height:1.1;min-width:78px;
+}
+.hud-time b{font-size:1.5rem;font-variant-numeric:tabular-nums}
+.hud-score b{font-size:1.5rem;font-variant-numeric:tabular-nums}
+.hud-time.low{background:var(--danger-bg);border-color:var(--danger);animation:pulse .9s infinite}
+@keyframes pulse{50%{transform:scale(1.05)}}
+.hud-stage{border:3px solid var(--ink);border-radius:999px;background:var(--mint);padding:5px 14px;font-weight:800;font-size:.88rem}
+.hud-stage.s2{background:var(--lemon)}
+.hud-stage.s3{background:var(--peach)}
+.hud-combo{border:3px solid var(--ink);border-radius:999px;background:var(--rose);padding:5px 12px;font-weight:800;font-size:.85rem}
+.hud-combo b{font-size:1.05rem}
+.hud-buff{border:3px solid var(--ink);border-radius:999px;padding:5px 12px;font-weight:800;font-size:.85rem;
+  background:linear-gradient(90deg,#FFB3B3,#FFE066,#7ED9A8,#B79BE8)}
+.timebar{height:16px;border:2.5px solid var(--ink);border-radius:999px;background:var(--paper);overflow:hidden;margin:2px 0 4px;flex:0 0 auto}
+.timebar span{display:block;height:100%;width:100%;background:var(--mint-d);transition:width .25s linear}
+.timebar span.s2{background:var(--lemon-d)}
+.timebar span.s3{background:var(--peach-d)}
+
+/* ---- 盤面 ---- */
+.board-wrap{
+  position:relative;flex:1 1 auto;min-height:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(5px,1.2vmin,16px);
+  border:3px solid var(--ink);border-radius:24px;
+  background:linear-gradient(180deg,#E7F5DA 0%,#CFE9BC 62%,#BFE0AB 100%);
+  box-shadow:inset 0 4px 0 rgba(255,255,255,.6);
+  overflow:hidden;
+  /* 讓盤面能用 cqw/cqh 算出「等比塞得進去的最大尺寸」 */
+  container-type:size;
+}
+.board{
+  /* --bc / --br 由 render.js 寫入，就是玩家（或房主）選的盤面列欄。
+     各裝置只會等比縮放盤面，不會改變列欄，所以地洞編號在哪台裝置上都一樣。 */
+  --bc:4;--br:3;
+  --gc:var(--bc);--gr:var(--br);
+  --ar:calc(var(--gc) / var(--gr) * 1.06);
+  display:grid;
+  grid-template-columns:repeat(var(--gc),1fr);
+  grid-template-rows:repeat(var(--gr),1fr);
+  gap:clamp(4px,1.1vmin,14px);
+  aspect-ratio:var(--ar);
+  width:100%;max-width:100%;max-height:100%;
+}
+/* 等比塞進可用空間：寬度取「容器寬」與「容器高 × 長寬比」的小者。
+   只寫 width:100% + max-height 的話，高度被夾住時寬度不會跟著縮，
+   格子會被壓成又寬又扁（手機橫向曾經壓到 2.09:1），地鼠也跟著被切頭。 */
+@supports (width:1cqw){
+  .board{width:min(100cqw,calc(100cqh * var(--ar)))}
+}
+.hole{
+  position:relative;overflow:hidden;border:0;padding:0;margin:0;background:none;
+  cursor:pointer;border-radius:16px;touch-action:manipulation;
+}
+.hole:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+/* 可愛鐵鎚游標：只在真的有滑鼠的裝置上換掉。觸控裝置沒有游標，換了也看不到，
+   而且手指按住時瀏覽器有時會把它畫出來擋住地鼠。--cur-hammer 由 app.js 從
+   SvgUI 產生，槌子的造型只有一份。
+   body.playing＝真的在打（見 app.js 的 paintPlayingFlag）。設定、房間準備、
+   倒數與結算畫面都維持一般游標，那時候按下去也沒有東西可以敲。 */
+@media (hover:hover) and (pointer:fine){
+  body.hammer-cursor.playing #s-game.active .board-wrap,
+  body.hammer-cursor.playing #s-game.active .hole{cursor:var(--cur-hammer,pointer)}
+  body.hammer-cursor.playing #s-game.active .board-wrap:active,
+  body.hammer-cursor.playing #s-game.active .hole:active{cursor:var(--cur-hammer-hit,pointer)}
+}
+.hole-back,.hole-front{position:absolute;left:0;bottom:0;width:100%;height:100%;pointer-events:none}
+.hole-front{z-index:3}
+.mole-clip{position:absolute;left:0;right:0;top:0;bottom:28%;overflow:hidden;z-index:2;pointer-events:none}
+/* 地鼠的大小要跟著「看得到的那扇窗」(.mole-clip) 的高度走，不能用地洞寬度。
+   以前是 width:82% 的地洞寬 + aspect-ratio:1，只要地洞比 0.88:1 寬，
+   地鼠就會比窗高，頭直接被 overflow:hidden 切掉 —— 每一種裝置都中招。
+   現在高度鎖成窗高，內層 SVG 自己 meet-fit 置中，不管地洞多扁都完整。 */
+.mole-slot{
+  position:absolute;left:0;right:0;bottom:0;height:100%;
+  transform:translateY(105%);opacity:0;will-change:transform;
+}
+.mole-slot .mole-svg{width:100%;height:100%;display:block;overflow:visible}
+.mole-slot.leaving{animation:wiggle .18s infinite}
+@keyframes wiggle{0%,100%{margin-left:0}50%{margin-left:3%}}
+.mole-badge{
+  position:absolute;top:3%;right:3%;z-index:5;pointer-events:none;
+  font-size:clamp(.6rem,1.7vmin,.95rem);font-weight:900;
+  border:2.5px solid var(--ink);border-radius:999px;padding:1px 7px;
+  background:var(--mint);line-height:1.3;white-space:nowrap;
+  opacity:0;transition:none;
+}
+.mole-badge.on{opacity:1}
+/* 好人的標記用紅色底＋「−」，壞人用綠色底＋「+」：不只靠顏色分辨 */
+.mole-badge.side-good{background:var(--rose);color:#8A1F2C}
+.mole-badge.side-bad{background:var(--mint);color:#1F5A44}
+.board.big-mark .mole-badge{font-size:clamp(.75rem,2.4vmin,1.2rem);padding:2px 10px;border-width:3px}
+.hole-flash{position:absolute;inset:0;border-radius:16px;z-index:4;pointer-events:none;opacity:0;transition:opacity .12s}
+.hole-flash.on{opacity:1}
+.hole-flash.hit-good{background:radial-gradient(circle,rgba(255,255,255,.85),rgba(169,231,210,.1) 70%)}
+.hole-flash.hit-bad{background:radial-gradient(circle,rgba(210,68,79,.55),rgba(210,68,79,0) 70%)}
+.hole-flash.hit-miss{background:radial-gradient(circle,rgba(122,106,136,.28),rgba(122,106,136,0) 70%)}
+.hole.shake{animation:shake .26s}
+@keyframes shake{0%,100%{transform:translate(0,0)}25%{transform:translate(-3px,2px)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-1px)}}
+
+/* 窄版的即時排行浮條：盤面等比縮放後周圍一定有留白，把排行貼在那裡。
+   寬版有固定側欄就不需要，所以預設不顯示（見下面的 RWD 區塊）。 */
+.livebar{display:none}
+.lchip{
+  display:inline-flex;align-items:center;gap:5px;min-width:0;
+  border:2.5px solid var(--ink);border-radius:999px;background:rgba(255,253,248,.94);
+  border-left-width:7px;border-left-color:var(--who,var(--grape-d));
+  padding:2px 9px;font-size:.72rem;font-weight:800;line-height:1.55;
+}
+.lchip.me{background:var(--lemon)}
+.lchip b{font-size:.68rem;color:var(--ink-soft)}
+.lchip .ln{max-width:82px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lchip i{font-style:normal;font-variant-numeric:tabular-nums}
+
+/* 特效層 */
+.fx{position:absolute;inset:0;pointer-events:none;z-index:8;overflow:hidden}
+.flyscore{
+  position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:clamp(1rem,2.8vmin,1.6rem);
+  color:var(--ok);text-shadow:0 2px 0 #fff,0 0 6px #fff;animation:fly .9s ease-out forwards;white-space:nowrap;
+}
+.flyscore.bad{color:var(--danger)}
+.flyscore.miss{color:var(--ink-soft);font-size:clamp(.8rem,2vmin,1.05rem)}
+@keyframes fly{0%{opacity:0;transform:translate(-50%,-20%)}20%{opacity:1;transform:translate(-50%,-60%)}100%{opacity:0;transform:translate(-50%,-160%)}}
+.shout{
+  position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+  font-size:clamp(1.6rem,7vmin,3.4rem);font-weight:900;color:var(--ink);
+  text-shadow:0 3px 0 #fff,0 0 14px #fff;animation:shout .9s ease-out forwards;text-align:center;
+}
+@keyframes shout{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
+.countdown{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:8;
+  font-size:clamp(3rem,16vmin,8rem);font-weight:900;color:var(--ink);
+  text-shadow:0 4px 0 #fff,0 0 22px #fff;background:rgba(255,253,248,.35);
+}
+
+/* ---- 盤面上的浮層（等待、結算） ---- */
+.overlay{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;
+  background:rgba(74,59,85,.32);padding:12px;overflow-y:auto}
+.ovcard{
+  width:min(100%,420px);background:var(--paper);border:3.5px solid var(--ink);border-radius:24px;
+  padding:16px;box-shadow:0 10px 0 rgba(74,59,85,.18);max-height:100%;overflow-y:auto;
+}
+.ovcard.wide{width:min(100%,560px)}
+.ovcard h3{margin:0 0 10px;text-align:center;font-size:1.25rem}
+.ovnote{font-size:.82rem;color:var(--ink-soft);line-height:1.6;margin:10px 0 0;text-align:center}
+.ovbtns{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.ovbtns .btn3d{flex:1 1 130px}
+.seatlist{display:flex;flex-direction:column;gap:6px}
+.seatrow{display:flex;align-items:center;gap:8px;border:2.5px solid var(--ink);border-radius:14px;
+  background:#fff;padding:7px 10px;font-size:.9rem;border-left-width:8px;border-left-color:var(--who,var(--grape-d))}
+.seatrow .nm{flex:1;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seatrow .tag{border:2px solid var(--ink);border-radius:999px;padding:0 8px;font-size:.72rem;font-weight:800;background:var(--cream)}
+.seatrow .tag.ready{background:var(--mint)}
+.seatrow .tag.host{background:var(--lemon)}
+.seatrow .tag.ai{background:var(--sky)}
+.seatrow .tag.off{background:var(--danger-bg);color:var(--danger)}
+.seatrow .x{border:2px solid var(--ink);border-radius:10px;background:var(--paper);min-width:30px;min-height:30px;cursor:pointer;font:inherit}
+.ai-manage{margin-top:10px;border-top:2.5px dashed var(--line);padding-top:9px}
+.ai-add{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.ai-add .btn3d{flex:1 1 90px;--d:5px;min-height:42px;font-size:.82rem;padding:7px 8px calc(7px + var(--d))}
+.resulttable{display:flex;flex-direction:column;gap:6px}
+.resrow{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;
+  border:2.5px solid var(--ink);border-radius:14px;background:#fff;padding:7px 10px;
+  border-left-width:8px;border-left-color:var(--who,var(--grape-d))}
+.resrow.win{background:var(--lemon);box-shadow:0 4px 0 var(--lemon-d)}
+.resrow .no{font-weight:900;text-align:center}
+.resrow .nm{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resrow .nm small{display:block;font-weight:600;font-size:.7rem;color:var(--ink-soft)}
+.resrow .sc{font-weight:900;font-size:1.15rem;text-align:right;font-variant-numeric:tabular-nums}
+.trophy{width:78px;margin:0 auto 4px}
+.trophy-svg{width:100%;height:auto;display:block}
+
+/* 窄版才用的側欄開關 */
+.side-fab{display:none;position:absolute;left:calc(6px + var(--safe-l));bottom:calc(10px + var(--safe-b));
+  z-index:12;flex-direction:column;gap:7px}
+.side-fab .iconbtn{box-shadow:0 3px 0 rgba(74,59,85,.25)}
+
+/* ---------- 彈窗（設定、邀請、確認） ---------- */
+.modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:14px}
+.modal-mask{position:absolute;inset:0;background:rgba(74,59,85,.45)}
+.modal-card{
+  position:relative;width:min(100%,440px);max-height:88dvh;display:flex;flex-direction:column;
+  background:var(--paper);border:3.5px solid var(--ink);border-radius:24px;
+  box-shadow:0 12px 0 rgba(74,59,85,.2);overflow:hidden;
+}
+.modal-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:2.5px solid var(--line)}
+.modal-head h3{margin:0;flex:1;font-size:1.12rem}
+.modal-body{padding:12px 14px;overflow-y:auto;flex:1}
+.modal-foot{display:flex;gap:9px;justify-content:flex-end;padding:10px 14px;border-top:2.5px solid var(--line);flex-wrap:wrap}
+.confirm-card{width:min(100%,420px)}
+.confirm-message{margin:0;line-height:1.7}
+.setrow{display:flex;align-items:center;gap:12px;padding:8px 0;flex-wrap:wrap}
+.setrow label{flex:1;min-width:130px;font-size:.94rem;font-weight:700}
+.setrow label small{display:block;font-weight:600;font-size:.74rem;color:var(--ink-soft)}
+.setrow input[type=range]{flex:1 1 130px;min-width:120px;accent-color:var(--grape-d);height:30px}
+.switch{appearance:none;-webkit-appearance:none;width:56px;height:32px;border:3px solid var(--ink);
+  border-radius:999px;background:var(--cream-d);position:relative;cursor:pointer;flex:0 0 auto;margin:0}
+.switch::after{content:"";position:absolute;top:50%;left:2px;width:22px;height:22px;border-radius:50%;
+  background:var(--paper);border:2.5px solid var(--ink);transform:translateY(-50%);transition:left .16s}
+.switch:checked{background:var(--mint)}
+.switch:checked::after{left:26px}
+.switch:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.sep{border:0;border-top:2.5px dashed var(--line);margin:10px 0}
+.setinfo{font-size:.8rem;color:var(--ink-soft);margin:6px 0;line-height:1.6;word-break:break-all}
+.invite-out{display:flex;gap:7px;margin-top:10px;align-items:center}
+.invite-out .field{font-size:.8rem;padding:9px 11px}
+.invitelist{display:flex;flex-direction:column;gap:6px}
+.invrow{display:flex;align-items:center;gap:8px;border:2.5px solid var(--ink);border-radius:13px;
+  background:#fff;padding:6px 9px;font-size:.78rem;flex-wrap:wrap}
+.invrow .txt{flex:1;min-width:110px;color:var(--ink-soft)}
+.invrow.dead{opacity:.5}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(20px + var(--safe-b));transform:translateX(-50%);z-index:120;
+  background:var(--ink);color:#fff;padding:11px 18px;border-radius:16px;font-size:.9rem;font-weight:700;
+  max-width:min(92vw,420px);text-align:center;line-height:1.5;box-shadow:0 6px 18px rgba(0,0,0,.2);
+}
+
+/* ================================================================
+ * RWD
+ * 檢查點：手機窄版 / 平板直向 / 平板橫向 / 桌機寬版。
+ * 側欄一律在左邊；空間不夠時改成抽屜，資訊優先順序不變。
+ * ================================================================ */
+
+/* 中等寬度：側欄收窄一點，盤面還是最大 */
+@media (max-width:1180px){ :root{ --side-w:192px; } }
+@media (max-width:1020px){ :root{ --side-w:178px; } }
+
+/* 窄版（手機、平板直向）：側欄變成從左邊滑出的抽屜 */
+@media (max-width:860px), (orientation:portrait) and (max-width:1024px){
+  .side{
+    position:absolute;left:0;top:0;bottom:0;z-index:20;
+    width:min(84vw,320px);flex-basis:auto;
+    transform:translateX(-102%);transition:transform .22s ease;
+    box-shadow:6px 0 22px rgba(74,59,85,.22);
+  }
+  .side.open{transform:translateX(0)}
+  .side.open .side-head{padding-top:calc(64px + var(--safe-t))}
+  .side-close{display:inline-flex}
+  .side-fab{display:flex}
+  .stage{padding-left:calc(8px + var(--safe-l))}
+  .hud{padding-left:0}
+  .board-wrap{padding-bottom:4px}
+  /* 盤面上方的留白拿來放即時排行（pointer-events:none，不會擋到敲擊） */
+  .livebar{
+    display:flex;position:absolute;z-index:7;pointer-events:none;
+    left:8px;right:8px;top:6px;justify-content:center;flex-wrap:wrap;gap:5px;
+  }
+}
+
+/* 手機橫向：高度很矮，HUD 壓扁；盤面列欄不變，只會縮小 */
+@media (orientation:landscape) and (max-height:520px){
+  /* 橫向的留白在盤面左右，排行改成靠左一欄，不會壓到地洞 */
+  .livebar{left:6px;right:auto;top:6px;bottom:6px;width:min(26%,138px);
+    flex-direction:column;justify-content:flex-start;align-items:stretch}
+  .lchip .ln{max-width:100%}
+  .hud{padding-top:calc(4px + var(--safe-t));gap:7px}
+  .hud-time b,.hud-score b{font-size:1.15rem}
+  .hud-time,.hud-score{padding:2px 9px;min-width:64px}
+  .hud-stage,.hud-combo,.hud-buff{padding:3px 10px;font-size:.78rem}
+  .timebar{height:11px;margin:1px 0 3px}
+  .settings-fab{--d:4px;min-width:42px;min-height:42px;padding:6px 8px calc(6px + var(--d))}
+  .hud{padding-right:54px}
+}
+
+/* 窄螢幕的 HUD 只有一排的空間：階段標籤縮成「熱身／加速／狂亂」，
+   時間、階段、分數就不會被擠到第二排去，盤面也不會跟著上下跳。 */
+@media (max-width:560px){
+  .timebar{height:13px}
+  .hud-stage .stage-no{display:none}
+  .hud{gap:7px}
+}
+
+/* 很小的手機：字再縮一點，但按鈕命中區維持 44px 以上 */
+@media (max-width:400px){
+  :root{font-size:15px}
+  .home-btns .btn3d.big{font-size:1.05rem;min-height:62px}
+  .panel{padding:14px 12px 28px}
+  .modal-card{border-radius:20px}
+  .hud-time,.hud-score{min-width:60px;padding:3px 8px}
+  .hud-time b,.hud-score b{font-size:1.2rem}
+  /* 連擊牌冒出來時 HUD 不要被擠成兩排，盤面才不會上下跳 */
+  .hud-combo,.hud-buff{padding:3px 8px;font-size:.74rem}
+  .hud-stage{padding:4px 10px;font-size:.8rem}
+}
+
+/* 超寬桌機：側欄不要跟著變胖，盤面也不要無限放大到看不出焦點 */
+@media (min-width:1600px){
+  :root{--side-w:232px}
+  /* 不讓盤面無限放大到一個地洞比臉還大，但也別浪費太多空間 */
+  .board{max-width:1500px}
+  .board-wrap{padding:0 2vw}
+}
+
+/* 尊重系統的「減少動態」設定；遊戲設定裡也有一份可以手動關 */
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  #bgdeco{display:none}
+}
+body.reduce-motion #bgdeco{display:none}
+body.reduce-motion .mole-slot{transition:none}
+body.reduce-motion .hole.shake,body.reduce-motion .mole-slot.leaving{animation:none}
+
+/* ================================================================
+ * 手機軟體鍵盤修正（js/keyboard.js 量測後寫入 --app-h／--kb）
+ * 鍵盤彈出時把滿版高度改成「真正看得到的高度」，聊天室輸入框才不會
+ * 被鍵盤蓋住；沒有鍵盤時兩個變數都不生效，版面與原本完全一樣。
+ * ================================================================ */
+#app{height:var(--app-h,100%);min-height:var(--app-h,100dvh)}
+
+/* 版面用 user-select:none 防拖曳，但可輸入的欄位一定要能選字 */
+input,textarea,select{user-select:text;-webkit-user-select:text}
+
+/* iOS 對 font-size < 16px 的欄位聚焦時會自動放大整頁，放大後輸入框常被推出畫面 */
+@media (pointer:coarse){
+  .chatbar .field,.chat-form input,.chatform input,
+  #chat-input,#chatInput,#room-chatinput,#game-chatinput{font-size:16px}
+}
+
+/* Global language and settings controls remain reachable at every viewport size. */
+.lang-toggle { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: calc(70px + env(safe-area-inset-right)); min-width: 48px; min-height: 48px; padding: 8px; border: 2px solid #4a3b55; border-radius: 14px; background: #fff0de; color: #4a3b55; font: 800 16px/1.2 system-ui, sans-serif; cursor: pointer; box-shadow: 0 4px 0 #cfb99f; z-index: 1001; }
+.lang-toggle:focus-visible { outline: 3px solid #287dac; outline-offset: 3px; }
+.settings-fab { min-width: 48px; min-height: 48px; }
+.panel-head h2, .setrow label, .seatrow .nm, .rmeta { min-width: 0; overflow-wrap: anywhere; }
+.settings-card, .panel { max-width: 100%; box-sizing: border-box; }
+html[lang="en"] .home-title, html[lang="en"] h1 { overflow-wrap: anywhere; }
+
+@media(max-width:600px) { .hud { padding-right: 116px; flex-wrap: nowrap; height: auto; } }
+
+
+/* =====================================================================
+ * 2026-10 加強：地鼠動畫、階段橫幅、倒數條與連擊條、頒獎台結算、暫停選單、戰績與成就
+ * ===================================================================== */
+
+/* ---- 時間條：最後 10 秒轉紅 ---- */
+.timebar span.low{background:linear-gradient(90deg,#FF8A8A,var(--danger));animation:barpulse .5s ease-in-out infinite alternate}
+@keyframes barpulse{from{filter:brightness(1)}to{filter:brightness(1.25)}}
+.board-wrap.urgent::after{
+  content:"";position:absolute;inset:0;z-index:7;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 38px 6px rgba(210,68,79,.42);animation:urgentglow .9s ease-in-out infinite alternate;
+}
+@keyframes urgentglow{from{opacity:.35}to{opacity:1}}
+
+/* ---- 連擊條（寬度固定預留，冒出來不會讓盤面上下跳） ---- */
+.comborow{display:flex;align-items:center;gap:8px;flex:0 0 auto;height:26px;margin:0 0 4px;overflow:hidden}
+.comborow .hud-combo,.comborow .hud-buff{flex:0 0 auto;padding:0 10px;border-width:2.5px;font-size:.76rem;line-height:1.55;white-space:nowrap}
+.comborow .hud-combo b{font-size:.9rem}
+.combobar{position:relative;flex:1 1 auto;min-width:40px;height:10px;margin:0;border:2px solid var(--ink);border-radius:999px;
+  background:var(--paper);overflow:hidden}
+.combobar span{position:absolute;left:0;top:0;bottom:0;width:0;background:#BDE8C8;transition:width .16s ease-out,background .2s}
+.combobar i{position:absolute;top:0;bottom:0;width:2px;background:rgba(74,59,85,.35)}
+.combobar i:nth-of-type(1){left:20%}.combobar i:nth-of-type(2){left:40%}
+.combobar i:nth-of-type(3){left:60%}.combobar i:nth-of-type(4){left:80%}
+.combobar.t1 span{background:var(--lemon-d)}
+.combobar.t2 span{background:#FFB84D}
+.combobar.t3 span{background:var(--peach-d)}
+.combobar.t4 span{background:var(--rose-d)}
+.combobar.t5 span{background:linear-gradient(90deg,#FF8FA3,#FFD65C,#7ED9A8,#8FC5F5,#B79BE8)}
+.combobar.broke{animation:combobroke .4s}
+.combobar.broke span{background:var(--danger)}
+@keyframes combobroke{20%,60%{transform:translateX(-3px)}40%,80%{transform:translateX(3px)}}
+
+/* ---- 階段橫幅 ---- */
+.stage-banner{
+  position:absolute;left:50%;top:clamp(6px,2%,14px);z-index:11;box-sizing:border-box;
+  transform:translate(-50%,-170%);max-width:calc(100% - 20px);
+  padding:6px 18px;border:3.5px solid var(--ink);border-radius:999px;background:var(--lemon);
+  font-weight:900;font-size:clamp(.85rem,2.8vmin,1.5rem);line-height:1.25;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;box-shadow:0 5px 0 rgba(74,59,85,.25);
+  animation:bannerIn 1.8s ease both;
+}
+.stage-banner.s3{background:var(--peach)}
+@keyframes bannerIn{
+  0%{transform:translate(-50%,-170%)}14%{transform:translate(-50%,10%)}20%{transform:translate(-50%,0)}
+  82%{transform:translate(-50%,0)}100%{transform:translate(-50%,-170%)}
+}
+
+/* ---- 被打到：暈眩星星、被打扁的殘影、晃動 ---- */
+.hit-stars{position:absolute;left:50%;top:1%;width:64%;z-index:6;pointer-events:none;
+  transform:translateX(-50%);animation:starsin .75s ease-out forwards}
+.hit-stars .stars-svg{display:block;width:100%;height:auto;animation:starwig .36s ease-in-out 2}
+@keyframes starsin{0%{opacity:0;transform:translate(-50%,30%)}20%{opacity:1;transform:translate(-50%,0)}78%{opacity:1}100%{opacity:0;transform:translate(-50%,-18%)}}
+@keyframes starwig{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+.mole-slot.ghost{transition:none;will-change:auto;pointer-events:none}
+.ghost-in{width:100%;height:100%;transform-origin:50% 100%;animation:ghostsquash .6s ease-in forwards}
+@keyframes ghostsquash{
+  0%{transform:scale(1,1)}
+  16%{transform:scale(1,.5)}
+  55%{transform:scale(1,.55);opacity:1}
+  100%{transform:translateY(118%) scale(1,.5);opacity:0}
+}
+.mole-svg.stun{transform-origin:50% 100%;animation:stun .32s ease-in-out}
+@keyframes stun{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}50%{transform:rotate(7deg)}75%{transform:rotate(-3deg)}}
+
+/* ---- 暫停 ---- */
+#b-pause{flex:0 0 auto}
+.pausecard{width:min(100%,320px)}
+.ovbtns.col{flex-direction:column;align-items:stretch}
+.ovbtns.col .btn3d{flex:0 0 auto;width:100%}
+
+/* ---- 結算：頒獎台 + 本局統計 ---- */
+.ovcard{scrollbar-width:thin;scrollbar-color:var(--grape-d) transparent}
+.ovcard::-webkit-scrollbar{width:9px}
+.ovcard::-webkit-scrollbar-thumb{background:var(--grape-d);border-radius:999px;border:2px solid var(--paper)}
+.ovcard.wide .trophy{display:none}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:2px 0 10px}
+.pod{flex:1 1 0;min-width:0;max-width:150px;display:flex;flex-direction:column;text-align:center}
+.pod-who{padding:0 2px 6px;min-width:0}
+.pod-you{display:block;width:fit-content;margin:0 auto 2px;padding:0 8px;border:2px solid var(--ink);border-radius:999px;
+  background:var(--grape);font-size:.66rem;font-weight:800;line-height:1.35}
+.pod-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;font-weight:800;
+  font-size:.82rem;line-height:1.2;overflow-wrap:anywhere}
+.pod-score{display:block;font-size:1.25rem;line-height:1.15;font-variant-numeric:tabular-nums}
+.pod-block{display:flex;align-items:center;justify-content:center;height:var(--ph,60px);
+  border:3px solid var(--ink);border-top:8px solid var(--who,var(--grape-d));border-radius:12px 12px 0 0;
+  background:var(--cream);transform-origin:50% 100%}
+.pod.p1{--ph:96px}.pod.p1 .pod-block{background:var(--lemon)}
+.pod.p2{--ph:70px}.pod.p3{--ph:52px}
+.pod.me .pod-block{box-shadow:0 0 0 3px var(--grape-d)}
+.medal{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:3px solid var(--ink);
+  font-style:normal;font-weight:900;font-size:.95rem;background:#E3E7EE}
+.medal.m1{background:#FFD65C}.medal.m3{background:#E8A87C}
+.podium.fresh .pod-block{animation:podrise .55s cubic-bezier(.2,1.25,.4,1) both}
+.podium.fresh .p3 .pod-block{animation-delay:.05s}.podium.fresh .p2 .pod-block{animation-delay:.2s}.podium.fresh .p1 .pod-block{animation-delay:.38s}
+.podium.fresh .pod-who{animation:podwho .4s ease-out both}
+.podium.fresh .p3 .pod-who{animation-delay:.3s}.podium.fresh .p2 .pod-who{animation-delay:.45s}.podium.fresh .p1 .pod-who{animation-delay:.65s}
+@keyframes podrise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes podwho{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.resrow.me{outline:3px solid var(--grape-d);outline-offset:-1px}
+.rstats{margin-top:12px;border:2.5px solid var(--ink);border-radius:16px;background:#fff;padding:10px 12px}
+.rstats h4{margin:0 0 8px;font-size:.95rem;text-align:center}
+.rgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.rcell{border:2px solid var(--line);border-radius:12px;background:var(--paper);padding:6px 4px;text-align:center;min-width:0}
+.rcell b{display:block;font-size:1.15rem;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rcell span{display:block;font-size:.7rem;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rcell.warn b{color:var(--danger)}
+.rkinds{margin-top:10px}
+.rlbl{display:block;font-size:.74rem;font-weight:800;color:var(--ink-soft);margin-bottom:5px}
+.kindrow{display:flex;flex-wrap:wrap;gap:6px}
+.kind{display:inline-flex;align-items:center;gap:3px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);
+  padding:1px 8px 1px 2px;font-size:.72rem;white-space:nowrap}
+.kind.good{border-color:var(--danger);background:var(--danger-bg)}
+.kind-svg{width:30px;height:30px;display:block}
+.rnone{font-size:.78rem;color:var(--ink-soft)}
+.rnew{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-top:10px}
+.rnew[hidden]{display:none}
+.newbest{border:2.5px solid var(--ink);border-radius:999px;background:var(--lemon);padding:1px 12px;font-weight:900;font-size:.82rem;white-space:nowrap}
+.newbadge{display:inline-flex;align-items:center;gap:6px;border:2.5px solid var(--ink);border-radius:999px;background:var(--paper);
+  padding:2px 12px 2px 4px;font-size:.8rem;white-space:nowrap;animation:badgepop .5s cubic-bezier(.2,1.4,.4,1) both}
+.newbadge .badge-svg{width:30px;height:30px}
+@keyframes badgepop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+
+/* ---- 戰績畫面：各難度紀錄與成就徽章 ---- */
+.reclist{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.reccard{border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:10px 12px;min-width:0}
+.reccard h4{margin:0 0 6px;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recrow{display:flex;justify-content:space-between;gap:8px;font-size:.78rem;padding:2px 0}
+.recrow span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-soft)}
+.recrow b{flex:0 0 auto;font-variant-numeric:tabular-nums}
+.recnone{margin:0;font-size:.78rem;color:var(--ink-soft)}
+.badgegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.badgecell{display:flex;gap:10px;align-items:center;border:3px solid var(--ink);border-radius:18px;background:var(--paper);padding:8px 10px;min-width:0}
+.badgecell.locked{background:#F3EFF7}
+.bpic{flex:0 0 52px}
+.badge-svg{width:52px;height:52px;display:block}
+.btxt{min-width:0}
+.btxt b{display:block;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btxt span{display:block;font-size:.74rem;color:var(--ink-soft);line-height:1.4}
+.badgecell.locked .btxt b{color:var(--ink-soft)}
+
+/* 手機橫向：結算改左右兩欄（頒獎台｜統計），不必一直捲 */
+@media (orientation:landscape) and (max-height:560px){
+  .ovcard.wide{width:min(100%,780px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:14px;align-items:start;padding:12px 14px}
+  .ovcard.wide .trophy{display:none}
+  .ovcard.wide h3{grid-column:1/-1;margin-bottom:6px}
+  .ovcard.wide .resulttable{grid-column:1}
+  .ovcard.wide .rstats{grid-column:2;margin-top:0;padding:8px 10px}
+  .ovcard.wide .ovbtns{grid-column:1/-1;margin-top:8px}
+  .pod.p1{--ph:70px}.pod.p2{--ph:52px}.pod.p3{--ph:40px}
+  .stage-banner{padding:3px 14px;border-width:3px}
+}
+
+/* 窄手機：統計格與橫幅再縮一點，仍然單行不斷字 */
+@media (max-width:400px){
+  .pod-name{font-size:.74rem}
+  .pod-score{font-size:1.1rem}
+  .rcell b{font-size:1.02rem}
+  .rcell span{font-size:.64rem}
+  .stage-banner{padding:5px 12px}
+  .podium{gap:5px}
+}
+
+body.reduce-motion .stage-banner{animation:none;transform:translate(-50%,0)}
+body.reduce-motion .board-wrap.urgent::after,body.reduce-motion .timebar span.low,
+body.reduce-motion .podium.fresh .pod-block,body.reduce-motion .podium.fresh .pod-who,
+body.reduce-motion .newbadge,body.reduce-motion .combobar.broke{animation:none}
+
+/* 矮螢幕（手機直向小機型、橫向）：結算卡片再壓緊，讓頒獎台、統計與三顆按鈕盡量一次看完 */
+@media (max-height:720px){
+  .ovcard.wide .trophy{display:none}
+  .ovcard.wide{padding:12px 14px}
+  .ovcard.wide h3{font-size:1.1rem;margin-bottom:6px}
+  .pod.p1{--ph:74px}.pod.p2{--ph:54px}.pod.p3{--ph:40px}
+  .podium{margin-bottom:8px}
+  .rstats{margin-top:8px;padding:8px 10px}
+  .ovcard.wide .ovbtns{margin-top:8px}
+  .ovcard.wide .ovbtns .btn3d{--d:5px;min-height:44px;padding:7px 10px calc(7px + var(--d));font-size:.92rem}
+}
+@media (orientation:landscape) and (max-height:560px){
+  .ovcard.wide{padding:8px 12px}
+  .ovcard.wide h3{font-size:1rem;margin-bottom:4px}
+  .pod.p1{--ph:52px}.pod.p2{--ph:38px}.pod.p3{--ph:28px}
+  .medal{width:24px;height:24px;font-size:.8rem;border-width:2.5px}
+  .pod-block{border-top-width:6px}
+  .pod-score{font-size:1.05rem}
+  .rstats{padding:6px 8px}
+  .rstats h4{margin-bottom:5px;font-size:.85rem}
+  .rkinds{margin-top:6px}
+  .kind-svg{width:24px;height:24px}
+  .ovcard.wide .ovbtns{margin-top:6px}
+  .ovcard.wide .ovbtns .btn3d{min-height:40px;padding:4px 10px calc(4px + var(--d));font-size:.88rem}
+  .overlay{padding:6px}
+}
+
+
+/* =====================================================================
+ * 美化頒獎台：聚光燈、立體階梯、頭像與皇冠、彩帶
+ * ===================================================================== */
+.podium{position:relative;isolation:isolate;padding-top:6px;margin:0 0 12px;gap:6px}
+.podium::before{
+  content:"";position:absolute;z-index:-1;left:0;right:0;top:-4px;bottom:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 46% 80% at 50% 78%,rgba(255,226,120,.62),rgba(255,226,120,0) 70%),
+    repeating-conic-gradient(from 0deg at 50% 100%,rgba(255,236,160,.0) 0deg 9deg,rgba(255,236,160,.26) 9deg 18deg);
+  -webkit-mask-image:radial-gradient(ellipse 60% 100% at 50% 100%,#000 40%,transparent 78%);
+  mask-image:radial-gradient(ellipse 60% 100% at 50% 100%,#000 40%,transparent 78%);
+  border-radius:20px;
+}
+.pod-floor{position:absolute;z-index:-1;left:4%;right:4%;bottom:-6px;height:12px;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%,rgba(74,59,85,.28),rgba(74,59,85,0) 70%)}
+.pod{--c1:#F4F6FA;--c2:#C9D0DC}
+.pod.g1{--c1:#FFEFA8;--c2:#FFC93C}
+.pod.g3{--c1:#F8D2B0;--c2:#DE9867}
+.pod-av{position:relative;width:var(--av,46px);aspect-ratio:1;margin:0 auto 2px;
+  filter:drop-shadow(0 3px 0 rgba(74,59,85,.18))}
+.pod.p1{--av:56px}
+.av-svg{width:100%;height:100%;display:block;overflow:visible}
+.pod-who{padding-bottom:5px}
+.pod-block{position:relative;overflow:hidden;border:3px solid var(--ink);border-top:0;border-radius:10px 10px 0 0;
+  background:linear-gradient(180deg,var(--c1),var(--c2));box-shadow:inset 0 -8px 0 rgba(74,59,85,.1)}
+.pod-block::before{content:"";position:absolute;left:0;right:0;top:0;height:9px;background:var(--who,var(--grape-d));
+  border-bottom:3px solid var(--ink);box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
+.pod-block::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.7) 48%,transparent 58%)}
+.pod-no{position:relative;margin-top:8px;font-style:normal;font-weight:900;font-size:1.9rem;line-height:1;color:var(--ink);
+  text-shadow:0 2px 0 rgba(255,255,255,.75),0 0 8px rgba(255,255,255,.5)}
+.pod.p1 .pod-no{font-size:2.3rem}
+.pod.p1{--ph:104px}.pod.p2{--ph:76px}.pod.p3{--ph:56px}
+.pod.me .pod-block{box-shadow:inset 0 -8px 0 rgba(74,59,85,.1),0 0 0 3px var(--grape-d)}
+.podium.fresh .pod-av{animation:avdrop .55s cubic-bezier(.3,1.5,.5,1) both}
+.podium.fresh .p3 .pod-av{animation-delay:.3s}.podium.fresh .p2 .pod-av{animation-delay:.45s}.podium.fresh .p1 .pod-av{animation-delay:.65s}
+.podium.fresh .g1 .pod-block::after{animation:podshine 1.1s ease-out 1.1s 1 both}
+@keyframes avdrop{from{opacity:0;transform:translateY(-26px) scale(.7)}to{opacity:1;transform:none}}
+@keyframes podshine{0%{opacity:1;transform:translateX(-80%)}100%{opacity:1;transform:translateX(80%)}}
+.confetti{position:absolute;inset:-6px 0 0;overflow:hidden;pointer-events:none;z-index:2}
+.confetti i{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;background:var(--c);transform:rotate(var(--r));
+  animation:confall 2.1s ease-in var(--d) both}
+@keyframes confall{0%{opacity:0;transform:translateY(0) rotate(var(--r))}10%{opacity:1}
+  100%{opacity:0;transform:translateY(190px) rotate(calc(var(--r) + 300deg))}}
+.medal{display:none}
+
+@media (max-height:720px){
+  .pod-av{--av:38px}.pod.p1{--av:46px}
+  .pod.p1{--ph:82px}.pod.p2{--ph:60px}.pod.p3{--ph:44px}
+  .pod-no{font-size:1.5rem;margin-top:6px}.pod.p1 .pod-no{font-size:1.8rem}
+}
+@media (orientation:landscape) and (max-height:560px){
+  .pod-av{--av:28px}.pod.p1{--av:34px}
+  .pod.p1{--ph:54px}.pod.p2{--ph:40px}.pod.p3{--ph:30px}
+  .pod-no{font-size:1.1rem;margin-top:4px}.pod.p1 .pod-no{font-size:1.3rem}
+  .pod-block::before{height:6px}
+  .pod-who{padding-bottom:3px}
+  .podium{margin-bottom:6px}
+}
+@media (max-width:400px){ .podium{gap:4px} }
+body.reduce-motion .podium.fresh .pod-av,body.reduce-motion .podium.fresh .g1 .pod-block::after,body.reduce-motion .confetti i{animation:none}
+body.reduce-motion .confetti{display:none}
+
+/* 小手機（360×640 等）：結算卡片再壓緊，讓頒獎台、統計與按鈕不必捲動就看得到 */
+@media (max-height:700px) and (max-width:420px){
+  .ovcard.wide{padding:10px 12px}
+  .ovcard.wide h3{margin-bottom:4px}
+  .pod.p1{--ph:68px}.pod.p2{--ph:50px}.pod.p3{--ph:36px}
+  .podium{margin-bottom:6px}
+  .rstats h4{display:none}
+  .rstats{margin-top:6px;padding:7px 9px}
+  .rkinds{margin-top:6px}
+  .rnew{margin-top:6px}
+}
+
+@media (orientation:landscape) and (max-height:560px){
+  .comborow{height:22px;margin-bottom:3px}
+  .combobar{height:7px}
+  .comborow .hud-combo,.comborow .hud-buff{font-size:.7rem;line-height:1.4}
+  .ovcard.wide .resulttable{grid-column:1;grid-row:2}
+  .ovcard.wide .rnew{grid-column:1;grid-row:3;align-self:center}
+  .ovcard.wide .rstats{grid-column:2;grid-row:2}
+  .ovcard.wide .ovbtns{grid-column:2;grid-row:3;margin-top:6px;flex-wrap:nowrap;gap:6px}
+  .ovcard.wide .ovbtns .btn3d{flex:1 1 0;min-width:0;min-height:44px;padding:3px 6px calc(3px + var(--d));font-size:.82rem}
+}
+
+/* HUD 永遠一排、高度固定：階段標籤吸收長短差異（過長才省略），盤面不會因為字變長或分數位數變多而上下跳。
+   連擊／加倍牌已移到時間條下方專用的一列（.comborow），不再擠進 HUD。 */
+.hud-stage{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+.hud-time,.hud-score{flex:0 0 auto}
+@media (max-width:600px){ .hud{padding-right:112px} }
+@media (max-width:400px){
+  .hud{gap:5px;padding-right:110px}
+  .hud-time,.hud-score{min-width:52px;padding:3px 6px}
+  .hud-stage{padding:4px 8px;font-size:.74rem}
+}
+
+/* 手機橫向：結算右欄（統計＋按鈕）再壓一點，三顆按鈕不被切掉 */
+@media (orientation:landscape) and (max-height:560px){
+  .ovcard.wide{padding:6px 12px}
+  .ovcard.wide h3{margin-bottom:2px}
+  .rstats h4{display:none}
+  .rnew{margin-top:0}
+  .rstats{padding:6px 8px}
+}
+
+/* 手機橫向（寬度夠）：連擊條＋連擊／加倍牌浮在 HUD 右側的空位，不再另外占一列高度，盤面才不會被擠矮 */
+@media (orientation:landscape) and (max-height:560px) and (min-width:760px){
+  .stage{position:relative}
+  .comborow{position:absolute;z-index:3;top:calc(4px + var(--safe-t));left:420px;right:122px;height:44px;margin:0}
+}
+
+/* 手機橫向（寬度 640～759）：階段標籤收成短版、連擊條浮到 HUD 右側空位，同樣不另占一列 */
+@media (orientation:landscape) and (max-height:560px) and (min-width:640px) and (max-width:759px){
+  .hud-stage .stage-no{display:none}
+  .stage{position:relative}
+  .comborow{position:absolute;z-index:3;top:calc(4px + var(--safe-t));left:300px;right:122px;height:44px;margin:0}
+}
+
+/* 小手機直向（360×640 等）：結算卡片再壓緊，且三顆按鈕固定貼在卡片底部，
+   即使「新紀錄／新成就」讓內容變長需要捲動，按鈕也永遠看得到 */
+@media (max-width:420px) and (orientation:portrait){
+  .ovcard.wide .ovbtns{position:sticky;bottom:-16px;z-index:2;margin:8px -16px -16px;padding:8px 16px 16px;
+    background:linear-gradient(180deg,rgba(255,253,248,0),var(--paper) 14px);border-radius:0 0 20px 20px}
+}
+@media (max-height:700px) and (max-width:420px){
+  .ovcard.wide h3{font-size:1rem;margin-bottom:2px}
+  .rcell{padding:4px 3px}
+  .rcell b{font-size:.98rem}
+  .kind-svg{width:24px;height:24px}
+  .rkinds{margin-top:4px}
+  .rlbl{margin-bottom:3px;font-size:.7rem}
+  .rnew{margin-top:5px;gap:6px}
+  .newbadge .badge-svg{width:24px;height:24px}
+  .newbest,.newbadge{font-size:.74rem}
+}
+
+@media (max-height:700px) and (max-width:420px){
+  .pod-av{--av:34px}.pod.p1{--av:40px}
+  .pod.p1{--ph:62px}.pod.p2{--ph:46px}.pod.p3{--ph:34px}
+}
+/* 超矮的手機橫向（高度 360 以下）：標題與「打過的地鼠」列先收起來，頒獎台、數字與三顆按鈕一屏看完 */
+@media (orientation:landscape) and (max-height:360px){
+  .ovcard.wide h3{display:none}
+  .ovcard.wide .rkinds{display:none}
+  .overlay{padding:4px}
+}
+
+@media (max-height:700px) and (max-width:420px){
+  .pod.p1{--ph:56px}.pod.p2{--ph:42px}.pod.p3{--ph:32px}
+  .pod-who{padding-bottom:3px}
+  .podium{margin-bottom:4px}
+}
+@media (orientation:landscape) and (max-height:360px){
+  .ovcard.wide .resulttable{grid-column:1;grid-row:2 / span 3}
+  .ovcard.wide .rnew{grid-column:2;grid-row:3;margin:4px 0 0}
+  .ovcard.wide .ovbtns{grid-column:2;grid-row:4;margin-top:4px}
+  .ovcard.wide .newbest,.ovcard.wide .newbadge{font-size:.7rem}
+}
+@media (orientation:landscape) and (max-height:360px){
+  .ovcard.wide .newbadge b{display:none}
+  .ovcard.wide .newbadge{padding:2px 4px}
+  .ovcard.wide .rnew{flex-wrap:nowrap;justify-content:flex-start}
+}
+
+/* ============================================================
+ * 槌子外觀：揮槌動畫、設定預覽、結算與戰績標題裝飾
+ * ============================================================ */
+.swing-ham{
+  position:absolute;pointer-events:none;z-index:7;display:block;
+  transform-origin:50% 90%;opacity:0;
+  animation:hamSwing .44s cubic-bezier(.3,.1,.3,1) forwards;
+}
+.swing-ham .hammer-svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 3px 2px rgba(60,40,90,.28))}
+.swing-ham .ham-shine{animation:hamShine .34s .1s ease-out 1 both}
+@keyframes hamSwing{
+  0%{transform:rotate(-62deg);opacity:1}
+  42%{transform:rotate(26deg);opacity:1}
+  58%{transform:rotate(18deg);opacity:1}
+  100%{transform:rotate(-20deg);opacity:0}
+}
+@keyframes hamShine{from{transform:translateX(0)}to{transform:translateX(110px)}}
+body.reduce-motion .swing-ham{display:none}
+
+/* 設定裡的選擇器 */
+.hamset{align-items:stretch}
+.hamset label{flex:1 1 100%}
+.hamstage{
+  position:relative;flex:0 0 112px;height:96px;margin:0;padding:0;border:3px solid var(--ink,#4a3a66);
+  border-radius:16px;background:linear-gradient(#DDF3FF,#C9EBD6);cursor:pointer;overflow:hidden;
+  font:inherit;color:inherit;-webkit-tap-highlight-color:transparent;
+}
+.hamstage:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.hamhole{position:absolute;left:50%;bottom:10px;width:70px;height:22px;margin-left:-35px;border-radius:50%;background:#7A5A3C;box-shadow:inset 0 5px 0 rgba(0,0,0,.25)}
+.hamidle{position:absolute;left:50%;top:4px;width:70px;height:70px;margin-left:-35px;transform:rotate(-14deg);pointer-events:none}
+.hamidle .hammer-svg{width:100%;height:100%;display:block}
+.hamstage.swinging .hamidle{visibility:hidden}
+.hamstage .swing-ham{left:50%;top:4px;width:70px;height:70px;margin-left:-35px}
+.hamtry{position:absolute;left:0;right:0;bottom:1px;text-align:center;font-size:.62rem;font-weight:800;color:var(--ink-soft);white-space:nowrap;pointer-events:none}
+.hamopts{flex:1 1 0;min-width:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.hamopt{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:68px;
+  padding:4px 2px;border:3px solid transparent;border-radius:14px;background:rgba(255,255,255,.55);
+  font:inherit;font-size:.74rem;font-weight:800;color:inherit;cursor:pointer;
+}
+.hamopt .hammer-svg{width:40px;height:40px;display:block;flex:none}
+.hamopt span{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.hamopt.on{border-color:var(--grape-d);background:#fff}
+.hamopt:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.hamset .ham-shine{animation:hamShine 2.6s ease-in-out infinite}
+@media (max-width:420px){
+  .hamstage{flex:1 1 100%}
+  .hamopts{flex:1 1 100%}
+}
+
+/* 結算與戰績標題前的小槌子（圖由 app.js 依目前款式寫進 --ham-deco） */
+#ov-result-title::before,#s-stats .panel-head h2::before{
+  content:"";display:inline-block;width:1.3em;height:1.3em;vertical-align:-.28em;margin-right:.25em;
+  background:var(--ham-deco,none) center/contain no-repeat;
+}
+
+/* 結算按鈕：文字不准斷行，窄的時候縮字級而不是換行 */
+.ovcard.wide .ovbtns .btn3d{white-space:nowrap;min-width:0;padding-left:8px;padding-right:8px}
+@media (max-width:420px){.ovcard.wide .ovbtns .btn3d{font-size:.86rem}}

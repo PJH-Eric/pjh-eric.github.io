@@ -1,0 +1,32 @@
+{
+  "zh-Hant": {
+    "name": "你畫我猜",
+    "summary": "單機自由畫畫、不限時也不計分；線上輪流當畫家，和朋友猜題搶分。",
+    "modes": [
+      "單機自由畫畫",
+      "線上房間",
+      "觀戰"
+    ],
+    "controls": "畫家用畫筆在畫布作畫，猜題者輸入答案"
+  },
+  "zh-Hans": {
+    "name": "你画我猜",
+    "summary": "单机自由画画、不限时也不计分；线上轮流当画家，和朋友猜题抢分。",
+    "modes": [
+      "单机自由画画",
+      "线上房间",
+      "观战"
+    ],
+    "controls": "画家用画笔在画布作画，猜题者输入答案"
+  },
+  "en": {
+    "name": "Draw & Guess",
+    "summary": "Draw freely solo with no timer or scoring, or take turns drawing and guessing with friends online.",
+    "modes": [
+      "Solo Free Drawing",
+      "Online Room",
+      "Spectate"
+    ],
+    "controls": "The artist draws on the canvas; guessers type their answers"
+  }
+}

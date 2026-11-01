@@ -1,0 +1,130 @@
+/* ===== config.js — 全站唯一的 server URL 設定入口 =====
+ *
+ * 遊戲的連線位置只能從這裡拿。app.js、online.js、測試都不可以自己寫死網址。
+ *
+ * 解析優先序：
+ *   1. 網址參數 ?server=https://example.com   （臨時覆蓋，方便測 staging 或跨電腦連線）
+ *   2. 建置時注入（scripts/inject-server-url.js 會改寫下面 INJECTED 那一行；
+ *      GitHub Pages 的自動佈署就是用 repo 變數 GAME_SERVER_URL 注入到這裡）
+ *   3. 頁面本身就是伺服器發出來的（http/https 且不是 file://）→ 用同源
+ *   4. 都不是 → null，代表只能玩單機
+ *
+ * 規則：必須是 http/https 的絕對網址；頁面走 https 時不接受 http（瀏覽器會擋混合內容）。
+ * 格式不合會被擋下並記錄在 Config.error，不會靜默回退到 localhost 或任何寫死的網域。
+ */
+(function (w) {
+  'use strict';
+
+  /* GAME_SERVER_URL:BEGIN 這一行由 scripts/inject-server-url.js 改寫，請勿更動格式 */
+  var INJECTED = '';
+  /* GAME_SERVER_URL:END */
+
+  /**
+   * 純函式：決定最後要用哪個 server URL。測試直接呼叫這一支。
+   * @param {string} injected      建置時注入的值
+   * @param {string} queryValue    ?server= 的值
+   * @param {string} pageProtocol  'https:' | 'http:' | 'file:'
+   * @param {string} pageOrigin    同源回退用的 location.origin
+   */
+  function resolve(injected, queryValue, pageProtocol, pageOrigin) {
+    var raw = String(queryValue || injected || '').trim();
+    var source = queryValue ? 'query' : 'injected';
+
+    if (!raw) {
+      /* 頁面本來就是伺服器送出來的 → 直接連同一台，這是最常見的情況 */
+      if ((pageProtocol === 'http:' || pageProtocol === 'https:') && pageOrigin) {
+        return { url: String(pageOrigin).replace(/\/+$/, ''), source: 'same-origin', status: 'ok', error: null };
+      }
+      return { url: null, source: 'none', status: 'unset', error: null };
+    }
+
+    var parsed;
+    try {
+      parsed = new URL(raw);
+    } catch (e) {
+      return { url: null, source: source, status: 'invalid', error: { key: 'cfg.notUrl', params: { url: raw } } };
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { url: null, source: source, status: 'invalid', error: { key: 'cfg.badProtocol', params: { url: raw } } };
+    }
+    if (pageProtocol === 'https:' && parsed.protocol === 'http:') {
+      return { url: null, source: source, status: 'invalid', error: { key: 'cfg.mixedContent', params: { url: raw } } };
+    }
+    return {
+      url: parsed.origin + parsed.pathname.replace(/\/+$/, ''),
+      source: source,
+      status: 'ok',
+      error: null
+    };
+  }
+
+  function queryParam(search, key) {
+    var m = new RegExp('[?&]' + key + '=([^&]*)').exec(search || '');
+    if (!m) return '';
+    try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+  }
+
+  var loc = (typeof w.location === 'object' && w.location) ? w.location : { search: '', protocol: '', origin: '' };
+  var r = resolve(INJECTED, queryParam(loc.search, 'server'), loc.protocol, loc.origin);
+
+  if (r.status === 'invalid' && typeof console !== 'undefined' && console.warn) {
+    console.warn('[config] server URL is invalid, online play is disabled: ' + r.error.key + ' ' + r.error.params.url);
+  }
+
+  var Config = {
+    serverUrl: r.url,
+    /* 'unset' 只能單機 ｜ 'ok' 可連線 ｜ 'invalid' 設定錯誤（已停用線上） */
+    status: r.status,
+    /* 'none' ｜ 'same-origin' ｜ 'injected' ｜ 'query' */
+    source: r.source,
+    /* 設定錯誤時是 { key, params }（字典 key），前端用 I18N.t 翻譯；沒有錯誤是 null */
+    error: r.error,
+
+    isOnlineEnabled: function () { return r.status === 'ok'; },
+
+    /** 組出完整網址；沒有伺服器時回 null，呼叫端就知道要跳過 */
+    url: function (p) {
+      if (!Config.serverUrl) return null;
+      var s = String(p || '');
+      if (s && s.charAt(0) !== '/') s = '/' + s;
+      return Config.serverUrl + s;
+    },
+
+    /** 進場時帶的 ?room= / ?invite=，讓邀請連結可以直接開 */
+    entry: function () {
+      return {
+        room: (queryParam(loc.search, 'room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8),
+        invite: (queryParam(loc.search, 'invite') || '').replace(/[^a-f0-9]/gi, '').slice(0, 64)
+      };
+    },
+
+    /**
+     * 產生要分享出去的邀請連結。
+     * 以目前頁面的網址為基底，並保留 ?server=（跨電腦測試時很重要），
+     * 不在程式裡寫死任何網域。
+     */
+    inviteUrl: function (code, token) {
+      var base = loc.origin + (loc.pathname || '/');
+      var qs = ['room=' + encodeURIComponent(code), 'invite=' + encodeURIComponent(token)];
+      var passthrough = queryParam(loc.search, 'server');
+      if (passthrough) qs.push('server=' + encodeURIComponent(passthrough));
+      return base + '?' + qs.join('&');
+    },
+
+    /** 線上連線狀態列使用的一行說明 */
+    describe: function () {
+      var tr = function (k) { return w.I18N ? w.I18N.t(k) : k; };
+      if (Config.status === 'invalid') return tr('cfg.invalid');
+      if (!Config.serverUrl) return tr('cfg.unset');
+      var host = Config.serverUrl.replace(/^https?:\/\//, '');
+      var tag = Config.source === 'query' ? tr('cfg.srcQuery')
+        : (Config.source === 'injected' ? tr('cfg.srcInjected') : tr('cfg.srcSame'));
+      return host + tag;
+    },
+
+    /* 測試用：不依賴瀏覽器環境也能驗證解析規則 */
+    _resolve: resolve
+  };
+
+  w.GameConfig = Config;
+}(typeof window !== 'undefined' ? window : this));

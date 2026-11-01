@@ -1,0 +1,189 @@
+{
+  "_說明": "合法的測試改動白名單。每筆綁檔案 sha256，內容改動就失效；其餘測試檔只允許改 require/import 行。",
+  "files": {
+    "games/sudoku/scripts/online-check.js": {
+      "reason": "SSE 用戶端改為 WsEventSource（傳輸層統一）",
+      "sha256": "86690025181c63cc69ba65130d8e88d76b120d15173f658da9e9476017b57887"
+    },
+    "games/sudoku/tests/verify.js": {
+      "reason": "靜態斷言由 SSE 標頭改為 WebSocket 串流（傳輸層統一）",
+      "sha256": "70375a736b570a1e0a72c81fd88eddddd523f0e9fd79c66dc6d780a6330bd30d"
+    },
+    "games/whack-a-mole/scripts/settings-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "83637a6b8cff1baa04442944185d3df4f61228a4d5cfc834bc281dffa9bb35d0"
+    },
+    "games/amaze-go/scripts/check-countdown.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "bed4c9eaeaa25f2297ad7c35b098a192c5b6117c12c13618e51fd45dc1bd2a1c"
+    },
+    "games/amaze-go/scripts/check-expansion.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "5cb92f4feb98fcfd45ae9da468acf8c93a6ea3a433d4d64ffa248d2039a111af"
+    },
+    "games/amaze-go/scripts/check-initial-zoom.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "1bda9be92988d1a10d7d0079134cafb6c726e889dce8e4b8c19510d1aa55d371"
+    },
+    "games/amaze-go/scripts/check-levels.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "2f1b0daa7896822f984bb9ff4ca843f943b91606b38ce058f0ed2e8565d709de"
+    },
+    "games/amaze-go/scripts/check-random.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "fdb936c8eac4f01175087bcd5eeadb6a25a0475b1515375e0bc008c50c71d0b1"
+    },
+    "games/amaze-go/scripts/check-replay.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "3ea0c82b1ee33f598d774c8369763c864d14113ae400fc42e3523c9d52a267d3"
+    },
+    "games/bomb-squad/scripts/browser-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "c9f4c44741eab18a7ba98d03ba7578bfd1aceb7106c9dac3885e2be7838ee934"
+    },
+    "games/fruit-link/scripts/browser-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "fea6883ca2263143419421ac6f542f60b6cefba387ff41c8262e548fad71e5ff"
+    },
+    "games/heart-attack/scripts/rwd-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "c39f370c5a22fdd927d92d834c19cd607794ea7641fa1d21e4629d321800e64a"
+    },
+    "games/maze-roll/scripts/ball-shots.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "c1a3f0d540c10bf022d633ae795a608e4da0d923c98c7fb871052e438a766e62"
+    },
+    "games/maze-roll/scripts/e2e-local.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "87d46fa83807ac9ea1b2d84b3b0a3a03e92842ea87de6146a23829c93de0a371"
+    },
+    "games/maze-roll/scripts/e2e-online.js": {
+      "reason": "過時等待時間：第一位抵達終點後結算寬限為 10 秒，結算視窗等待由 10 秒改 20 秒（已併入上游最新版）",
+      "sha256": "76dc281c6c77141ce7a5887a77bf583ada5b310ab099752586dcbb1404aa3ecd"
+    },
+    "games/maze-roll/scripts/mapdbg.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "d59d6f992bf231e40e90a972587dc01c04420713712c10504ae3aaf3f0511e62"
+    },
+    "games/maze-roll/scripts/mapzoom.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "688dbb01d09d695b4ccaed66f5c4498584b31b2c464aec80e610caa73b96a060"
+    },
+    "games/maze-roll/scripts/mini-shots.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "0ecc97add0c1fe2b8903cfafede7d2367de25d944dab5694ce91cea688530aef"
+    },
+    "games/rainbow-bubble/scripts/browser-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "8fc29f83e214ccb171fab97d491e9b1d34dd7828062f4d879cc36d4b6a3ae305"
+    },
+    "games/rainbow-bubble/scripts/natural-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "dced5929f3e48e1c06dba1a3b717ec16f934b31591f4155086928942f0950997"
+    },
+    "games/rainbow-bubble/scripts/online-browser-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "ca79e7647cdda5f9bfa83b976afe0a645c99430f3679db6cfeb06fab5d7029dc"
+    },
+    "games/rainbow-bubble/scripts/quest-browser-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "6c942b09959f48e67bcf4ebf475b7a2680b1777de58d42ff9746698edcef29af"
+    },
+    "games/rainbow-bubble/scripts/timer-row-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "e3e3ce18859216f669d659dd09bdf13adc544d11d6e61691402ecc22e8efcaec"
+    },
+    "games/rainbow-bubble/tests/server.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "4df1ba69a8f2d7518ae1149b48e14c9b3e2be24b3b7b263fc1dbc6854c20981c"
+    },
+    "games/reversi/tests/browser-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "79bc1081346afe23e4c40ba8c211243203c3bf13c0c799c4bd2e59e74a393365"
+    },
+    "games/whack-a-mole/scripts/browser-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "96335d32d762ab76cd13daebb27d8a17aa10e1625aa934abfc8943b178523ee8"
+    },
+    "games/bomb-squad/scripts/layout-sweep.js": {
+      "reason": "過時步驟：規則面板簡化後已沒有「更多設定」按鈕，改為有才點",
+      "sha256": "b500199ad4a24fa85f1a0aa377e6635f14f493b54b929bc5925c63956392b44b"
+    },
+    "games/bomb-squad/scripts/layout-check.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "23866df06054913909780075af6036eb71b1547dc7dd0654bffd35702aee3eaa"
+    },
+    "games/bomb-squad/tests/layout.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "67e0380eedf3a8cffdd97e1752f57ecaa0529c590c505a89fc648c791dec807a"
+    },
+    "games/bomb-squad/tests/verify.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "fc7d046a7938f15aaf463959ed74849b34ff7fd886788f4c17fdf7d52ac52328"
+    },
+    "games/amaze-go/scripts/inject-seo.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
+    },
+    "games/draw-guess/scripts/inject-seo.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
+    },
+    "games/flip-match/scripts/inject-seo.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
+    },
+    "games/heart-attack/scripts/inject-seo.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
+    },
+    "games/house-stack/scripts/layout-audit.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "37b9364fda83cdac0194ca46f653110a6bf55b7c21e44891828bff1fc4ee9d7e"
+    },
+    "games/house-stack/scripts/screenshots.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "d6e12759820f5fa26d79fb2890fe647f1342af48b6cb470329edd46b31128513"
+    },
+    "games/house-stack/tests/i18n.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "f83b7844f28535c9746c171b6308ad7bf4804304414a1942a283c9f4b74d75cf"
+    },
+    "games/ice-duel/scripts/inject-seo.mjs": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "0a356bbfddd499460fd42b95b81bc72c8ad6e604d8eb971e98e4dd5c5994893e"
+    },
+    "games/shoot-balloon/scripts/inject-seo.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
+    },
+    "games/sudoku/scripts/inject-seo.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
+    },
+    "games/whack-a-mole/scripts/inject-seo.js": {
+      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
+    },
+    "games/pinball-hoops/tests/analytics.js": {
+      "reason": "移除線上遊戲後，改驗證舊房間、聊天室與觀戰事件不再送出",
+      "sha256": "cf54595a8bb672fc9dcb864c6bbe298689e33b3fbed1b15d0dc64439562ab5c9"
+    },
+    "games/pinball-hoops/tests/seo.js": {
+      "reason": "移除線上遊戲後，改驗證房間、邀請與觀戰遙測事件被拒絕",
+      "sha256": "4f3f813de34152832cc3bcc820bf7aa0696e4ea9e4d8722ba772d09bdd0aa362"
+    },
+    "games/pinball-hoops/tests/verify.js": {
+      "reason": "移除線上後端後，以單機與部署檢查取代房間服務測試，維持斷言數",
+      "sha256": "e93c6a893143829b5b87ce76bee866fa2c7b6621a90b3ef7eb8b264a194448ad"
+    },
+    "games/pinball-hoops/tests/i18n-hans.js": {
+      "reason": "移除觀戰後，刪除簡體翻譯測試中已無用途的觀戰人數範例",
+      "sha256": "e582e6ca291f9cf595c2d5869ec0c7af9e7426ff05b853518d4b3fa005496b29"
+    },
+    "games/pinball-hoops/tests/localization.js": {
+      "reason": "移除房間功能後，改用一般網址參數驗證語系連結保留行為",
+      "sha256": "27bd88cb274ba9a8bbede13fd0465bc039b51a6658c6af725b4ea6de9c3c9bb4"
+    }
+  }
+}

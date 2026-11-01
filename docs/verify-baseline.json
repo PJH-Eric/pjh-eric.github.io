@@ -1,0 +1,413 @@
+{
+  "amaze-go": {
+    "node tests/i18n.js": {
+      "count": null
+    },
+    "node tests/determinism.js": {
+      "count": null
+    },
+    "node tests/verify.js": {
+      "count": null
+    },
+    "node tests/hub.js": {
+      "count": null
+    },
+    "node scripts/online-check.js": {
+      "count": null
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "flip-match": {
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/verify.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    },
+    "node tests/online-check.js": {
+      "count": 11
+    }
+  },
+  "sudoku": {
+    "node tests/verify.js": {
+      "count": null
+    },
+    "node tests/i18n.js": {
+      "count": null
+    },
+    "node scripts/online-check.js": {
+      "count": null
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "maze-roll": {
+    "node tests/rules.test.js": {
+      "count": null
+    },
+    "node tests/hub.test.js": {
+      "count": null
+    },
+    "node scripts/online-check.js": {
+      "count": null
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/night.test.js": {
+      "count": null
+    },
+    "node tests/game.test.js": {
+      "count": null
+    },
+    "node tests/store.test.js": {
+      "count": null
+    },
+    "node tests/i18n.test.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    },
+    "node tests/seo.js": {
+      "count": null
+    }
+  },
+  "ice-duel": {
+    "npm install": {
+      "count": null
+    },
+    "tsc": {
+      "count": null
+    },
+    "vitest": {
+      "count": 47
+    },
+    "online-check": {
+      "count": 13
+    }
+  },
+  "snake-3d": {
+    "server::node tests/verify.js": {
+      "count": 29
+    },
+    "server::node tests/rooms.js": {
+      "count": 30
+    },
+    "server::node scripts/online-check.js": {
+      "count": null
+    }
+  },
+  "whack-a-mole": {
+    "node tests/verify.js": {
+      "count": 343
+    },
+    "node scripts/online-check.js": {
+      "count": 98
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "fruit-link": {
+    "node tests/verify.js": {
+      "count": 91
+    },
+    "node scripts/online-check.js": {
+      "count": 43
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "stair-kids": {
+    "node tests/verify.js": {
+      "count": 237
+    },
+    "node scripts/versus-audit-check.js": {
+      "count": 10
+    },
+    "node scripts/stairs-check.js": {
+      "count": 81
+    },
+    "node scripts/match-check.js": {
+      "count": 52
+    },
+    "node scripts/online-check.js": {
+      "count": 65
+    },
+    "node scripts/netcode-check.js": {
+      "count": 150
+    },
+    "node scripts/online-chat-check.js": {
+      "count": null
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    },
+    "node tests/ui-visuals.js": {
+      "count": 6
+    }
+  },
+  "draw-guess": {
+    "node tests/verify.js": {
+      "count": 327
+    },
+    "node scripts/online-check.js": {
+      "count": 124
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/words-i18n.js": {
+      "count": null
+    },
+    "node tests/reference.js": {
+      "count": null
+    },
+    "node tests/reference-coverage.js": {
+      "count": null
+    },
+    "node scripts/reference-lint.js all": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "heart-attack": {
+    "node tests/verify.js": {
+      "count": 35
+    },
+    "node tests/i18n.js": {
+      "count": 21
+    },
+    "node scripts/online-check.js": {
+      "count": 56
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "bomb-squad": {
+    "node tests/i18n.js": {
+      "count": 11
+    },
+    "node tests/verify.js": {
+      "count": 77
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/rooms.js": {
+      "count": 30
+    },
+    "node tests/server.js": {
+      "count": null
+    },
+    "node scripts/online-check.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "reversi": {
+    "node tests/verify.js": {
+      "count": 8
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "pinball-hoops": {
+    "node tests/verify.js": {
+      "count": 37
+    },
+    "node tests/i18n.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    }
+  },
+  "shoot-balloon": {
+    "node tests/verify.js": {
+      "count": 311
+    },
+    "node scripts/online-check.js": {
+      "count": 67
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    }
+  },
+  "house-stack": {
+    "node scripts/online-check.js": {
+      "count": 22
+    },
+    "node tests/i18n.js": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/seo.js": {
+      "count": null
+    },
+    "node tests/outage.js": {
+      "count": null
+    },
+    "node tests/verify.js": {
+      "count": 28
+    }
+  },
+  "pool-duel": {
+    "node scripts/verify-parallel.js": {
+      "count": 34
+    }
+  },
+  "rainbow-bubble": {
+    "node tests/verify.js": {
+      "count": 37
+    },
+    "node tests/i18n.js": {
+      "count": 2611
+    },
+    "node tests/rooms.js": {
+      "count": 48
+    },
+    "node tests/server.js": {
+      "count": null
+    },
+    "node tests/server-outage.cjs": {
+      "count": null
+    },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/localization.js": {
+      "count": null
+    },
+    "node tests/i18n-hans.js": {
+      "count": null
+    },
+    "node tests/quest.js": {
+      "count": 25
+    },
+    "node tests/quest-data.js": {
+      "count": 19
+    },
+    "node scripts/online-check.js": {
+      "count": null
+    },
+    "node scripts/netcode-check.js": {
+      "count": null
+    }
+  }
+}

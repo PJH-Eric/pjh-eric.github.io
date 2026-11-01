@@ -1,0 +1,8 @@
+{
+  "name": "@pjh/net-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "零依賴的 WebSocket 伺服器（RFC 6455）：訊息大小上限、來源檢查（verify）、續傳 frame 防呆",
+  "main": "ws.js",
+  "license": "MIT"
+}

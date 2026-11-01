@@ -1,0 +1,920 @@
+/* ===== online.js — 線上模式：連線、大廳、房間、觀戰、聊天 =====
+ *
+ * 規劃書 §6／§7.4。分工刻意切乾淨：
+ *   net.js     只管「同步」（預測、校正、內插），不碰 DOM
+ *   這一支      只管「畫面與操作」（大廳、房間、聊天）＋ 一條 WebSocket
+ *   app.js     只管「遊戲畫面」，透過下面的 callback 被通知該開打／該收局了
+ *
+ * 為什麼不把 UI 寫進 net.js：net.js 要能在 Node 裡被 netcode-check 直接跑。
+ */
+(function (root) {
+  'use strict';
+
+  const Net = root.Net;
+  const Rules = root.Rules;
+  const Render = root.Render;
+  const Characters = root.Characters;
+  const Nicknames = root.Nicknames;
+
+  /* 對局中保留自由輸入與短語；輸入框聚焦時，input.js 會讓文字輸入優先。 */
+  const PHRASES = ['加油！', '小心刺！', '厲害！', '等我一下', '再來一局', '哈哈哈'];
+  /* 多語系：I18N／ServerText 不在的環境（單元測試）退回原字串 */
+  const T = (k, p) => (root.I18N ? root.I18N.t(k, p) : k);
+  const SRV = x => (root.ServerText ? root.ServerText.translate(x) : x);
+
+  /* 結算至少留在畫面上多久（毫秒）。
+   * 伺服器的結算停留是 10 秒（rooms.js 的 RESULT_MS），正常情況下結算一結束就播，
+   * 等房間回到大廳時早就看夠了。這個下限是給「結算來得很晚」的情況用的 ——
+   * 沒有它的話結算會閃一下就被收掉。 */
+  const MIN_RESULT_MS = 4000;
+
+  const $ = (sel, root2) => (root2 || document).querySelector(sel);
+  const esc = t => String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  /** http(s):// → ws(s)://…/ws */
+  function wsUrl(httpUrl) {
+    if (!httpUrl) return null;
+    return String(httpUrl).replace(/^http/i, 'ws').replace(/\/+$/, '') + '/ws';
+  }
+
+  /**
+   * @param {object} opt
+   *   serverUrl   從 config.js 拿，不在這裡硬編碼
+   *   onMatchStart(info)  info = { spectating, meId }
+   *   onMatchEnd(result)
+   *   onBackToLobby()
+   *   onNotice(text, kind)
+   *   nameOf() / charOf()  目前的暱稱與角色（app.js 保管設定）
+   */
+  function create(opt) {
+    opt = opt || {};
+    const notice = (t, k) => { if (opt.onNotice) opt.onNotice(t, k); };
+    const statusText = {};
+
+    const els = {
+      lobbyStatus: $('#lobby-status'),
+      lobbyOnlineCount: $('#lobby-online-count'),
+      lobbyList: $('#lobby-list'),
+      lobbyEmpty: $('#lobby-empty'),
+      lobbyMe: $('#lobby-me'),
+      inviteJoin: $('#invite-join'),
+      inviteJoinForm: $('#invite-join-form'),
+      inviteJoinRoom: $('#invite-join-room'),
+      inviteNickname: $('#invite-nickname'),
+      btnInviteJoin: $('#btn-invite-join'),
+      inviteJoinHint: $('#invite-join-hint'),
+      btnQuick: $('#btn-quick'),
+      btnCreate: $('#btn-create'),
+      btnRefresh: $('#btn-refresh'),
+      btnReconnect: $('#btn-reconnect'),
+
+      roomTitle: $('#room-title'),
+      roomDiff: $('#room-diff'),
+      roomIdentity: $('#room-identity'),
+      roomNickname: $('#room-nickname'),
+      roomNicknameForm: $('#room-identity'),
+      btnRoomNickname: $('#btn-room-nickname'),
+      roomNicknameHint: $('#room-nickname-hint'),
+      roomSeats: $('#room-seats'),
+      roomSpecs: $('#room-specs'),
+      roomSpecsBlock: $('#room-specs-block'),
+      btnReady: $('#btn-ready'),
+      btnStart: $('#btn-start-online'),
+      btnSeat: $('#btn-take-seat'),
+      btnLeave: $('#btn-leave-room'),
+      btnInvite: $('#btn-invite'),
+      inviteBox: $('#invite-box'),
+      inviteLink: $('#invite-link'),
+      btnInviteCopy: $('#btn-invite-copy'),
+      btnInviteRevoke: $('#btn-invite-revoke'),
+      roomHint: $('#room-hint'),
+
+      chatList: $('#chat-list'),
+      chatForm: $('#chat-form'),
+      chatInput: $('#chat-input'),
+      chatPhrases: $('#chat-phrases'),
+
+      gameChat: $('#side-chat'),
+      gameChatList: $('#game-chat-list'),
+      gameChatPhrases: $('#game-chat-phrases'),
+      gameChatForm: $('#game-chat-form'),
+      gameChatInput: $('#game-chat-input')
+    };
+
+    const S = {
+      status: 'offline',          /* offline | connecting | online | error */
+      onlineCount: null,
+      socket: null,
+      client: null,
+      retries: 0,
+      retryTimer: 0,
+      wakeTimer: 0,
+      pendingInvite: null,        /* { token, roomId }，確認暱稱後才使用 */
+      inviteSubmitting: false,
+      nameMax: 8,
+      wantRoom: null,             /* 連上線之後要進的房號 */
+      inMatch: false,
+      resultShown: false,             /* 這一局的結算已經播給 app.js 了 */
+      resultAt: 0,                    /* 結算是什麼時候播的（決定還要不要多留幾秒） */
+      wrapped: false,                 /* 這一局已經收場（畫面已經離開結算） */
+      wantRematch: false,             /* 按過「再來一局」：回到房間就自動準備好 */
+      wrapTimer: 0,
+      spectating: false,
+      lastRoomPhase: null,
+      chatSeen: 0
+    };
+
+    /* ---------- 連線 ---------- */
+
+    function client() { return S.client; }
+
+    function setStatus(next, key) {
+      S.status = next;
+      if (next !== 'online') S.onlineCount = null;
+      paintOnlineCount();
+      if (next === 'online' && root.ServerOutage) root.ServerOutage.state('online');
+      S.statusKey = key || '';
+      if (els.lobbyStatus) {
+        els.lobbyStatus.textContent = T(key || ('lobby.status.' + next));
+        els.lobbyStatus.dataset.state = next;
+      }
+      if (els.btnReconnect) els.btnReconnect.hidden = next === 'online' || next === 'connecting';
+      const busy = next !== 'online';
+      for (const b of [els.btnQuick, els.btnCreate, els.btnRefresh]) if (b) b.disabled = busy;
+    }
+
+    function paintOnlineCount() {
+      if (!els.lobbyOnlineCount) return;
+      const count = S.onlineCount;
+      els.lobbyOnlineCount.hidden = !Number.isInteger(count) || S.status !== 'online';
+      els.lobbyOnlineCount.textContent = Number.isInteger(count) ? T('lobby.onlineCount', { n: count }) : '';
+    }
+
+    function connect(then) {
+      if (S.status === 'online') { if (then) then(); return; }
+      if (S.status === 'connecting') { if (then) S.afterConnect = then; return; }
+      const url = wsUrl(opt.serverUrl);
+      if (!url) {
+        setStatus('error', 'lobby.noServer');
+        return;
+      }
+      if (root.ServerOutage) root.ServerOutage.state('begin');
+      S.afterConnect = then || null;
+      setStatus('connecting');
+
+      let socket;
+      try { socket = new WebSocket(url); } catch (e) {
+        setStatus('error');
+        return;
+      }
+      S.socket = socket;
+
+      /* Render 免費方案會休眠，第一個人進來要等 30～60 秒冷啟動。
+       * 三秒還沒連上就把原因寫出來，不然使用者只會看到「連線中…」以為壞了。 */
+      clearTimeout(S.wakeTimer);
+      S.wakeTimer = setTimeout(() => {
+        if (S.status === 'connecting') {
+          setStatus('connecting', 'lobby.waking');
+        }
+      }, 3000);
+
+      /* Net 客戶端：送出動作走這條 socket，其他（預測、校正、內插）它自己處理 */
+      S.client = Net.createClient({
+        name: opt.nameOf ? opt.nameOf() : '',
+        char: opt.charOf ? opt.charOf() : 'yuan',
+        /* 這台裝置想看幾格（手機直向比較深）。連上線的第一則 hello 就帶著，
+         * 免得第一次開局時伺服器還不知道，整房照預設值開。 */
+        viewH: opt.viewHOf ? opt.viewHOf() : 0,
+        beforeStep: opt.beforeStep || null,
+        send(msg) {
+          if (socket.readyState === 1) {
+            socket.send(JSON.stringify(msg));
+            if (root.GameAnalytics) root.GameAnalytics.roomRequest(msg);
+          }
+        }
+      });
+
+      socket.onopen = () => {
+        S.retries = 0;
+        clearTimeout(S.wakeTimer);
+        setStatus('online');
+        /* 伺服器一連上就會送 hello，Net 收到會自己回 hello（帶暱稱與角色） */
+      };
+      socket.onmessage = ev => {
+        let msg = null;
+        try { msg = JSON.parse(ev.data); } catch (e) { return; }
+        if (root.GameAnalytics) root.GameAnalytics.roomResponse(msg.type, !!msg.room);
+        S.client.receive(msg);
+        afterMessage(msg);
+      };
+      socket.onclose = () => {
+        if (S.socket !== socket) return;
+        clearTimeout(S.wakeTimer);
+        S.socket = null;
+        const wasOnline = S.status === 'online';
+        setStatus('offline');
+        /* 斷線就是離開這間房：伺服器已經把座位標成離線（對局中還會判輸），
+         * 而重連會拿到一個新的身分，回不到原本的座位。所以本地也要把房間收掉 ——
+         * 留著只會讓畫面停在一間按什麼都沒反應的幽靈房間裡。 */
+        clearWrap();
+        const lostRoom = S.client && S.client.state.room ? S.client.state.room.id : null;
+        const wasInRoom = !!lostRoom;
+        /* 剛剛在哪一間房：重新連上就自動回去。手機切到別的 App、螢幕暗掉都會斷線，
+         * 伺服器那邊「等人」的房間會留 60 秒（rooms.js 的 EMPTY_GRACE_MS），
+         * 所以切回來通常還回得去 —— 回不去（房間真的收掉了）會收到錯誤訊息。 */
+        if (lostRoom && !S.inMatch) S.wantRoom = lostRoom;
+        if (S.inMatch) notice(T('net.lost.match'), 'bad');
+        else if (wasOnline && wasInRoom) notice(T('net.lost.room'), 'bad');
+        S.inMatch = false;
+        S.resultShown = false;
+        S.resultAt = 0;
+        S.wrapped = false;
+        S.wantRematch = false;
+        S.lastRoomPhase = null;
+        if (S.client) S.client.state.room = null;
+        renderRoom();
+        renderLobby();
+        if (wasInRoom && opt.onBackToLobby) opt.onBackToLobby();
+        /* 自動重試三次（越試越久），之後交給「重新連線」按鈕 */
+        if (wasOnline && S.retries < 3) {
+          S.retries++;
+          clearTimeout(S.retryTimer);
+          S.retryTimer = setTimeout(() => connect(), 600 * S.retries);
+        }
+      };
+      socket.onerror = () => { if (S.status === 'connecting') setStatus('error'); };
+    }
+
+    function disconnect() {
+      if (root.ServerOutage) root.ServerOutage.state('idle');
+      clearTimeout(S.retryTimer);
+      clearTimeout(S.wakeTimer);
+      clearWrap();
+      S.wantRoom = null;               /* 自己走的，就不要再自動回房間 */
+      S.retries = 99;
+      if (S.socket) { const s = S.socket; S.socket = null; try { s.close(); } catch (e) { /* 已經斷了 */ } }
+      S.client = null;
+      S.inMatch = false;
+      setStatus('offline');
+    }
+
+    /* ---------- 收到訊息之後：畫面該怎麼變 ---------- */
+
+    function afterMessage(msg) {
+      const c = S.client;
+      if (!c) return;
+
+      if (msg.type === 'welcome') {
+        S.nameMax = Number(msg.nameMaxLen) || S.nameMax;
+        /* 邀請連結先停在大廳讓使用者改暱稱；只有按確認才使用 token 加入。 */
+        if (S.wantRoom) { const r = S.wantRoom; S.wantRoom = null; c.actions.join(r, 'player'); }
+        if (S.afterConnect) { const f = S.afterConnect; S.afterConnect = null; f(); }
+        renderLobby();
+        return;
+      }
+      if (msg.type === 'rooms') {
+        S.onlineCount = Number.isInteger(msg.online) && msg.online >= 0 ? msg.online : null;
+        paintOnlineCount();
+        renderLobby();
+        return;
+      }
+      if (msg.type === 'error') {
+        S.inviteSubmitting = false;
+        notice(SRV(msg.text), 'bad');
+        renderLobby();
+        renderRoom();
+        return;
+      }
+      if (msg.type === 'notice') { notice(SRV(msg.text)); return; }
+      if (msg.type === 'kicked') { notice(T('net.kicked'), 'bad'); leaveToLobby(); return; }
+      if (msg.type === 'left') { leaveToLobby(); return; }
+      if (msg.type === 'invite') { renderRoom(); return; }
+
+      if (msg.type === 'joined' || msg.type === 'room') {
+        const room = c.state.room;
+        if (msg.type === 'joined' && S.pendingInvite) {
+          S.pendingInvite = null;
+          S.inviteSubmitting = false;
+        }
+        renderRoom();
+        renderChat();
+        if (msg.type === 'joined' && opt.onEnterRoom) opt.onEnterRoom(room);
+        checkPhase(room);
+        return;
+      }
+      if (msg.type === 'snap') {
+        checkPhase(c.state.room);
+        notifyMatchEnd();
+      }
+    }
+
+    const myId = () => (S.client ? S.client.state.me.id : null);
+
+    /** 房間的階段變了就通知 app.js 進／出遊戲畫面 */
+    function checkPhase(room) {
+      if (!room) return;
+      const c = S.client;
+      const prev = S.lastRoomPhase;
+      if (room.phase !== prev) {
+        S.lastRoomPhase = room.phase;
+        /* 新的一局：把上一局的收場狀態全部清乾淨 */
+        if (room.phase === 'playing') {
+          S.resultShown = false;
+          S.resultAt = 0;
+          S.wrapped = false;
+          S.wantRematch = false;
+          clearWrap();
+        }
+      }
+
+      /* ---- 開場 ---- */
+      /* 正好在結算階段才進來（重新整理、晚一步進房）也要進遊戲畫面，才看得到結果 */
+      const resultReady = room.phase === 'result' && !S.resultShown;
+      if (!S.inMatch && !S.wrapped && c.match && (room.phase === 'playing' || resultReady)) {
+        S.inMatch = true;
+        S.spectating = room.youAre !== 'player';
+        if (opt.onMatchStart) opt.onMatchStart({ spectating: S.spectating, meId: myId(), room: room });
+      }
+
+      /* ---- 收場 ---- */
+      /* 「房間回到大廳」是這一局結束的唯一信號，而伺服器只在階段變的時候推一次
+       * 房間狀態、回到大廳之後也不再推快照 —— 所以這一則訊息一定要處理完，
+       * 不能像以前那樣提前 return。漏掉就沒有下一次機會，畫面會永遠卡在上一局的
+       * 結算上，連下一局都開不起來（實測真的卡住過）。 */
+      if (room.phase === 'lobby' && prev && prev !== 'lobby') {
+        notifyMatchEnd();                 /* 結算還沒播過就補播（沒有結果就什麼都不做） */
+        const seen = S.resultShown ? Date.now() - S.resultAt : MIN_RESULT_MS;
+        if (seen >= MIN_RESULT_MS) wrapUp();
+        else scheduleWrap(MIN_RESULT_MS - seen);
+      }
+
+      /* 按過「再來一局」的人，一回到房間就自動幫他按好準備 ——
+       * 之後就跟原本開房間一模一樣：等對方也準備好，房主按開始。 */
+      if (room.phase === 'lobby' && S.wantRematch) {
+        S.wantRematch = false;
+        sendReady(room);
+      }
+    }
+
+    /** 還沒按準備的玩家就幫他按下去（不重複送） */
+    function sendReady(room) {
+      const c = S.client;
+      if (!c || !room) return;
+      const me = room.members && room.members.find(m => m.id === myId());
+      if (me && me.role === 'player' && !me.ready) c.actions.ready(true);
+    }
+
+    function notifyMatchEnd() {
+      const c = S.client;
+      if (!c || !c.state.result || S.resultShown || S.wrapped) return;
+      S.resultShown = true;
+      S.resultAt = Date.now();
+      S.inMatch = false;
+      if (opt.onMatchEnd) opt.onMatchEnd(c.state.result, myId());
+    }
+
+    function clearWrap() {
+      if (S.wrapTimer) clearTimeout(S.wrapTimer);
+      S.wrapTimer = 0;
+    }
+
+    function scheduleWrap(ms) {
+      clearWrap();
+      S.wrapTimer = setTimeout(() => { S.wrapTimer = 0; wrapUp(); }, Math.max(0, ms));
+    }
+
+    /** 這一局收場：叫 app.js 離開結算畫面（回房間等下一局，或回大廳） */
+    function wrapUp() {
+      clearWrap();
+      if (S.wrapped) return;
+      if (!S.inMatch && !S.resultShown) return;   /* 根本沒進過這一局，不用收場 */
+      S.wrapped = true;
+      S.inMatch = false;
+      renderRoom();
+      if (opt.onBackToLobby) opt.onBackToLobby();
+    }
+
+    function leaveToLobby() {
+      clearWrap();
+      S.wantRoom = null;               /* 被踢或自己離開：不要再自動回那間房 */
+      S.inMatch = false;
+      S.resultShown = false;
+      S.resultAt = 0;
+      S.wrapped = false;
+      S.wantRematch = false;
+      S.lastRoomPhase = null;
+      if (S.client) S.client.state.room = null;
+      renderRoom();
+      if (opt.onBackToLobby) opt.onBackToLobby();
+    }
+
+    /* ---------- 大廳 ---------- */
+
+    function cleanName(name) {
+      return String(name == null ? '' : name).replace(/\s+/g, ' ').trim().slice(0, S.nameMax);
+    }
+
+    function rememberName(name) {
+      if (opt.onNameChange) opt.onNameChange(name);
+      if (S.client) S.client.state.me.name = name;
+    }
+
+    function currentName() {
+      if (S.client && S.client.state.me.name) return S.client.state.me.name;
+      return opt.nameOf ? String(opt.nameOf() || '').trim() : '';
+    }
+
+    function renderLobby() {
+      const c = S.client;
+      if (els.lobbyMe && c) {
+        els.lobbyMe.innerHTML = Render.kidAvatarSvg(Characters.byId(c.state.me.char), 34) +
+          '<b>' + esc(c.state.me.name) + '</b>';
+      }
+      if (els.inviteJoin) {
+        const invite = S.pendingInvite;
+        els.inviteJoin.hidden = !invite;
+        if (invite) {
+          if (els.inviteJoinRoom) {
+            els.inviteJoinRoom.textContent = invite.roomId
+              ? T('invite.room', { id: invite.roomId })
+              : T('invite.roomNoId');
+          }
+          if (els.inviteNickname && document.activeElement !== els.inviteNickname) {
+            els.inviteNickname.value = currentName();
+          }
+          if (els.btnInviteJoin) els.btnInviteJoin.disabled = S.status !== 'online' ||
+            !c || S.inviteSubmitting;
+          if (els.inviteJoinHint) {
+            els.inviteJoinHint.textContent = S.inviteSubmitting
+              ? T('invite.joining')
+              : S.status === 'online' ? T('invite.canEdit')
+              : T('invite.waitConn');
+          }
+        }
+      }
+      if (!els.lobbyList) return;
+      const rooms = (c && c.state.rooms) || [];
+      els.lobbyList.innerHTML = rooms.map(r => {
+        const full = r.players >= r.seats;
+        const playing = r.phase !== 'lobby';
+        /* 四種一眼分得出來：等待中（可加入）／遊戲中（只能看）／滿席（只能看）／可觀戰（後兩者都有） */
+        const state = playing ? 'playing' : full ? 'full' : 'waiting';
+        const watchable = state !== 'waiting';
+        const label = playing ? T('lobby.tag.playing') : full ? T('lobby.tag.full') : T('lobby.tag.waiting');
+        const act = watchable ? T('lobby.act.watch') : T('lobby.act.join');
+        const role = watchable ? 'spectator' : 'player';
+        const dots = [];
+        for (let i = 0; i < r.seats; i++) dots.push('<i class="seat-dot p' + (i + 1) + (i < r.players ? ' on' : '') + '"></i>');
+        /* 整張卡都可以點（手指按整張卡比按右邊那顆小按鈕容易得多）。
+         * 裡面那顆按鈕留著當視覺提示，也留給鍵盤操作 —— 點按鈕時
+         * closest('[data-join]') 會先命中按鈕，行為一樣。 */
+        return '<li class="room-item state-' + state + '" data-join="' + esc(r.id) + '" data-role="' + role + '">' +
+          '<span class="room-state-ico">' + SvgUI.roomStateIcon(state) + '</span>' +
+          '<div class="room-item-main">' +
+            '<b>' + esc(SRV(r.name)) + '</b>' +
+            '<span class="room-meta">' + esc(T('lobby.meta', {
+              diff: root.ServerText ? root.ServerText.diffLabel(r.difficultyName) : r.difficultyName,
+              players: r.players, seats: r.seats, spectators: r.spectators
+            })) + '</span>' +
+            '<span class="room-seats" aria-hidden="true">' + dots.join('') +
+              '<span class="room-eye">' + SvgUI.eyeIcon(14) + r.spectators + '</span></span>' +
+          '</div>' +
+          '<div class="room-side">' +
+            '<span class="room-tag ' + state + '">' + (playing ? '<i class="live-dot"></i>' : '') + label + '</span>' +
+            (watchable ? '<span class="room-watchable">' + SvgUI.eyeIcon(12) + T('lobby.canWatch') + '</span>' : '') +
+            '<button class="mini-btn go ' + (watchable ? 'watch' : 'join') + '" type="button" data-join="' + esc(r.id) + '" ' +
+              'data-role="' + role + '">' + act + '</button>' +
+          '</div>' +
+        '</li>';
+      }).join('');
+      if (els.lobbyEmpty) els.lobbyEmpty.hidden = rooms.length > 0;
+    }
+
+    /* ---------- 房間 ---------- */
+
+    /* 兩位玩家各一個代表色（跟遊戲中的角色外框一致：玩家 1 藍、玩家 2 紅） */
+    const SEAT_COLOR = ['#4F86D6', '#F2545B'];
+    let readyPrev = null;               /* 上一次畫面上誰已準備；null＝剛進房、不放慶祝動畫 */
+    let readyRoomId = null;
+
+    function seatCard(m, room, iAmHost, idx, justReady) {
+      const tags = [];
+      if (m.host) tags.push('<span class="pill host">' + T('room.pill.host') + '</span>');
+      if (!m.connected) tags.push('<span class="pill off">' + T('room.pill.off') + '</span>');
+      if (m.ready) tags.push('<span class="pill ready">' + SvgUI.readyCheck(13) + T('room.pill.ready') + '</span>');
+      const color = SEAT_COLOR[idx % SEAT_COLOR.length];
+      return '<li class="seat p' + ((idx % 2) + 1) + (m.ready ? ' is-ready' : '') + (justReady ? ' just-ready' : '') +
+        (m.connected ? '' : ' is-off') + '">' +
+        '<div class="seat-face">' + Render.kidAvatarSvg(Characters.byId(m.char), 56, color) +
+          (m.ready ? '<span class="seat-ok">' + SvgUI.readyCheck(20) + '</span>' : '') + '</div>' +
+        '<div class="seat-body"><b>' + esc(m.name) + (m.id === myId() ? T('room.you') : '') + '</b>' +
+          '<div class="seat-tags"><span class="seat-no">P' + ((idx % 2) + 1) + '</span>' +
+            (tags.join('') || '<span class="pill wait">' + T('room.pill.wait') + '</span>') + '</div>' +
+        '</div>' +
+        (iAmHost && m.id !== myId() && room.phase !== 'playing'
+          ? '<button class="mini-btn danger" type="button" data-kick="' + esc(m.id) + '">' + T('room.kick') + '</button>'
+          : '') +
+        (justReady ? '<span class="seat-spark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>' : '') +
+      '</li>';
+    }
+
+    function renderRoom() {
+      const c = S.client;
+      const room = c && c.state.room;
+      if (!els.roomSeats) return;
+      if (!room) {
+        els.roomSeats.innerHTML = '';
+        if (els.roomTitle) els.roomTitle.textContent = T('room.title');
+        if (els.roomIdentity) els.roomIdentity.hidden = true;
+        return;
+      }
+      const iAmHost = !!room.isHost;
+      const seats = room.members.filter(m => m.role === 'player');
+      const specs = room.members.filter(m => m.role === 'spectator');
+      const me = room.members.find(m => m.id === myId());
+
+      if (els.roomTitle) els.roomTitle.textContent = SRV(room.name);
+      if (els.roomDiff) {
+        els.roomDiff.innerHTML = Rules.DIFFICULTY_LIST
+          .filter(id => Rules.DIFFICULTY[id].versus)
+          .map(id => '<button class="diff-btn' + (room.difficulty === id ? ' on' : '') +
+            '" type="button" data-diff="' + id + '"' + (iAmHost && room.phase === 'lobby' ? '' : ' disabled') +
+            '>' + T('diff.' + id) + '</button>').join('');
+      }
+      if (els.roomIdentity) els.roomIdentity.hidden = !me;
+      if (els.roomNickname && me && document.activeElement !== els.roomNickname) {
+        els.roomNickname.value = me.name || '';
+      }
+
+      const emptyIdx = seats.length;
+      const empty = '<li class="seat is-empty p' + ((emptyIdx % 2) + 1) + '"><div class="seat-face">' +
+        SvgUI.emptySeatArt(SEAT_COLOR[emptyIdx % SEAT_COLOR.length], 56) + '</div>' +
+        '<div class="seat-body"><b>' + T('room.emptySeat') + '</b>' +
+        '<div class="seat-tags"><span class="seat-no">P' + ((emptyIdx % 2) + 1) + '</span>' +
+        '<span class="pill wait">' + T('room.pill.open') + '</span></div></div></li>';
+      /* 剛按下準備的那一位播一次慶祝效果（進房第一次畫面不播，避免重新整理就放煙火） */
+      if (readyRoomId !== room.id) { readyRoomId = room.id; readyPrev = null; }
+      const justReady = {};
+      if (readyPrev) for (const m of seats) if (m.ready && !readyPrev[m.id]) justReady[m.id] = true;
+      readyPrev = {};
+      for (const m of seats) readyPrev[m.id] = !!m.ready;
+      els.roomSeats.innerHTML = seats.map((m, i) => seatCard(m, room, iAmHost, i, !!justReady[m.id])).join('') +
+        (seats.length < room.seats ? empty : '');
+
+      if (els.roomSpecsBlock) els.roomSpecsBlock.hidden = specs.length === 0;
+      if (els.roomSpecs) {
+        els.roomSpecs.innerHTML = specs.map(m =>
+          '<li class="spec' + (m.connected ? '' : ' is-off') + '">' +
+            Render.kidAvatarSvg(Characters.byId(m.char), 28) +
+            '<span>' + esc(m.name) + (m.id === myId() ? T('room.you') : '') + '</span>' +
+            (iAmHost && m.id !== myId()
+              ? '<button class="mini-btn danger tiny" type="button" data-kick="' + esc(m.id) + '">' + T('room.kick') + '</button>'
+              : '') +
+          '</li>').join('');
+      }
+
+      const amPlayer = me && me.role === 'player';
+      if (els.btnReady) {
+        els.btnReady.hidden = !amPlayer || room.phase !== 'lobby';
+        els.btnReady.textContent = me && me.ready ? T('room.unready') : T('room.ready');
+        els.btnReady.classList.toggle('primary', !(me && me.ready));
+      }
+      if (els.btnStart) {
+        els.btnStart.hidden = !iAmHost || room.phase !== 'lobby';
+        els.btnStart.disabled = !room.canStart;
+      }
+      if (els.btnSeat) els.btnSeat.hidden = !room.canTakeSeat;
+      if (els.btnInvite) els.btnInvite.hidden = !iAmHost;
+      if (els.inviteBox) {
+        els.inviteBox.hidden = !room.invite;
+        if (room.invite && els.inviteLink) els.inviteLink.value = inviteHref(room.invite, room.id);
+      }
+      if (els.roomHint) {
+        els.roomHint.textContent =
+          room.phase === 'playing' ? T('room.hint.playing')
+          : room.phase === 'result'
+            ? (S.wantRematch ? T('room.hint.rematch')
+              : T('room.hint.result'))
+          : !amPlayer ? T('room.hint.spectating')
+          : seats.length < room.seats ? T('room.hint.waitOther')
+          : room.canStart ? T('room.hint.canStart')
+          : T('room.hint.needReady');
+      }
+      renderChat();
+    }
+
+    function inviteHref(token, roomId) {
+      try {
+        const u = new URL(root.location.href);
+        if (roomId) u.searchParams.set('room', roomId);
+        u.searchParams.set('invite', token);
+        u.hash = '';
+        return u.toString();
+      } catch (e) {
+        return root.location.href.split('?')[0] + (roomId ? '?room=' + encodeURIComponent(roomId) + '&' : '?') + 'invite=' + token;
+      }
+    }
+
+    /* ---------- 聊天 ---------- */
+
+    function chatHtml(lines) {
+      return lines.map(l => l.sys
+        ? '<li class="chat-sys">' + esc(SRV(l.text)) + '</li>'
+        : '<li class="chat-line' + (l.role === 'spectator' ? ' spec' : '') + '">' +
+            '<b>' + esc(l.who) + '</b>' + esc(l.text) + '</li>').join('');
+    }
+
+    function renderChat() {
+      const c = S.client;
+      const room = c && c.state.room;
+      const lines = (room && room.chat) || [];
+      if (els.chatList) {
+        els.chatList.innerHTML = chatHtml(lines);
+        els.chatList.scrollTop = els.chatList.scrollHeight;
+      }
+      /* 對局中的側欄只放最後幾行，不然會把資訊欄吃光 */
+      if (els.gameChatList) {
+        els.gameChatList.innerHTML = chatHtml(lines.slice(-5));
+        els.gameChatList.scrollTop = els.gameChatList.scrollHeight;
+      }
+    }
+
+    function renderPhrases() {
+      const html = PHRASES.map((zh, i) => {
+        const t = T('chat.p' + i);
+        return '<button class="mini-btn phrase" type="button" data-say="' + esc(t) + '">' + esc(t) + '</button>';
+      }).join('');
+      if (els.chatPhrases) els.chatPhrases.innerHTML = html;
+      if (els.gameChatPhrases) els.gameChatPhrases.innerHTML = html;
+    }
+
+    function commitRoomName() {
+      const c = S.client;
+      const name = cleanName(els.roomNickname && els.roomNickname.value);
+      if (!name) {
+        notice(T('net.nameEmpty'), 'bad');
+        return false;
+      }
+      if (!c || S.status !== 'online') {
+        notice(T('net.noConn'), 'bad');
+        return false;
+      }
+      if (name !== c.state.me.name) c.actions.rename(name);
+      rememberName(name);
+      if (els.roomNicknameHint) els.roomNicknameHint.textContent = T('room.nick.applied');
+      renderRoom();
+      renderLobby();
+      return true;
+    }
+
+    function commitInvite() {
+      const c = S.client;
+      const invite = S.pendingInvite;
+      const name = cleanName(els.inviteNickname && els.inviteNickname.value);
+      if (!invite) return false;
+      if (!name) {
+        notice(T('net.nameEmpty'), 'bad');
+        return false;
+      }
+      if (!c || S.status !== 'online') {
+        notice(T('net.connecting'), 'bad');
+        return false;
+      }
+      rememberName(name);
+      S.inviteSubmitting = true;
+      c.actions.useInvite(invite.token, name);
+      renderLobby();
+      return true;
+    }
+
+    /* ---------- 綁事件 ---------- */
+
+    function bind() {
+      renderPhrases();
+
+      if (els.btnQuick) els.btnQuick.addEventListener('click', () =>
+        connect(() => S.client && S.client.actions.quick()));
+      if (els.btnCreate) els.btnCreate.addEventListener('click', () =>
+        connect(() => S.client && S.client.actions.create('', 'normal')));
+      if (els.btnRefresh) els.btnRefresh.addEventListener('click', () =>
+        connect(() => S.client && S.client.actions.rooms()));
+      if (els.btnReconnect) els.btnReconnect.addEventListener('click', () => {
+        S.retries = 0;
+        connect();
+      });
+      if (els.inviteJoinForm) els.inviteJoinForm.addEventListener('submit', ev => {
+        ev.preventDefault();
+        commitInvite();
+      });
+      if (els.roomNicknameForm) els.roomNicknameForm.addEventListener('submit', ev => {
+        ev.preventDefault();
+        commitRoomName();
+      });
+      if (els.roomNickname) els.roomNickname.addEventListener('change', commitRoomName);
+
+      if (els.lobbyList) els.lobbyList.addEventListener('click', ev => {
+        const btn = ev.target.closest('[data-join]');
+        if (!btn) return;
+        const id = btn.getAttribute('data-join');
+        const role = btn.getAttribute('data-role') || 'player';
+        connect(() => S.client && S.client.actions.join(id, role));
+      });
+
+      if (els.roomDiff) els.roomDiff.addEventListener('click', ev => {
+        const btn = ev.target.closest('[data-diff]');
+        if (!btn || btn.disabled) return;
+        if (S.client) S.client.actions.config({ difficulty: btn.getAttribute('data-diff') });
+      });
+
+      const kickHandler = ev => {
+        const btn = ev.target.closest('[data-kick]');
+        if (!btn) return;
+        if (S.client) S.client.actions.kick(btn.getAttribute('data-kick'));
+      };
+      if (els.roomSeats) els.roomSeats.addEventListener('click', kickHandler);
+      if (els.roomSpecs) els.roomSpecs.addEventListener('click', kickHandler);
+
+      if (els.btnReady) els.btnReady.addEventListener('click', () => {
+        const c = S.client;
+        if (!c || !c.state.room) return;
+        const me = c.state.room.members.find(m => m.id === myId());
+        c.actions.ready(!(me && me.ready));
+      });
+      if (els.btnStart) els.btnStart.addEventListener('click', () => S.client && S.client.actions.start());
+      if (els.btnSeat) els.btnSeat.addEventListener('click', () => S.client && S.client.actions.seat());
+      if (els.btnLeave) els.btnLeave.addEventListener('click', () => {
+        if (S.client) S.client.actions.leave();
+        leaveToLobby();
+      });
+
+      if (els.btnInvite) els.btnInvite.addEventListener('click', () => S.client && S.client.actions.invite());
+      if (els.btnInviteRevoke) els.btnInviteRevoke.addEventListener('click', () =>
+        S.client && S.client.actions.revokeInvite());
+      if (els.btnInviteCopy) els.btnInviteCopy.addEventListener('click', () => {
+        const v = els.inviteLink ? els.inviteLink.value : '';
+        if (!v) return;
+        /* clipboard 在非 https 會被擋，所以留 fallback：選起來讓使用者自己複製 */
+        const done = () => notice(T('invite.copied'));
+        if (root.navigator && root.navigator.clipboard && root.navigator.clipboard.writeText) {
+          root.navigator.clipboard.writeText(v).then(done, () => { els.inviteLink.select(); });
+        } else {
+          els.inviteLink.select();
+          notice(T('invite.selected'));
+        }
+      });
+
+      const submitChat = (input, giveBack) => {
+        const text = input ? input.value : '';
+        if (!text.trim()) return;
+        if (S.client) S.client.actions.chat(text);
+        if (!input) return;
+        input.value = '';
+        /* 對局中送完一定要把焦點還給遊戲。焦點留在輸入框的話，input.js 的 typing()
+         * 會把方向鍵整個擋掉 —— 打完一句話就再也不能動，只能眼睜睜被天花板追上，
+         * 而且畫面上完全看不出來原因（Eric 回報）。房間裡沒有這個問題，
+         * 那裡留著焦點才好連續聊天。 */
+        if (giveBack && input.blur) input.blur();
+      };
+      const chatSubmit = (input, giveBack) => ev => {
+        ev.preventDefault();
+        submitChat(input, giveBack);
+      };
+      if (els.chatForm) els.chatForm.addEventListener('submit', chatSubmit(els.chatInput, false));
+      if (els.gameChatForm) els.gameChatForm.addEventListener('submit', chatSubmit(els.gameChatInput, true));
+
+      /* 對局中的聊天框：Esc 直接跳回遊戲（不用找滑鼠點畫面），
+       * 聚焦時把「方向鍵停用」講出來 —— 不講的話玩家只會覺得遊戲壞了。
+       * Esc 在這裡不往上傳，所以第一下是離開輸入框、第二下才是叫出選單。 */
+      if (els.gameChatInput) {
+        const markTyping = on => {
+          if (els.gameChat && els.gameChat.classList) els.gameChat.classList.toggle('typing', on);
+        };
+        els.gameChatInput.addEventListener('keydown', ev => {
+          if (ev.key !== 'Escape' && ev.key !== 'Esc') return;
+          if (ev.preventDefault) ev.preventDefault();
+          if (ev.stopPropagation) ev.stopPropagation();
+          if (els.gameChatInput.blur) els.gameChatInput.blur();
+        });
+        els.gameChatInput.addEventListener('focus', () => markTyping(true));
+        els.gameChatInput.addEventListener('blur', () => markTyping(false));
+      }
+
+      const sayHandler = ev => {
+        const btn = ev.target.closest('[data-say]');
+        if (!btn) return;
+        if (S.client) S.client.actions.chat(btn.getAttribute('data-say'));
+      };
+      if (els.chatPhrases) els.chatPhrases.addEventListener('click', sayHandler);
+      if (els.gameChatPhrases) els.gameChatPhrases.addEventListener('click', sayHandler);
+    }
+
+    /* ---------- 對外 ---------- */
+
+    /** 網址帶 ?invite=xxx 先停在大廳，確認暱稱後才進房。 */
+    function takeInviteFromUrl() {
+      let token = '';
+      let roomId = '';
+      try {
+        const params = new URLSearchParams(root.location.search);
+        token = params.get('invite') || '';
+        roomId = params.get('room') || '';
+      } catch (e) { token = ''; }
+      if (!token) return null;
+      S.pendingInvite = { token: token, roomId: roomId };
+      /* 用掉之後把網址清乾淨，重新整理才不會又跳一次 */
+      try {
+        const u = new URL(root.location.href);
+        u.searchParams.delete('invite');
+        root.history.replaceState({}, '', u.toString());
+      } catch (e) { /* 舊瀏覽器就算了 */ }
+      return token;
+    }
+
+    /**
+     * 手機切回前景就再連一次，並且回到剛剛那間房。
+     *
+     * 分頁被切到背景（切去 LINE 貼邀請連結、螢幕暗掉）時連線一定會斷，
+     * 而 onclose 的自動重試那三次通常在背景就用完了 —— 切回來只會看到「沒有連線」。
+     * 只在「剛剛真的在房間裡」（S.wantRoom）的時候才重連，
+     * 不然在首頁放著的人也會被硬連上去。
+     */
+    function watchVisibility() {
+      const doc = root.document;
+      if (!doc || !doc.addEventListener) return;
+      doc.addEventListener('visibilitychange', () => {
+        if (doc.visibilityState !== 'visible') return;
+        if (!S.wantRoom) return;
+        if (S.status === 'online' || S.status === 'connecting') return;
+        S.retries = 0;
+        connect();
+      });
+    }
+
+    bind();
+    watchVisibility();
+    setStatus('offline');
+
+    /**
+     * 結算畫面上的「再來一局」：馬上回房間，並且自動幫他按好準備。
+     * 之後的流程跟原本開房間一模一樣 —— 等對方也準備好，房主按開始。
+     * （不能直接開下一局：開局是伺服器的權限，而且要兩個人都準備好。）
+     */
+    function rematch() {
+      const c = S.client;
+      const room = c && c.state.room;
+      S.wantRematch = true;
+      if (c) c.actions.resultDone();      /* 兩邊都按了就馬上回房間，不用等結算停留 */
+      if (room && room.phase === 'lobby') {
+        S.wantRematch = false;
+        sendReady(room);
+      }
+      backToRoom();
+    }
+
+    /** 結算畫面上的「回到房間」：不等結算停留跑完，馬上收場 */
+    function backToRoom() {
+      if (S.client) S.client.actions.resultDone();
+      S.resultShown = true;         /* 已經看過結算了，不要再補播 */
+      wrapUp();
+      renderRoom();
+    }
+
+    return {
+      PHRASES,
+      connect, disconnect, client, rematch, backToRoom,
+      renderLobby, renderRoom, renderChat,
+      /** 語言切換：重畫大廳、房間、短語與連線狀態文字（不動連線與房間狀態） */
+      relang() {
+        setStatus(S.status, S.statusKey);
+        renderLobby(); renderRoom(); renderPhrases();
+      },
+      takeInviteFromUrl,
+      get status() { return S.status; },
+      get inMatch() { return S.inMatch; },
+      get spectating() { return S.spectating; },
+      get room() { return S.client ? S.client.state.room : null; },
+      get meId() { return myId(); },
+      /** 對局中每一格：推進本地預測（含送出輸入意圖） */
+      frame(nowMs, dir) { return S.client ? S.client.frame(nowMs, dir) : 0; },
+      takeEvents() { return S.client ? S.client.takeEvents() : []; },
+      stats() { return S.client ? S.client.stats() : null; },
+      visualOffset() { return S.client ? S.client.visualOffset() : { x: 0, y: 0 }; },
+      alpha() { return S.client ? S.client.alpha() : 0; },
+      get match() { return S.client ? S.client.match : null; },
+      /** 轉向之後螢幕想看的格數變了，趁還沒開局告訴伺服器（開局時全房統一成一個值） */
+      syncViewH(h) {
+        if (S.client) S.client.actions.setViewH(h);
+      },
+      /** 名字或角色改了要告訴伺服器（房間卡片、名牌都要跟著換） */
+      syncMe(name, char) {
+        if (!S.client) return;
+        if (name && name !== S.client.state.me.name) S.client.actions.rename(name);
+        if (char && char !== S.client.state.me.char) S.client.actions.setChar(char);
+        renderLobby();
+      }
+    };
+  }
+
+  root.Online = { create, PHRASES };
+})(typeof self !== 'undefined' ? self : this);

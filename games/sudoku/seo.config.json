@@ -1,0 +1,13 @@
+{
+  "id": "sudoku",
+  "siteUrl": "https://pjh-eric.github.io/sudoku/",
+  "title": "數獨小學堂｜免費數獨・五種難度",
+  "description": "免費免下載的九宮格數獨，提供五種難度與唯一解謎題，支援筆記、提示及續玩進度。手機、平板與電腦都能練習邏輯。",
+  "lobbyUrl": "https://pjh-eric.github.io/game-lobby/",
+  "googleSiteVerification": "",
+  "genre": "數獨",
+  "players": "1",
+  "iconUrl": "https://pjh-eric.github.io/sudoku/favicon-96.png",
+  "ogImage": "https://pjh-eric.github.io/sudoku/assets/images/seo.webp",
+  "ogImageAlt": "數獨小學堂 遊戲封面"
+}

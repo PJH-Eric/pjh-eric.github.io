@@ -1,0 +1,16 @@
+{
+  "name": "flip-match",
+  "version": "1.0.0",
+  "description": "翻牌配對碰 - 可愛風翻牌記憶配對遊戲（單機／電腦對戰／線上大廳對戰）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/server-outage.cjs && node tests/analytics.js && node tests/localization.js && node tests/verify.js && node tests/i18n-hans.js && node tests/online-check.js",
+    "test:localization": "node tests/localization.js",
+    "test:analytics": "node tests/analytics.js"
+  },
+  "engines": {
+    "node": "^26.12.1"
+  },
+  "license": "MIT"
+}

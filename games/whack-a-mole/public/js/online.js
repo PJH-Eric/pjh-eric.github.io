@@ -1,0 +1,173 @@
+/* ===== online.js — Socket.IO 連線包裝 =====
+ *
+ * 所有連線位置都從 GameConfig 取得（?server= 或建置注入或同源），
+ * 這個檔案裡沒有任何寫死的網址。
+ *
+ * 對 app.js 只暴露「連線 / 送出意圖 / 訂閱事件」三件事；
+ * 房間規則與計分判定都在伺服器上（共用盤面搶打先得分，一定要伺服器說了算），這裡不做任何權限判斷，
+ * 只把伺服器算好的 you.can 原封不動交給 UI。
+ */
+(function (w) {
+  'use strict';
+
+  var Config = w.GameConfig;
+  var socket = null;
+  var loading = null;
+  var connectionGeneration = 0;
+  var listeners = {};
+  var status = 'idle';    // idle | loading | connecting | connected | error | offline
+  var lastError = null;   // { key, params }（字典 key），畫面端用 I18N.t 翻譯
+
+  /** 帶字典 key 的 Error：message 只當開發用備援，畫面顯示請用 key/params */
+  function keyedError(key, params) {
+    var e = new Error(key);
+    e.key = key;
+    e.params = params || {};
+    return e;
+  }
+
+  function emitLocal(evt, payload) {
+    var list = listeners[evt];
+    if (!list) return;
+    for (var i = 0; i < list.length; i++) {
+      try { list[i](payload); } catch (e) { console.error('[online] handler error', e); }
+    }
+  }
+
+  function on(evt, fn) {
+    (listeners[evt] || (listeners[evt] = [])).push(fn);
+    return function off() {
+      var list = listeners[evt] || [];
+      var i = list.indexOf(fn);
+      if (i >= 0) list.splice(i, 1);
+    };
+  }
+
+  function setStatus(next, msg) {
+    status = next;
+    if (w.ServerOutage) w.ServerOutage.state(next);
+    lastError = msg || null;
+    emitLocal('status', { status: status, key: lastError ? lastError.key : null, params: lastError ? lastError.params : null });
+  }
+
+  /** 連線用戶端（sio-client.js）由頁面直接載入；這裡只確認它存在 */
+  function loadScript() {
+    return w.io ? Promise.resolve() : Promise.reject(keyedError('net.cannotReach', { where: Config.describe() }));
+  }
+
+  /**
+   * 建立連線。可以重複呼叫，已連上就直接回傳。
+   * @param {{clientId:string, name:string}} identity
+   */
+  function connect(identity) {
+    if (!Config.isOnlineEnabled()) {
+      var offline = Config.error || { key: 'net.noServer', params: {} };
+      setStatus('offline', offline);
+      return Promise.reject(keyedError(offline.key, offline.params));
+    }
+    if (socket && socket.connected) return Promise.resolve(socket);
+
+    var generation = connectionGeneration;
+    if (w.ServerOutage) w.ServerOutage.state('begin');
+    return loadScript().then(function () {
+      if (generation !== connectionGeneration) throw new Error('Connection cancelled');
+      if (socket) { socket.connect(); return waitHello(identity); }
+      setStatus('connecting');
+      socket = w.io(Config.serverUrl, {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionDelay: 800,
+        reconnectionDelayMax: 6000,
+        timeout: 12000
+      });
+      if (w.NetworkLatency) w.NetworkLatency.bindSocketIo(socket);
+
+      socket.on('connect', function () {
+        setStatus('connected');
+        sayHello(identity);
+        emitLocal('reconnected', {});
+      });
+      socket.on('disconnect', function (reason) {
+        setStatus('connecting', { key: 'net.dropped', params: { reason: reason } });
+      });
+      socket.on('connect_error', function (err) {
+        setStatus('error', err && err.message
+          ? { key: 'net.connectError', params: { reason: err.message } }
+          : { key: 'net.connectErrorUnknown' });
+      });
+
+      ['lobby:rooms', 'room:sync', 'room:events', 'room:chat', 'room:error', 'room:closed', 'room:left']
+        .forEach(function (evt) {
+          socket.on(evt, function (payload) { emitLocal(evt, payload); });
+        });
+
+      return waitHello(identity);
+    }).catch(function (err) {
+      setStatus('error', err.key ? { key: err.key, params: err.params } : { key: 'net.connectError', params: { reason: err.message || String(err) } });
+      throw err;
+    });
+  }
+
+  function sayHello(identity) {
+    if (!socket) return;
+    socket.emit('hello', { clientId: identity.clientId, name: identity.name });
+  }
+
+  function waitHello(identity) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function () {
+        if (done) return;
+        done = true;
+        reject(keyedError('net.noResponse'));
+      }, 15000);
+      var finish = function () {
+        if (done) return;
+        socket.emit('hello', { clientId: identity.clientId, name: identity.name }, function (res) {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          if (res && res.ok) {
+            setStatus('connected');
+            emitLocal('hello', res);        /* 帶 serverTime，app.js 用來校時 */
+            resolve(socket);
+          }
+          else reject(keyedError('net.refused'));
+        });
+      };
+      if (socket.connected) finish();
+      else socket.once('connect', finish);
+    });
+  }
+
+  function send(evt, payload, ack) {
+    if (!socket || !socket.connected) {
+      emitLocal('room:error', { key: 'net.offlineSend', params: {}, code: 'offline' });
+      return false;
+    }
+    if (evt === 'room:leave' && w.GameAnalytics) w.GameAnalytics.roomLeft();
+    if (ack) socket.emit(evt, payload || {}, function (res) {
+      if (res && res.ok && w.GameAnalytics && (evt === 'room:create' || evt === 'room:join')) {
+        w.GameAnalytics.roomAccepted(evt === 'room:create' ? 'create' : 'join', res.code || (payload && payload.code), payload && payload.token ? 'invite_link' : 'lobby');
+      }
+      ack(res);
+    });
+    else socket.emit(evt, payload || {});
+    return true;
+  }
+
+  function disconnect() {
+    connectionGeneration++;
+    if (socket) { socket.disconnect(); }
+    setStatus('idle');
+  }
+
+  w.Online = {
+    on: on,
+    connect: connect,
+    send: send,
+    disconnect: disconnect,
+    isConnected: function () { return !!socket && socket.connected; },
+    status: function () { return { status: status, key: lastError ? lastError.key : null, params: lastError ? lastError.params : null }; }
+  };
+}(window));

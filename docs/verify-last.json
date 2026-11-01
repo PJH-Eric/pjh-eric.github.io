@@ -1,0 +1,801 @@
+{
+  "sudoku": {
+    "at": "2026-10-29T04:55:05.894Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": null,
+        "sec": 18
+      },
+      {
+        "cmd": "node tests/i18n.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "amaze-go": {
+    "at": "2026-10-29T04:43:36.635Z",
+    "commands": [
+      {
+        "cmd": "node tests/i18n.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/determinism.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": null,
+        "sec": 36
+      },
+      {
+        "cmd": "node tests/hub.js",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 10
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "flip-match": {
+    "at": "2026-10-29T04:21:16.005Z",
+    "commands": [
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": null,
+        "sec": 3
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/online-check.js",
+        "exit": 0,
+        "count": 11,
+        "sec": 2
+      }
+    ],
+    "problems": []
+  },
+  "maze-roll": {
+    "at": "2026-10-29T04:44:27.147Z",
+    "commands": [
+      {
+        "cmd": "node tests/rules.test.js",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      },
+      {
+        "cmd": "node tests/hub.test.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 16
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/night.test.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/game.test.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/store.test.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/i18n.test.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/seo.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "ice-duel": {
+    "at": "2026-10-29T04:48:49.742Z",
+    "commands": [
+      {
+        "cmd": "npm install",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "tsc",
+        "exit": 0,
+        "count": null,
+        "sec": 3
+      },
+      {
+        "cmd": "vitest",
+        "exit": 0,
+        "count": 47,
+        "sec": 11
+      },
+      {
+        "cmd": "online-check",
+        "exit": 0,
+        "count": 13,
+        "sec": 8
+      }
+    ],
+    "problems": []
+  },
+  "snake-3d": {
+    "at": "2026-10-29T03:58:44.235Z",
+    "commands": [
+      {
+        "cmd": "server::node tests/verify.js",
+        "exit": 0,
+        "count": 29,
+        "sec": 23
+      },
+      {
+        "cmd": "server::node tests/rooms.js",
+        "exit": 0,
+        "count": 30,
+        "sec": 0
+      },
+      {
+        "cmd": "server::node scripts/online-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 5
+      }
+    ],
+    "problems": []
+  },
+  "whack-a-mole": {
+    "at": "2026-10-29T08:50:05.711Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 343,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": 98,
+        "sec": 26
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": [
+      "測試檔被改了不只是 require 路徑：games/whack-a-mole/scripts/browser-check.js -    /* 倒數中也還沒開打 */",
+      "測試檔被改了不只是 require 路徑：games/whack-a-mole/scripts/browser-check.js +    /* 倒數中游標就先換成槌子 */",
+      "測試檔被改了不只是 require 路徑：games/whack-a-mole/scripts/browser-check.js -    ok(!counting.playing, '開賽倒數還不算「在打」');",
+      "測試檔被改了不只是 require 路徑：games/whack-a-mole/scripts/browser-check.js -    ok(counting.cursor.indexOf('data:image') < 0, '倒數中維持一般游標', counting.cursor.",
+      "測試檔被改了不只是 require 路徑：games/whack-a-mole/scripts/browser-check.js +    ok(counting.playing, '開賽倒數時游標就先是槌子（算「在打」）');",
+      "測試檔被改了不只是 require 路徑：games/whack-a-mole/scripts/browser-check.js +    ok(counting.cursor.indexOf('data:image') >= 0, '倒數中游標已是槌子', counting.cursor"
+    ]
+  },
+  "fruit-link": {
+    "at": "2026-10-29T04:59:05.473Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 91,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": 43,
+        "sec": 6
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "stair-kids": {
+    "at": "2026-10-29T04:59:14.396Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 237,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/versus-audit-check.js",
+        "exit": 0,
+        "count": 10,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/stairs-check.js",
+        "exit": 0,
+        "count": 81,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/match-check.js",
+        "exit": 0,
+        "count": 52,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": 65,
+        "sec": 0
+      },
+      {
+        "cmd": "node scripts/netcode-check.js",
+        "exit": 0,
+        "count": 150,
+        "sec": 2
+      },
+      {
+        "cmd": "node scripts/online-chat-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/ui-visuals.js",
+        "exit": 0,
+        "count": 6,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "draw-guess": {
+    "at": "2026-10-29T04:59:22.020Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 327,
+        "sec": 2
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": 124,
+        "sec": 11
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/words-i18n.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/reference.js",
+        "exit": 0,
+        "count": null,
+        "sec": 6
+      },
+      {
+        "cmd": "node tests/reference-coverage.js",
+        "exit": 0,
+        "count": null,
+        "sec": 6
+      },
+      {
+        "cmd": "node scripts/reference-lint.js all",
+        "exit": 0,
+        "count": null,
+        "sec": 6
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "heart-attack": {
+    "at": "2026-10-29T04:59:54.064Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 35,
+        "sec": 3
+      },
+      {
+        "cmd": "node tests/i18n.js",
+        "exit": 0,
+        "count": 21,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": 56,
+        "sec": 2
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "house-stack": {
+    "at": "2026-10-29T05:01:21.226Z",
+    "commands": [
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": 22,
+        "sec": 21
+      },
+      {
+        "cmd": "node tests/i18n.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/seo.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/outage.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 28,
+        "sec": 52
+      }
+    ],
+    "problems": []
+  },
+  "reversi": {
+    "at": "2026-10-29T06:04:43.617Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 8,
+        "sec": 7
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "shoot-balloon": {
+    "at": "2026-10-29T05:01:06.442Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 311,
+        "sec": 1
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": 67,
+        "sec": 12
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "pinball-hoops": {
+    "at": "2026-10-31T13:38:44.393Z",
+    "commands": [
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 37,
+        "sec": 2
+      },
+      {
+        "cmd": "node tests/i18n.js",
+        "exit": 0,
+        "count": null,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "pool-duel": {
+    "at": "2026-10-29T05:02:40.897Z",
+    "commands": [
+      {
+        "cmd": "node scripts/verify-parallel.js",
+        "exit": 0,
+        "count": 34,
+        "sec": 117
+      }
+    ],
+    "problems": []
+  },
+  "bomb-squad": {
+    "at": "2026-10-29T05:00:05.585Z",
+    "commands": [
+      {
+        "cmd": "node tests/i18n.js",
+        "exit": 0,
+        "count": 11,
+        "sec": 1
+      },
+      {
+        "cmd": "node tests/verify.js",
+        "exit": 0,
+        "count": 77,
+        "sec": 36
+      },
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/analytics.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/localization.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/rooms.js",
+        "exit": 0,
+        "count": 30,
+        "sec": 0
+      },
+      {
+        "cmd": "node tests/server.js",
+        "exit": 0,
+        "count": null,
+        "sec": 2
+      },
+      {
+        "cmd": "node scripts/online-check.js",
+        "exit": 0,
+        "count": null,
+        "sec": 5
+      },
+      {
+        "cmd": "node tests/i18n-hans.js",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  },
+  "rainbow-bubble": {
+    "at": "2026-10-29T05:11:16.085Z",
+    "commands": [
+      {
+        "cmd": "node tests/server-outage.cjs",
+        "exit": 0,
+        "count": null,
+        "sec": 0
+      }
+    ],
+    "problems": []
+  }
+}

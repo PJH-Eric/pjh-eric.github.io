@@ -1,0 +1,67 @@
+{
+  "sudoku": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "whack-a-mole": {
+    "fp": "997c242f1faa",
+    "streak": 1,
+    "rounds": 1
+  },
+  "fruit-link": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "stair-kids": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "draw-guess": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "heart-attack": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "bomb-squad": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "reversi": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "pinball-hoops": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "shoot-balloon": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "house-stack": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "pool-duel": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "rainbow-bubble": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  }
+}

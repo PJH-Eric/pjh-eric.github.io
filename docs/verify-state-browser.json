@@ -1,0 +1,92 @@
+{
+  "flip-match": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "sudoku": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "whack-a-mole": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "fruit-link": {
+    "fp": "3bb912b410e2",
+    "streak": 2,
+    "rounds": 4
+  },
+  "stair-kids": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "draw-guess": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "heart-attack": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "bomb-squad": {
+    "fp": "f248bed9c347",
+    "streak": 1,
+    "rounds": 4
+  },
+  "rainbow-bubble": {
+    "fp": "36c730ae3551",
+    "streak": 1,
+    "rounds": 4
+  },
+  "pool-duel": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "reversi": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "amaze-go": {
+    "fp": "e2ef1e737bd9",
+    "streak": 1,
+    "rounds": 4
+  },
+  "pinball-hoops": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "shoot-balloon": {
+    "fp": "a2889538cb8d",
+    "streak": 2,
+    "rounds": 4
+  },
+  "maze-roll": {
+    "fp": "f34db3fdfb9c",
+    "streak": 1,
+    "rounds": 4
+  },
+  "house-stack": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "snake-3d": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "ice-duel": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  }
+}

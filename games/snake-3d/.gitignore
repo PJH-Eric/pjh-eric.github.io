@@ -1,0 +1,27 @@
+# 相依套件與建置產物
+node_modules/
+client/dist/
+
+# 秘密與本機設定
+.env
+.env.local
+.env.*.local
+
+# 可重新產生的測試截圖、暫存與快取
+client/.shots/
+/.shots/
+/shots/
+/screenshots/
+/test-results/
+/playwright-report/
+/coverage/
+.cache/
+*.log
+*.tmp
+*.bak
+*.tsbuildinfo
+
+# IDE
+.vs/
+.idea/
+.vscode/

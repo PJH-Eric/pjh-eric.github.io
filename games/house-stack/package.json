@@ -1,0 +1,36 @@
+{
+  "name": "house-stack",
+  "version": "0.1.0",
+  "description": "疊疊高樓：3D 卡通城市蓋樓遊戲，吊車放樓層、重心穩定判定，單人、對電腦與線上多人",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "verify": "npm test && node scripts/online-check.js",
+    "build:pages": "node scripts/build-pages.js",
+    "audit": "node scripts/layout-audit.js",
+    "screenshots": "node scripts/screenshots.js",
+    "test": "node tests/i18n.js && node tests/records.js && node tests/analytics.js && node tests/seo.js && node tests/outage.js && node tests/verify.js",
+    "test:combo": "node tests/combo.cjs",
+    "i18n:hans": "python3 scripts/gen-hans.py",
+    "i18n:check": "node scripts/i18n-check.js",
+    "langmenu:check": "node scripts/langmenu-check.js",
+    "overlap:check": "node scripts/overlap-check.js",
+    "tap:check": "node scripts/tap-check.js",
+    "tap:online": "node scripts/online-tap-check.js",
+    "timer:check": "node scripts/timer-check.js",
+    "timer:online": "node scripts/online-timer-check.js"
+  },
+  "engines": {
+    "node": "^26.12.1"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0",
+    "socket.io-client": "^4.7.5"
+  }
+}

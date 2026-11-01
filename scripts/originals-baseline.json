@@ -1,0 +1,82 @@
+{
+  "flip-match": {
+    "head": "5e2b16695c110e9da62c7aa0b557bfe6edc3a6b9",
+    "status": ""
+  },
+  "sudoku": {
+    "head": "84d1c50b8802118e230796e53285f379259ae350",
+    "status": ""
+  },
+  "whack-a-mole": {
+    "head": "d7ca230b92d2492541d3857e030c963d9c129bf7",
+    "status": "M public/css/style.css\n M public/index.html\n M public/js/app.js\n M public/js/audio.js\n M public/js/locales.js\n M public/js/render.js\n M public/js/storage.js\n M public/js/svgui.js\n M scripts/board-check.js\n M scripts/browser-check.js\n M scripts/leave-check.js\n?? wam-src.tgz"
+  },
+  "fruit-link": {
+    "head": "48694fcc6cc8fcf94d773ef0f0949293251c7267",
+    "status": "?? preview-lobby.png"
+  },
+  "stair-kids": {
+    "head": "c794062d1fe1baac2e708c70ca365ac853ca22a0",
+    "status": ""
+  },
+  "draw-guess": {
+    "head": "09b8c32283db24e0c626f16fe5f64ce4e98d3916",
+    "status": "?? .claude/\n?? preview-lobby.png"
+  },
+  "heart-attack": {
+    "head": "d3016cfedf7d0e47b303586ce8dc274466ef4ab2",
+    "status": ""
+  },
+  "bomb-squad": {
+    "head": "d399f47719af25197ed260cf173ce55ce02d2d71",
+    "status": ""
+  },
+  "rainbow-bubble": {
+    "head": "98713ec3304fd248250a5e3a3f0d8e4600fb1d24",
+    "status": ""
+  },
+  "pool-duel": {
+    "head": "095d468331e41aff3062055897013ea9f0f7e20c",
+    "status": ""
+  },
+  "reversi": {
+    "head": "c16aa1ae9d23fda362ceeed00d05f8f71dffe526",
+    "status": ""
+  },
+  "amaze-go": {
+    "head": "ae3bb7cb037a1c4a237bd22b2bbfbe773444e110",
+    "status": ""
+  },
+  "pinball-hoops": {
+    "head": "aae55e73ac11461c2952a8058f8b0b1c59c469a1",
+    "status": ""
+  },
+  "shoot-balloon": {
+    "head": "e9dc41e6049017e44e732fbd9a3ccde0ec6834fc",
+    "status": ""
+  },
+  "maze-roll": {
+    "head": "2046460b38d3873094caf2656e6dd6bbf4588ff4",
+    "status": ""
+  },
+  "house-stack": {
+    "head": "d630c2530a2d97944eac3b862ee2f117b9d148ad",
+    "status": ""
+  },
+  "snake-3d": {
+    "head": "5b21744a5e94efbd6caeeb7f1a0efd807187d9c7",
+    "status": ""
+  },
+  "ice-duel": {
+    "head": "(無 commit)",
+    "status": "?? .env.example\n?? .github/\n?? .gitignore\n?? README.md\n?? blender/\n?? index.html\n?? package-lock.json\n?? package.json\n?? public/\n?? render.yaml\n?? scripts/\n?? seo.config.json\n?? server/\n?? src/\n?? tests/\n?? tsconfig.json\n?? vite.config.ts\n?? \"\\345\\225\\237\\345\\213\\225\\351\\201\\212\\346\\210\\262.bat\""
+  },
+  "game-lobby": {
+    "head": "72913883eb90b5f6733154bac2d65d075f0a682e",
+    "status": "?? \"\\345\\205\\250\\351\\201\\212\\346\\210\\262\\346\\225\\264\\345\\220\\210\\350\\246\\217\\345\\212\\203\\346\\233\\270.md\""
+  },
+  "pjh-eric.github.io": {
+    "head": "f3a859fc0ea2de205089bb1c61b7cbdcd1978612",
+    "status": ""
+  }
+}

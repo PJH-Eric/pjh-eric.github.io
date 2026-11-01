@@ -1,0 +1,56 @@
+name: 建置並部署遊戲小小島
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '23 0 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 取出程式碼
+        uses: actions/checkout@v4
+      - name: 設定 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26.12.1"
+          cache: npm
+      - name: 安裝相依套件
+        run: npm ci
+      - name: 執行驗證與 Pages 建置
+        run: npm run verify
+        env:
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+      - name: 更新 GA4 累計不重複訪客數
+        run: node scripts/update-ga-visitor-count.js
+        continue-on-error: true
+        env:
+          GA_PROPERTY_ID: '558900909'
+          GA_SERVICE_ACCOUNT_JSON: ${{ secrets.GA_SERVICE_ACCOUNT_JSON }}
+      - name: 上傳 Pages 產物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

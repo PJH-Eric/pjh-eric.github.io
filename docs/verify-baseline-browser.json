@@ -1,0 +1,201 @@
+{
+  "flip-match": {
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "sudoku": {
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "whack-a-mole": {
+    "node scripts/board-check.js": {
+      "count": 36
+    },
+    "node scripts/browser-check.js": {
+      "count": 577
+    },
+    "node scripts/invite-nick-check.js": {
+      "count": 6
+    },
+    "node scripts/leave-check.js": {
+      "count": 10
+    },
+    "node scripts/reconnect-check.js": {
+      "count": 11
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    },
+    "node scripts/settings-check.js": {
+      "count": null
+    },
+    "node scripts/sidebar-check.js": {
+      "count": 8
+    },
+    "node scripts/sync-check.js": {
+      "count": 4
+    }
+  },
+  "fruit-link": {
+    "node scripts/browser-check.js": {
+      "count": 248
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "stair-kids": {
+    "node scripts/e2e-online.js": {
+      "count": 47
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "draw-guess": {
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "heart-attack": {
+    "node scripts/browser-check.js": {
+      "count": 56
+    },
+    "node scripts/rwd-check.js": {
+      "count": null
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "bomb-squad": {
+    "node scripts/browser-check.js": {
+      "count": null
+    },
+    "node scripts/layout-sweep.js": {
+      "count": null
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "rainbow-bubble": {
+    "node scripts/browser-check.js": {
+      "count": 83
+    },
+    "node scripts/laser-check.js": {
+      "count": null
+    },
+    "node scripts/natural-check.js": {
+      "count": null
+    },
+    "node scripts/online-browser-check.js": {
+      "count": null
+    },
+    "node scripts/quest-browser-check.js": {
+      "count": 115
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    },
+    "node scripts/swap-hover-check.js": {
+      "count": null
+    },
+    "node scripts/timer-row-check.js": {
+      "count": null
+    }
+  },
+  "pool-duel": {
+    "node scripts/layout-check.js": {
+      "count": null
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "reversi": {
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    },
+    "node tests/browser-check.js": {
+      "count": null
+    }
+  },
+  "amaze-go": {
+    "node scripts/check-countdown.js": {
+      "count": null
+    },
+    "node scripts/check-expansion.js": {
+      "count": null
+    },
+    "node scripts/check-initial-zoom.js": {
+      "count": null
+    },
+    "node scripts/check-levels.js": {
+      "count": null
+    },
+    "node scripts/check-random.js": {
+      "count": null
+    },
+    "node scripts/check-replay.js": {
+      "count": null
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "pinball-hoops": {
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    }
+  },
+  "shoot-balloon": {
+    "node scripts/browser-check.js": {
+      "count": 168
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    },
+    "node scripts/shots.js": {
+      "count": null
+    }
+  },
+  "maze-roll": {
+    "node scripts/ball-shots.js": {
+      "count": null
+    },
+    "node scripts/e2e-local.js": {
+      "count": null
+    },
+    "node scripts/e2e-online.js": {
+      "count": null
+    },
+    "node scripts/mapdbg.js": {
+      "count": null
+    },
+    "node scripts/mapzoom.js": {
+      "count": null
+    },
+    "node scripts/mini-shots.js": {
+      "count": null
+    },
+    "node scripts/server-outage-browser-check.cjs": {
+      "count": null
+    },
+    "node scripts/smoke.js": {
+      "count": null
+    },
+    "node scripts/theme-shots.js": {
+      "count": null
+    }
+  },
+  "house-stack": {
+    "node scripts/browser.js": {
+      "count": null
+    }
+  },
+  "snake-3d": {},
+  "ice-duel": {}
+}

@@ -1,0 +1,758 @@
+// 迷宮滾球：畫面與流程。所有可見元件皆為 ui.js 的自訂元件。
+import { h, icon, Button, IconButton, Toggle, Slider, Chips, Select, ScrollArea, TextInput, Modal, toast, modalOpen, Key } from './ui.js';
+import { store } from './store.js';
+import { audio } from './audio.js';
+import { Input } from './input.js';
+import { Game } from './game.js';
+import { net, wsUrl } from './net.js';
+import { T, M } from './t.js';
+import { BALL_COLORS, SHAPES, BALL_TYPES } from './scene.js';
+
+const MR = window.MR;
+const $app = document.getElementById('app');
+const MODE_INFO = {
+  race: { get name() { return T('同圖競速'); }, get sub() { return T('單人抵達即結束；多人第一人抵達後倒數 10 秒結算'); }, icon: 'flag' },
+  stars: { get name() { return T('搶星星'); }, get sub() { return T('限時依地圖級距與參賽人數增加；星星依面積增加，撿完提前結束'); }, icon: 'star' },
+  collapse: { get name() { return T('地板崩塌'); }, get sub() { return T('地磚踩過後延遲碎裂；全員淘汰才結算，存活越久名次越前'); }, icon: 'crown' },
+  escape: { get name() { return T('逃出模式'); }, get sub() { return T('拿鑰匙、踩踏板開門；單人逃出即結束，多人首位逃出後完整倒數 10 秒'); }, icon: 'key' },
+};
+// 時間一律顯示到小數點第二位（m:ss.cc）
+const fmt = (s) => { const cs = Math.floor(Math.max(0, s) * 100 + 1e-6); return Math.floor(cs / 6000) + ':' + String(Math.floor(cs / 100) % 60).padStart(2, '0') + '.' + String(cs % 100).padStart(2, '0'); };
+const fmtShort = fmt;
+const myName = () => (store.get('name') || '').trim() || T('你');
+
+// ---------- 全域外框：設定入口（右上角）、回大廳（只在首頁）----------
+const chrome = h('div', { class: 'chrome' });
+const gearBtn = IconButton({ icon: 'gear', ariaLabel: T('設定'), class: 'gear', onClick: () => openSettings() });
+const chromeRight = h('div', { class: 'chromeRight' }, gearBtn);
+const lobbyLink = h('a', { class: 'btn lobbyLink', href: (window.MR_CONFIG && window.MR_CONFIG.lobbyUrl) || '#', 'aria-label': T('回遊戲大廳') }, icon('home'), h('span', { text: T('遊戲小小島') }));
+chrome.append(lobbyLink, chromeRight);
+const $screen = h('div', { class: 'screenHost' });
+$app.append($screen, chrome);
+
+// ---------- 多語系（核心沿用箭頭解密的 i18n.js：繁體中文／English）----------
+const langToggle = window.I18N ? window.I18N.mountToggle({ after: gearBtn }) : null;
+const META = { title: '迷宮滾球｜免費線上 3D 滾球迷宮・多人競速', desc: '免費免下載的 3D 木質迷宮滾球遊戲，含同圖競速、搶星星、地板崩塌、逃出四種玩法；同圖競速與逃出各有五種難度、每種 100 關，可單人闖關、自由練習或對電腦，也能線上最多 4 人同玩。另有可選的關燈挑戰、每日挑戰、觀戰與邀請連結，支援手機、平板和桌機。' };
+function applyLang() {
+  document.title = T(META.title);
+  const d = document.querySelector('meta[name="description"]'); if (d) d.setAttribute('content', T(META.desc));
+  gearBtn.setAttribute('aria-label', T('設定')); gearBtn.setAttribute('title', T('設定'));
+  lobbyLink.setAttribute('aria-label', T('回遊戲大廳')); lobbyLink.lastElementChild.textContent = T('遊戲小小島');
+}
+
+let cleanup = null, current = '', ctx = {};
+if (window.I18N) window.I18N.onChange(() => { applyLang(); if (current && current !== 'game') go(current, ctx); });
+function go(name, params) {
+  if (window.ServerOutage) window.ServerOutage.setScreen(name === 'online' ? 'lobby' : name);
+  if (name === 'home' && session.room) net.send({ t: 'leave' }); // 回首頁一定離開房間，避免留下空殼房
+  if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }
+  Array.from(chromeRight.children).forEach((c) => { if (c !== gearBtn && !c.classList.contains('language-controls')) c.remove(); });
+  if (langToggle) langToggle.style.display = name === 'game' ? 'none' : '';
+  $screen.replaceChildren(); current = name; ctx = params || {};
+  lobbyLink.style.display = name === 'home' ? '' : 'none';
+  $app.dataset.screen = name;
+  window.MR_ANALYTICS?.pageView(name);
+  const fn = SCREENS[name]; const r = fn(ctx);
+  if (typeof r === 'function') cleanup = r;
+  audio.bgm(store.get('bgm') && audio.ready());
+}
+function topbar(title, onBack) {
+  return h('header', { class: 'topbar' }, Button({ icon: 'back', label: T('返回'), size: 'small', onClick: onBack }), h('h1', { class: 'title', text: title }), h('span', { class: 'spacer' }));
+}
+const rc = (el, ...k) => el.replaceChildren(...k.flat().filter((x) => x != null && x !== false));
+const panel = (...k) => h('div', { class: 'panel' }, ...k);
+
+// 第一次使用者手勢：解鎖音訊
+const unlock = () => { audio.unlock(); audio.bgm(store.get('bgm')); removeEventListener('pointerdown', unlock, true); removeEventListener('keydown', unlock, true); };
+addEventListener('pointerdown', unlock, true); addEventListener('keydown', unlock, true);
+addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.btn,.chip,.opt')) audio.click(); }, true);
+
+// ---------- 設定彈窗 ----------
+function openSettings() {
+  audio.unlock();
+  let m; const S = store;
+  const rows = {
+    bgm: Toggle({ label: T('背景音樂'), value: S.get('bgm'), onChange: (v) => { S.set('bgm', v); audio.bgm(v); } }),
+    bgmVol: Slider({ label: T('音樂音量'), value: S.get('bgmVol'), onChange: (v) => S.set('bgmVol', v) }),
+    sfx: Toggle({ label: T('音效'), value: S.get('sfx'), onChange: (v) => { S.set('sfx', v); if (v) audio.star(); } }),
+    sfxVol: Slider({ label: T('音效音量'), value: S.get('sfxVol'), onChange: (v, commit) => { S.set('sfxVol', v); if (commit) audio.star(); } }),
+    ctrl: Chips({ label: T('操作方式'), value: S.get('ctrl'), options: [{ value: 'stick', label: T('虛擬搖桿') }, { value: 'drag', label: T('手指拖曳') }, { value: 'tilt', label: T('裝置傾斜') }], onChange: async (v) => { if (v === 'tilt') { const ok = await new Input().enableTilt(); if (!ok) { toast(T('此裝置無法使用傾斜，已改回搖桿')); S.set('ctrl', 'stick'); rows.ctrl.set('stick'); return; } } S.set('ctrl', v); } }),
+    vib: Toggle({ label: T('震動回饋'), value: S.get('vib'), onChange: (v) => S.set('vib', v) }),
+    cam: Chips({ label: T('鏡頭距離'), value: S.get('cam'), options: [{ value: 0, label: T('近') }, { value: 1, label: T('中') }, { value: 2, label: T('遠') }], onChange: (v) => S.set('cam', v) }),
+    minimap: Toggle({ label: T('小地圖'), value: S.get('minimap'), onChange: (v) => S.set('minimap', v) }),
+    ball: Chips({ label: T('球種'), value: S.get('ball'), options: BALL_TYPES.map((b) => ({ value: b.id, label: T(b.name) })), onChange: (v) => S.set('ball', v) }),
+    trail: Toggle({ label: T('滾動軌跡'), value: S.get('trail'), onChange: (v) => S.set('trail', v) }),
+    shapes: Toggle({ label: T('色彩輔助（用形狀區分玩家）'), value: S.get('shapes'), onChange: (v) => S.set('shapes', v) }),
+    reduce: Toggle({ label: T('減少動態（關閉粒子、晃動與浮動）'), value: S.get('reduce'), onChange: (v) => S.set('reduce', v) }),
+  };
+  const sect = (t, ...k) => h('section', { class: 'sect' }, h('h3', { text: t }), ...k);
+  const body = h('div', { class: 'settings' },
+    sect(T('聲音'), rows.bgm, rows.bgmVol, rows.sfx, rows.sfxVol),
+    sect(T('操作'), h('div', { class: 'rowStack' }, h('span', { class: 'rowLabel', text: T('操作方式') }), rows.ctrl), rows.vib, h('p', { class: 'hint' }, T('鍵盤：'), Key('W'), Key('A'), Key('S'), Key('D'), T(' 或方向鍵都能操作。'))),
+    sect(T('畫面與輔助'), h('div', { class: 'rowStack' }, h('span', { class: 'rowLabel', text: T('鏡頭距離') }), rows.cam), h('div', { class: 'rowStack' }, h('span', { class: 'rowLabel', text: T('球種（自己的球）') }), rows.ball), rows.trail, rows.minimap, rows.shapes, rows.reduce));
+  const g = activeGame && !activeGame.online && activeGame.state === 'play' && !activeGame.paused ? activeGame : null;
+  if (g) g.pause(true);
+  m = Modal({
+    title: T('設定'), body, class: 'settingsModal', onClose: () => { if (g && activeGame === g) g.pause(false); },
+    actions: [Button({ label: T('恢復預設'), onClick: () => { S.reset(); m.close('reset'); toast(T('已恢復預設設定')); audio.bgm(S.get('bgm')); } }), Button({ label: T('完成'), variant: 'primary', onClick: () => m.close('ok') })],
+  });
+  return m;
+}
+
+function openHow() {
+  const sec = (t, ...k) => h('section', { class: 'sect' }, h('h3', { text: t }), ...k);
+  const m = Modal({
+    title: T('怎麼玩'), class: 'howModal',
+    body: h('div', { class: 'how' },
+      sec(T('基本操作'), h('p', {}, T('依設定用虛擬搖桿、手指拖曳、裝置傾斜或按 '), Key('W'), Key('A'), Key('S'), Key('D'), T(' 或方向鍵控制球。牆會擋住球；轉彎前放慢速度，更容易控制方向。'))),
+      sec(T('同圖競速'), h('p', { text: T('同一局使用相同迷宮與起點，先滾進終點洞者排名較前。單人抵達即結束；多人（含電腦）首位抵達後完整倒數 10 秒，全員抵達也不提前結算，未抵達者為未完賽。球與球不會碰撞，可互相穿過。') })),
+      sec(T('搶星星'), h('p', { text: T('先依地圖大小和參賽人數合成限時級距，再依級距計時：第一級 30 秒，每升一級增加 30 秒；參賽者最多按 8 人計算。多人地圖每增加一位參賽者，寬和高各增加 2 格；星星數依地圖格數增加，每 12 格約 1 顆，至少 5 顆。碰到星星得 1 分，星星被撿走就不會再出現，全部被撿完時比賽提前結束。限時內分數最高的人贏；同分時，最後一次得分較早者排名較前。') })),
+      sec(T('地板崩塌'), h('p', { text: T('踩過的地磚會先晃動，再依難度於約 1.2～3.2 秒後碎裂；停在破洞上會掉落淘汰。60 秒後場地開始隨機崩塌。多人地圖依參賽人數加大；即使只剩一人也繼續，直到全員淘汰才結算，存活越久名次越前。單人記錄存活時間。') })),
+      sec(T('逃出模式'), h('p', { text: T('迷宮裡有幾道彩色的門擋住去路。同色的鑰匙要繞去支線撿起來，帶著鑰匙走到門前門就會打開；踩踏板的門只會開一小段時間，要在關上前衝過去（快關上時門會閃爍）。每個人的鑰匙與門各自獨立，不會被別人搶走。路旁小岔路上成對的發光光圈是傳送門，走進一邊會從另一邊出來，可以當作捷徑。單人抵達即結束；多人首位抵達後完整倒數 10 秒才結算，未抵達者為未完賽。') })),
+      sec(T('闖關模式'), h('p', { text: T('競速與逃出各有五種難度，每種 100 關。五種難度都可選；各難度內的關卡依序解鎖。完成時間評 1～3 顆星。') })),
+      sec(T('自由練習'), h('p', { text: T('單人可選四種玩法與五種迷宮難度，每局隨機產生地圖。同圖競速與逃出抵達終點即結束；搶星星挑戰得分；地板崩塌挑戰存活時間。最佳成績保存在此瀏覽器。') })),
+      sec(T('每日挑戰'), h('p', { text: T('可選同圖競速或逃出，各有五種難度。同一天、同玩法與同難度共用相同地圖，依完成時間評 1～3 顆星；最佳時間與星數分開記錄。完成任一每日挑戰即可累積連續天數。') })),
+      sec(T('對電腦'), h('p', { text: T('可加入 1～7 位電腦，每位可個別選擇五種難度。同難度電腦也有不同的速度節奏與轉彎偏好；多人結束條件與線上對戰相同。迷宮難度與電腦難度分別設定。') })),
+      sec(T('關燈挑戰'), h('p', { text: T('所有玩法皆可在開局前選擇關燈，對局中固定。只有目前觀看的球周圍約 2.5 格有柔邊光圈，範圍內可看見牆後區域；其他球進入光圈才看得到。小地圖與放大地圖仍完整顯示所有玩家動態。電腦只感知附近道路並保留本局探索記憶。') }), h('p', { text: T('關燈與亮燈共用闖關解鎖進度，星數及最佳成績分開保存。線上由房主在等待時設定，全房一致；觀戰與重連沿用本局設定。') })),
+      sec(T('地圖與觀戰'), h('p', { text: T('點小地圖可放大，放大後仍會持續更新所有玩家、電腦與軌跡。神話難度的資訊欄不提供剩餘格數。競速或逃出抵達終點後、崩塌淘汰後，可點資訊欄的玩家或電腦切換視角；觀看對象結束時會自動切換至尚未結束者。') })),
+      sec(T('線上對戰'), h('p', { text: T('每房最多 4 位玩家、20 位觀戰者。房主在等待中設定玩法、迷宮難度與關燈；更改設定後其他玩家需重新準備。可複製玩家或觀戰邀請連結給朋友。觀戰者可切換視角、看完整地圖並聊天；房內沒有真人玩家時，房間會關閉。') }))),
+    actions: [Button({ label: T('知道了'), variant: 'primary', onClick: () => m.close('ok') })],
+  });
+}
+
+// ---------- 畫面：首頁 ----------
+const LOGO = '<svg viewBox="0 0 200 120" aria-hidden="true"><rect x="8" y="8" width="184" height="104" rx="12" fill="#e2b97c" stroke="#3b2417" stroke-width="6"/><path d="M30 94V30h40v44h30V30h40v54h20M70 94h30M130 94V74" fill="none" stroke="#8a5330" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="52" r="13" fill="#d94a3d" stroke="#7a2018" stroke-width="2"/><path d="M43 48a10 10 0 0 1 8-6" fill="none" stroke="#fff" stroke-width="3.500" stroke-linecap="round" opacity=".85"/><path d="M168 30v22" stroke="#f4ead2" stroke-width="3"/><path d="M168 30l16 6-16 6z" fill="#d4473a"/></svg>';
+function menuBtn(ic, title, sub, onClick, variant) {
+  return h('button', { type: 'button', class: 'btn big ' + (variant || ''), on: { click: onClick } }, icon(ic), h('span', { class: 'tx' }, h('b', { text: title }), h('small', { text: sub })));
+}
+function nightOption(value, onChange, disabled = false) {
+  return h('div', { class: 'nightOption' },
+    Toggle({ label: T('關燈挑戰'), value, onChange, disabled }),
+    h('p', { class: 'note', text: T('開局前選擇，本局固定。球周圍 2.5 格有柔光，地圖仍完整顯示；電腦僅靠附近探索與本局記憶。明暗成績分開，闖關解鎖共用。') }));
+}
+function homeScreen() {
+  $screen.append(h('section', { class: 'screen home' },
+    ScrollArea(h('div', { class: 'homeIn' },
+      h('div', { class: 'logo', html: LOGO }),
+      h('h1', { class: 'gameTitle', text: T('迷宮滾球') }),
+      h('p', { class: 'sub', text: T('3D 木質迷宮・滾動小球體驗四種玩法') }),
+      h('div', { class: 'menu' },
+        menuBtn('flag', T('闖關模式'), T('競速／逃出・各 5 難度 × 100 關'), () => go('levels'), 'primary'),
+        menuBtn('key', T('每日挑戰'), T('競速／逃出・每天更新 10 張迷宮'), () => go('daily')),
+        menuBtn('star', T('自由練習'), T('單人練習・四種玩法・保留紀錄'), () => go('setup', { kind: 'practice' })),
+        menuBtn('people', T('對電腦'), T('1～7 位電腦・各自選難度'), () => go('setup', { kind: 'vsai' })),
+        menuBtn('link', T('線上對戰'), T('最多 4 人・觀戰・邀請連結'), () => go('online')),
+        Button({ label: T('怎麼玩'), variant: 'ghost', onClick: openHow }))), { class: 'homeScroll' })));
+}
+
+// ---------- 畫面：闖關 ----------
+function levelsScreen(p) {
+  let lightsOut = p.lightsOut === true;
+  const dOpen = () => true; // 五種難度皆可直接選擇，不需星星門檻
+  let lmode = p.mode === 'escape' ? 'escape' : 'race';
+  let diff = p.diff != null && dOpen(p.diff) ? p.diff : Math.max(0, MR.DIFFS.findIndex((_, i) => dOpen(i) && store.levelStars(i, lmode).filter((x) => x > 0).length < 100));
+  const grid = h('div', { class: 'levelGrid' }), prog = h('p', { class: 'note' });
+  const levelControls = h('div', { class: 'levelControls' });
+  const sa = ScrollArea(h('div', {}, levelControls, h('div', { class: 'levelWrap' }, grid)), { class: 'levelScroll', label: T('關卡列表') });
+  const draw = () => {
+    const stars = store.levelStars(diff, lmode, lightsOut), un = store.unlockedLevel(diff, lmode), done = stars.filter((x) => x > 0).length, tot = stars.reduce((a, b) => a + b, 0);
+    grid.dataset.diff = String(diff); grid.style.setProperty('--dtheme', MR.DIFF_THEME[diff].accent);
+    const nx = '';
+    const progTxt = T('{wood}・已通過 {done}/100 關・共 {tot} 顆星{nx}・迷宮大小 {x5}×{x6} ～ {x7}×{x8}', { wood: T(MR.DIFF_THEME[diff].wood), done, tot, nx, x5: MR.levelSize(diff, 1, lmode), x6: MR.levelSize(diff, 1, lmode), x7: MR.levelSize(diff, 100, lmode), x8: MR.levelSize(diff, 100, lmode) });
+    prog.textContent = ''; progTxt.split(/[・·]\s*/).forEach((seg, k) => { if (k) prog.appendChild(document.createTextNode(' · ')); prog.appendChild(h('span', { class: 'nw', text: seg })); });
+    grid.replaceChildren();
+    for (let n = 1; n <= 100; n++) {
+      const locked = n > un, s = stars[n - 1] || 0;
+      const bt = !locked && store.getBest((lmode === 'escape' ? 'lve-' : 'lv-') + diff + '-' + n, lightsOut);
+      const b = h('button', { type: 'button', class: 'lv' + (locked ? ' locked' : '') + (s ? ' done' : '') + (n === un ? ' next' : ''), disabled: locked || null, 'aria-label': T('第 {n} 關{x2}', { n, x2: locked ? T('（未解鎖）') : s ? T('，{s} 顆星', { s }) : '' }) },
+        h('b', { text: String(n) }), locked ? icon('lock') : h('span', { class: 'stars', text: '★'.repeat(s) + '☆'.repeat(3 - s) }), locked ? null : h('span', { class: 'lvTime', text: bt ? fmtShort(bt) : '--' }));
+      if (!locked) b.addEventListener('click', () => startLocal({ kind: 'level', mode: lmode, diff, level: n, lightsOut, ais: [] }));
+      grid.append(b);
+    }
+  };
+  const modeChips = Chips({ label: T('玩法'), value: lmode, options: ['race', 'escape'].map((m) => ({ value: m, label: MODE_INFO[m].name, icon: MODE_INFO[m].icon })), onChange: (v) => { lmode = v; draw(); sa.view.scrollTop = 0; } });
+  const chips = Chips({ label: T('難度'), value: diff, options: MR.DIFFS.map((d, i) => ({ value: i, label: T(d), disabled: !dOpen(i), sub: T(MR.DIFF_THEME[i].wood) })), onChange: (v) => { diff = v; draw(); sa.view.scrollTop = 0; } });
+  levelControls.append(modeChips, nightOption(lightsOut, (value) => { lightsOut = value; ctx.lightsOut = value; draw(); }), chips, prog);
+  $screen.append(h('section', { class: 'screen levels' }, topbar(T('闖關模式'), () => go('home')), h('div', { class: 'body' }, panel(sa))));
+  draw();
+}
+
+// ---------- 畫面：每日挑戰（同日、同玩法與難度共用同一張迷宮）----------
+function dailyScreen(p = {}) {
+  let lightsOut = p.lightsOut === true;
+  const date = store.ymd(new Date()), streak = store.dailyStreak(date);
+  let mode = p.mode === 'race' ? 'race' : 'escape';
+  const mazeNote = h('p', { class: 'note' });
+  const rows = h('div', { class: 'menu dailyGrid' });
+  const draw = () => {
+    mazeNote.textContent = T('{date}・今天的{mode_}迷宮，同難度玩家共用相同地圖', { date, mode_: MODE_INFO[mode].name });
+    rows.replaceChildren(...MR.DIFFS.map((d, i) => {
+      const bestKey = dailyRecordKey('daily', mode, date, i), starsKey = dailyRecordKey('dailys', mode, date, i);
+      const b = store.getBest(bestKey, lightsOut), st = store.getBest(starsKey, lightsOut) || 0, sz = MR.SIZE[mode][i];
+      return menuBtn(MODE_INFO[mode].icon, T(d) + '・' + sz + '×' + sz, b != null ? '★'.repeat(st) + '☆'.repeat(3 - st) + '・' + fmtShort(b) : T('尚未挑戰'), () => startLocal({ kind: 'daily', mode, diff: i, date, lightsOut, ais: [] }), b != null ? '' : 'primary');
+    }));
+  };
+  const modeChips = Chips({ label: T('每日模式'), value: mode, options: ['race', 'escape'].map((m) => ({ value: m, label: MODE_INFO[m].name, icon: MODE_INFO[m].icon })), onChange: (v) => { mode = v; ctx = Object.assign({}, ctx, { mode }); draw(); } });
+  $screen.append(h('section', { class: 'screen setup' }, topbar(T('每日挑戰'), () => go('home')),
+    h('div', { class: 'body' }, panel(ScrollArea(h('div', { class: 'setupBody' },
+      modeChips,
+      nightOption(lightsOut, (value) => { lightsOut = value; ctx.lightsOut = value; draw(); }),
+      mazeNote,
+      h('p', { class: 'note', text: streak ? T('連續挑戰 {n} 天', { n: streak }) : T('今天完成任一每日挑戰，就開始累積連續天數') }),
+      rows), { class: 'setupScroll' })))));
+  draw();
+}
+
+function dailyRecordKey(kind, mode, date, diff) {
+  return mode === 'race' ? kind + '-race-' + date + '-' + diff : kind + '-' + date + '-' + diff;
+}
+
+// ---------- 畫面：自由練習／對電腦 設定 ----------
+function setupScreen(p) {
+  const vsai = p.kind === 'vsai', S = { mode: p.mode || 'race', diff: p.diff != null ? p.diff : 1, lightsOut: p.lightsOut === true, ai: p.ai || [1], count: p.ai ? p.ai.length : 1 };
+  const best = h('p', { class: 'note best' }), compList = h('div', { class: 'comps' }), countLbl = h('b', { class: 'count' });
+  const playerCount = () => vsai ? S.count + 1 : 1;
+  const modeDescription = () => {
+    if (S.mode === 'stars') {
+      const size = MR.sizeFor('stars', S.diff, playerCount());
+      return T('本局級距 {tier}，限時 {seconds} 秒；星星撿完提前結束。', { tier: MR.starTimeTier(size, playerCount()), seconds: MR.starTimeFor(size, playerCount()) });
+    }
+    if (vsai) return MODE_INFO[S.mode].sub;
+    return ({
+      race: T('單人滾進終點洞即結束，挑戰最快完成時間。'),
+      collapse: T('避開持續崩塌的地磚，掉落後結束，挑戰最長存活時間。'),
+      escape: T('繞路拿鑰匙、踩踏板開門，逃到終點即結束，挑戰最快完成時間。'),
+    })[S.mode];
+  };
+  const modeDesc = h('p', { class: 'note', text: modeDescription() });
+  const showBest = () => {
+    if (vsai) return;
+    const v = store.getBest(S.mode + '-' + S.diff, S.lightsOut);
+    best.textContent = v == null ? T('還沒有紀錄，來挑戰看看！') : MR.isRun(S.mode) ? T('本機最佳：{x1}', { x1: fmtShort(v) }) : S.mode === 'stars' ? T('本機最佳：{v} 顆星星', { v }) : T('本機最佳：存活 {x1} 秒', { x1: v.toFixed(2) });
+  };
+  const drawComps = () => {
+    countLbl.textContent = T('{n} 位電腦', { n: S.count }); compList.replaceChildren();
+    for (let i = 0; i < S.count; i++) {
+      compList.append(h('div', { class: 'comp' }, h('span', { class: 'dot', style: { background: BALL_COLORS[(i + 1) % 8] } }), h('span', { class: 'cname', text: T('電腦 {n}', { n: i + 1 }) }),
+        Select({ label: T('電腦 {x1} 難度', { x1: i + 1 }), value: S.ai[i] != null ? S.ai[i] : 1, options: MR.AI_NAMES.map((n, k) => ({ value: k, label: T(n) })), onChange: (v) => { S.ai[i] = v; } })));
+    }
+  };
+  const diffChipsWrap = h('div');
+  const drawDiffChips = () => {
+    const count = playerCount();
+    const options = MR.DIFFS.map((d, i) => {
+      const size = MR.sizeFor(S.mode, i, count);
+      const sub = `${size}×${size}` + (S.mode === 'stars' ? ` · ${T('第 {tier} 級・{seconds} 秒', { tier: MR.starTimeTier(size, count), seconds: MR.starTimeFor(size, count) })}` : '');
+      return { value: i, label: T(d), sub };
+    });
+    diffChipsWrap.replaceChildren(Chips({ label: T('迷宮難度'), value: S.diff, options, onChange: (v) => { S.diff = v; modeDesc.textContent = modeDescription(); showBest(); } }));
+  };
+  const modeChips = Chips({ label: T('玩法'), value: S.mode, options: MR.MODES.map((m) => ({ value: m, label: MODE_INFO[m].name, icon: MODE_INFO[m].icon })), onChange: (v) => { S.mode = v; modeDesc.textContent = modeDescription(); drawDiffChips(); showBest(); } });
+  drawDiffChips();
+  const stepper = vsai ? h('div', { class: 'stepper' },
+    IconButton({ icon: 'minus', ariaLabel: T('減少一位電腦'), onClick: () => {
+      if (S.count > 1) { S.count--; drawComps(); drawDiffChips(); modeDesc.textContent = modeDescription(); }
+    } }),
+    countLbl,
+    IconButton({ icon: 'plus', ariaLabel: T('增加一位電腦'), onClick: () => {
+      if (S.count < 7) { S.count++; while (S.ai.length < S.count) S.ai.push(1); drawComps(); drawDiffChips(); modeDesc.textContent = modeDescription(); }
+    } })) : null;
+  const sections = [h('h3', { text: T('玩法') }), modeChips, modeDesc, nightOption(S.lightsOut, (value) => { S.lightsOut = value; ctx.lightsOut = value; showBest(); }), h('h3', { text: T('迷宮難度') }), diffChipsWrap, vsai ? h('h3', { text: T('電腦對手') }) : best, vsai ? stepper : null, vsai ? compList : null];
+  $screen.append(h('section', { class: 'screen setup' }, topbar(vsai ? T('對電腦') : T('自由練習'), () => go('home')),
+    h('div', { class: 'body' }, panel(ScrollArea(h('div', { class: 'setupBody' }, ...sections), { class: 'setupScroll' }),
+      h('div', { class: 'panelActions' }, Button({ label: T('開始遊戲'), variant: 'primary', size: 'big', onClick: () => startLocal({ kind: p.kind, mode: S.mode, diff: S.diff, lightsOut: S.lightsOut, ais: vsai ? S.ai.slice(0, S.count) : [] }) }))))));
+  showBest(); if (vsai) drawComps();
+}
+
+// ---------- 單機開局 ----------
+function startLocal(cfg) {
+  const players = [{ id: 'me', name: myName(), kind: 'human' }];
+  cfg.ais.forEach((lv, i) => players.push({ id: 'ai' + (i + 1), name: T('電腦{x1}・{AI_NAMES_lv_}', { x1: i + 1, AI_NAMES_lv_: T(MR.AI_NAMES[lv]) }), kind: 'ai', ai: lv }));
+  let seed, size;
+  if (cfg.kind === 'level') { seed = MR.levelSeed(cfg.diff, cfg.level, cfg.mode); size = MR.levelSize(cfg.diff, cfg.level, cfg.mode); } else if (cfg.kind === 'daily') { seed = MR.dailySeed(cfg.date, cfg.diff, cfg.mode); size = MR.SIZE[cfg.mode][cfg.diff]; } else seed = (Math.random() * 4294967296) >>> 0;
+  go('game', { local: true, cfg, players, mode: cfg.mode, diff: cfg.diff, lightsOut: cfg.lightsOut === true, seed, size, meId: 'me' });
+}
+
+// ---------- 線上：共用 session（任何畫面都能收到房間／聊天更新）----------
+const session = { room: null, you: null, role: null, chat: [], unread: 0, subs: new Set(), init: null, fallback: false };
+net.on((m) => {
+  if (m.t === 'room') { session.room = m.room; session.you = m.you; session.role = m.role; }
+  else if (m.t === 'joined') { session.chat = []; session.unread = 0; session.fallback = !!m.fallback; session.init = null; }
+  else if (m.t === 'chat') { session.chat.push(m); if (session.chat.length > 80) session.chat.shift(); if (!m.sys && m.from !== session.you) session.unread++; }
+  else if (m.t === 'left' || m.t === 'closed') { session.room = null; session.role = null; session.init = null; }
+  else if (m.t === 'init') session.init = m;
+  [...session.subs].forEach((f) => f(m));
+  if (m.t === 'room' && current === 'online') go('room');
+  if ((m.t === 'closed' || m.t === 'left') && (current === 'room' || current === 'game')) {
+    go('online', { notice: m.t === 'closed' ? (M(m.reason) || T('房間已結束')) : m.why === 'kicked' ? T('你被房主請出房間了') : '' });
+  }
+  if (m.t === 'init' && (current === 'room')) go('game', { online: true, init: m });
+});
+const inviteLink = (kind) => { const r = session.room; if (!r || !r.invite) return ''; return location.origin + location.pathname + '#/join/' + r.code + '/' + (kind === 'spec' ? r.invite.ts : r.invite.tp); };
+function copyText(text) {
+  const done = () => toast(T('已複製連結'));
+  const fallback = () => { const m = Modal({ title: T('複製連結'), body: h('div', {}, h('p', { class: 'note', text: T('請長按選取下面的連結後複製：') }), h('div', { class: 'linkBox', text })), actions: [Button({ label: T('完成'), variant: 'primary', onClick: () => m.close() })] }); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+}
+
+// ---------- 聊天元件 ----------
+const QUICK = ['加油！', '好險～', '漂亮！', '再來一局！', 'GG']; // 顯示時再 T()
+function ChatBox() {
+  const list = h('div', { class: 'chatList', role: 'log', 'aria-live': 'polite' });
+  const sa = ScrollArea(list, { class: 'chatScroll', label: T('聊天訊息') });
+  const input = TextInput({ placeholder: T('輸入訊息…'), maxLength: 80, label: T('聊天輸入'), enter: 'send', onEnter: () => send() });
+  const send = () => { const t = input.value.trim(); if (!t) return; net.send({ t: 'chat', text: t }); input.value = ''; };
+  const draw = () => {
+    list.replaceChildren(...session.chat.slice(-60).map((c) => c.sys ? h('div', { class: 'msg sys', text: M(c.text) }) :
+      h('div', { class: 'msg' + (c.from === session.you ? ' mine' : '') }, h('b', { text: c.name + (c.role === 'spec' ? T('（觀戰）') : '') }), h('span', { text: M(c.text) }))));
+    requestAnimationFrame(() => sa.scrollToEnd());
+  };
+  const root = h('div', { class: 'chatBox' }, sa,
+    h('div', { class: 'quick' }, QUICK.map((q) => Button({ label: T(q), size: 'tiny', onClick: () => net.send({ t: 'chat', text: q }) }))),
+    h('div', { class: 'chatIn' }, input, Button({ label: T('送出'), size: 'small', variant: 'primary', onClick: send })));
+  root.draw = draw; draw();
+  return root;
+}
+
+// ---------- 畫面：線上大廳 ----------
+const MODE_SHORT = { get race() { return T('競速'); }, get stars() { return T('搶星星'); }, get collapse() { return T('崩塌'); }, get escape() { return T('逃出'); } };
+function onlineScreen(p) {
+  let rooms = [], invite = p.invite || null, peek = null, joining = false;
+  let onlineCount = null;
+  const status = h('div', { class: 'status' });
+  const countEl = h('p', { class: 'online-count', role: 'status', 'aria-live': 'polite', hidden: true });
+  const nameIn = TextInput({ placeholder: T('輸入暱稱（可留空）'), maxLength: 12, value: store.get('name'), label: T('暱稱'), onInput: (v) => store.set('name', v.trim()) });
+  const listEl = h('div', { class: 'roomList' });
+  const inviteBox = h('div', { class: 'inviteBox' });
+  const notice = p.notice ? h('p', { class: 'notice', role: 'alert', text: p.notice }) : null;
+  const nm = () => nameIn.value.trim();
+  const drawStatus = () => {
+    const st = net.state, map = { idle: T('尚未連線'), connecting: T('連線中…（伺服器第一次喚醒可能要等幾十秒）'), reconnecting: T('重新連線中…'), online: T('已連線'), offline: T('無法連線'), nourl: T('尚未設定線上伺服器') };
+    status.className = 'status ' + st; status.textContent = map[st] || st;
+    if (st !== 'online') onlineCount = null;
+    countEl.hidden = !Number.isInteger(onlineCount);
+    countEl.textContent = Number.isInteger(onlineCount) ? T('目前在線：{n} 人', { n: onlineCount }) : '';
+  };
+  const drawRooms = () => {
+    listEl.replaceChildren();
+    if (net.state === 'nourl') { listEl.append(h('p', { class: 'empty', text: T('這個版本還沒有設定線上伺服器（GAME_SERVER_URL），目前只能玩單機模式。') })); return; }
+    if (!rooms.length) { listEl.append(h('p', { class: 'empty', text: net.state === 'online' ? T('目前沒有房間。按「快速加入」會自動幫你開一間！') : T('連線後會顯示房間列表。') })); return; }
+    for (const r of rooms) {
+      const full = r.players >= r.max || r.state !== 'waiting';
+      listEl.append(h('div', { class: 'roomRow' },
+        h('div', { class: 'ri' }, h('b', { text: T('{host} 的房間', { host: r.host }) }), h('small', { text: T('{mode_}・{diff_}・{x3}・{players}/{max} 人{x6}', { mode_: MODE_SHORT[r.mode], diff_: T(MR.DIFFS[r.diff]), x3: r.state === 'waiting' ? T('等待中') : T('遊戲中'), players: r.players, max: r.max, x6: r.specs ? '・' + T('{n} 人觀戰', { n: r.specs }) : '' }) })),
+        Button({ label: T('加入'), size: 'small', variant: 'primary', disabled: full || joining, onClick: () => net.send({ t: 'join', code: r.code, name: nm(), role: 'player' }) }),
+        Button({ label: T('觀戰'), size: 'small', icon: 'eye', onClick: () => net.send({ t: 'join', code: r.code, name: nm(), role: 'spec' }) })));
+    }
+  };
+  const drawInvite = () => {
+    inviteBox.replaceChildren(); if (!invite) return;
+    const bad = { invalid: T('邀請連結無效，請向朋友再要一次。'), revoked: T('這個邀請連結已被房主撤銷，請向朋友再要一個新的。'), closed: T('這個房間已經結束了。') };
+    if (peek && !peek.ok) { inviteBox.append(h('div', { class: 'inviteCard bad' }, h('p', { text: bad[peek.reason] || T('無法使用這個邀請。') }), Button({ label: T('知道了'), onClick: () => { invite = null; peek = null; clearHash(); drawInvite(); } }))); return; }
+    if (!peek) { inviteBox.append(h('div', { class: 'inviteCard' }, h('p', { text: net.state === 'online' ? T('正在確認邀請…') : T('連線後會確認邀請…') }))); return; }
+    const r = peek.room;
+    inviteBox.append(h('div', { class: 'inviteCard' },
+      h('h3', { text: T('你收到房間邀請') }),
+      h('p', { text: T('{host} 的房間・{mode_}・{diff_}・{players}/{max} 人', { host: r.host, mode_: MODE_SHORT[r.mode], diff_: T(MR.DIFFS[r.diff]), players: r.players, max: r.max }) }),
+      h('p', { class: 'note', text: peek.role === 'spec' ? T('你將以「觀戰者」身分加入。確認暱稱後按加入。') : r.state === 'waiting' ? T('你將以「玩家」身分加入。確認暱稱後按加入。') : T('遊戲進行中，你會先以觀戰者身分加入。') }),
+      Button({ label: peek.role === 'spec' ? T('確認並觀戰') : T('確認並加入'), variant: 'primary', onClick: () => { joining = true; net.send({ t: 'join', code: invite.code, token: invite.token, name: nm() }); } })));
+  };
+  const clearHash = () => { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* 略 */ } };
+  const sub = (m) => {
+    if (m.t === '_state') { drawStatus(); drawRooms(); if (m.state === 'online' && invite && !peek) net.send({ t: 'peek', code: invite.code, token: invite.token }); drawInvite(); }
+    else if (m.t === 'rooms') { rooms = m.rooms; onlineCount = Number.isInteger(m.online) && m.online >= 0 ? m.online : null; drawStatus(); drawRooms(); }
+    else if (m.t === 'peek') { peek = m; drawInvite(); }
+    else if (m.t === 'joined') { clearHash(); }
+    else if (m.t === 'err') { joining = false; toast(M(m.msg) || T('發生錯誤')); if (invite && ['invalid', 'revoked', 'closed'].includes(m.code)) { peek = { ok: false, reason: m.code }; drawInvite(); } drawRooms(); }
+  };
+  net.on(sub); const off = () => net.handlers.delete(sub);
+  const createRoom = () => {
+    let mode = 'race', diff = 2, lightsOut = false, mm;
+    const body = h('div', {}, h('h3', { text: T('玩法') }), Chips({ label: T('玩法'), value: mode, options: MR.MODES.map((m) => ({ value: m, label: MODE_INFO[m].name })), onChange: (v) => { mode = v; } }),
+      h('h3', { text: T('迷宮難度') }), Chips({ label: T('難度'), value: diff, options: MR.DIFFS.map((d, i) => ({ value: i, label: T(d) })), onChange: (v) => { diff = v; } }), nightOption(lightsOut, (value) => { lightsOut = value; }), h('p', { class: 'note', text: T('進房後房主還可以再調整。') }));
+    mm = Modal({ title: T('建立房間'), body, actions: [Button({ label: T('取消'), onClick: () => mm.close() }), Button({ label: T('建立'), variant: 'primary', onClick: () => { net.send({ t: 'create', name: nm(), mode, diff, lightsOut }); mm.close(); } })] });
+  };
+  $screen.append(h('section', { class: 'screen online' }, topbar(T('線上對戰'), () => go('home')),
+    h('div', { class: 'body' }, panel(ScrollArea(h('div', { class: 'onlineBody' },
+      notice, status, countEl, inviteBox,
+      h('div', { class: 'nickRow' }, h('label', { class: 'rowLabel', text: T('暱稱') }), nameIn),
+      h('div', { class: 'row2' },
+        Button({ label: T('快速加入'), variant: 'primary', icon: 'flag', onClick: () => net.send({ t: 'quick', name: nm() }) }),
+        Button({ label: T('建立房間'), icon: 'plus', onClick: createRoom }),
+        Button({ label: T('重新整理'), size: 'small', onClick: () => net.send({ t: 'rooms' }) })),
+      h('h3', { text: T('公開房間') }), listEl), { class: 'onlineScroll' })))));
+  net.connect(nm()); drawStatus(); drawRooms(); drawInvite();
+  if (net.state === 'online') { net.send({ t: 'rooms' }); if (invite && !peek) net.send({ t: 'peek', code: invite.code, token: invite.token }); }
+  return off;
+}
+
+// ---------- 畫面：房間 ----------
+function roomScreen() {
+  if (!session.room) { go('online'); return; }
+  const chat = ChatBox();
+  const seats = h('div', { class: 'seats' }), specs = h('div', { class: 'specs' }), actions = h('div', { class: 'panelActions' }), head = h('div', { class: 'roomHead' }), settings = h('div', { class: 'roomSettings' }), inviteEl = h('div', { class: 'inviteRow' });
+  const draw = () => {
+    const r = session.room; if (!r) return;
+    const isHost = r.host === session.you, me = r.members.find((m) => m.id === session.you), isPlayer = me && me.role === 'player';
+    const players = r.members.filter((m) => m.role === 'player'), sp = r.members.filter((m) => m.role === 'spec');
+    const activePlayerCount = players.filter((p) => p.online).length;
+    const mapSize = MR.sizeFor(r.mode, r.diff, activePlayerCount);
+    const mapNote = r.mode === 'stars'
+      ? T('目前 {n} 位玩家的地圖大小：{size}×{size}；搶星第 {tier} 級、限時 {seconds} 秒', { n: activePlayerCount, size: mapSize, tier: MR.starTimeTier(mapSize, activePlayerCount), seconds: MR.starTimeFor(mapSize, activePlayerCount) })
+      : T('目前 {n} 位玩家的地圖大小：{size}×{size}', { n: activePlayerCount, size: mapSize });
+    rc(head, h('div', {}, h('small', { text: T('房間代碼') }), h('b', { class: 'code', text: r.code })), Button({ label: T('離開房間'), size: 'small', onClick: () => { net.send({ t: 'leave' }); go('online'); } }));
+    rc(settings,
+      h('h3', { text: T('玩法') }), Chips({ label: T('玩法'), value: r.mode, options: MR.MODES.map((m) => ({ value: m, label: MODE_INFO[m].name, disabled: !isHost })), onChange: (v) => net.send({ t: 'set', mode: v }) }),
+      h('p', { class: 'note', text: MODE_INFO[r.mode].sub }),
+      h('h3', { text: T('迷宮難度') }), Chips({ label: T('難度'), value: r.diff, options: MR.DIFFS.map((d, i) => ({ value: i, label: T(d), disabled: !isHost })), onChange: (v) => net.send({ t: 'set', diff: v }) }),
+      h('p', { class: 'note', text: mapNote }),
+      nightOption(r.lightsOut, (value) => net.send({ t: 'set', lightsOut: value }), !isHost || r.state !== 'waiting'),
+      isHost ? null : h('p', { class: 'note', text: T('只有房主能更改設定。') }));
+    seats.replaceChildren();
+    for (let i = 0; i < r.max; i++) {
+      const m = players[i];
+      seats.append(m ? h('div', { class: 'seat' + (m.ready || m.id === r.host ? ' ready' : '') + (m.online ? '' : ' off') },
+        h('span', { class: 'dot', style: { background: BALL_COLORS[i % 8] } }), h('span', { class: 'sname', text: m.name + (m.id === session.you ? T('（你）') : '') }),
+        m.id === r.host ? h('span', { class: 'tag', title: T('房主') }, icon('crown'), T('房主')) : h('span', { class: 'tag', text: m.ready ? T('已準備') : T('未準備') }),
+        !m.online ? h('span', { class: 'tag warn', text: T('斷線中') }) : null,
+        isHost && m.id !== session.you ? Button({ label: T('請出'), size: 'tiny', onClick: () => net.send({ t: 'kick', id: m.id }) }) : null)
+        : h('div', { class: 'seat empty' }, h('span', { class: 'dot' }), h('span', { class: 'sname', text: T('等待玩家加入…') })));
+    }
+    rc(specs, h('h3', {}, icon('eye'), T(' 觀戰 {length}/{maxSpecs}', { length: sp.length, maxSpecs: r.maxSpecs })), sp.length ? h('p', { class: 'note', text: sp.map((m) => m.name + (m.id === session.you ? T('（你）') : '')).join(T('、')) }) : h('p', { class: 'note', text: T('還沒有人觀戰') }));
+    inviteEl.replaceChildren();
+    if (r.invite) {
+      const row = (label, kind, ico) => h('div', { class: 'linkRow' }, h('div', { class: 'linkLbl' }, icon(ico), h('span', { text: label })),
+        h('div', { class: 'linkUrl', role: 'textbox', 'aria-readonly': 'true', 'aria-label': label, tabindex: '0', text: inviteLink(kind) }),
+        Button({ label: T('複製'), icon: 'copy', size: 'small', onClick: () => copyText(inviteLink(kind)) }));
+      inviteEl.append(h('h3', { text: T('邀請朋友') }), row(T('加入連結（玩家）'), 'player', 'link'), row(T('觀戰連結'), 'spec', 'eye'), isHost ? h('div', { class: 'row2' }, Button({ label: T('撤銷並重發'), size: 'small', onClick: () => net.send({ t: 'invite', act: 'revoke' }) })) : null);
+    }
+    actions.replaceChildren();
+    if (!isPlayer) actions.append(h('p', { class: 'note', text: session.fallback ? T('房間已滿或已開始，你目前是觀戰者。') : T('你是觀戰者：可切換視角、查看完整地圖並聊天。') }));
+    else if (isHost) { const ok = players.length >= 2 && players.every((m) => m.id === r.host || m.ready); actions.append(Button({ label: ok ? T('開始遊戲') : players.length < 2 ? T('至少需要 2 位玩家') : T('等待大家準備'), variant: 'primary', size: 'big', disabled: !ok, onClick: () => net.send({ t: 'start' }) })); }
+    else actions.append(Button({ label: me.ready ? T('取消準備') : T('準備好了'), variant: me.ready ? '' : 'primary', size: 'big', onClick: () => net.send({ t: 'ready', v: !me.ready }) }));
+  };
+  const sub = (m) => { if (m.t === 'room') draw(); else if (m.t === 'chat') { chat.draw(); session.unread = 0; audio.chat(); } else if (m.t === 'err') toast(M(m.msg)); };
+  session.subs.add(sub); session.unread = 0;
+  $screen.append(h('section', { class: 'screen room' }, topbar(T('房間'), () => { net.send({ t: 'leave' }); go('online'); }),
+    h('div', { class: 'body roomBody' }, h('aside', { class: 'panelSide roomChat' }, h('h3', { text: T('聊天室') }), chat),
+      panel(ScrollArea(h('div', { class: 'roomMain' }, head, inviteEl, settings, h('h3', { text: T('玩家') }), seats, specs), { class: 'roomScroll' }), actions))));
+  draw();
+  return () => session.subs.delete(sub);
+}
+
+// ---------- 畫面：遊戲 ----------
+let activeGame = null;
+function gameScreen(p) {
+  const online = !!p.online;
+  let players, meId, mode, diff, seed, size, lightsOut = false, snapshot = null, cfg = p.cfg || null;
+  if (online) {
+    const init = p.init; players = init.players.map((x) => ({ id: x.id, name: x.name, kind: 'remote' }));
+    meId = session.role === 'player' && players.some((x) => x.id === session.you) ? session.you : null;
+    mode = init.mode; diff = init.diff; seed = init.seed; size = init.size; lightsOut = init.lightsOut === true;
+    if (init.resume) snapshot = { snap: init.snap, stars: init.stars, tiles: init.tiles, state: init.state, tt: init.tt, graceLeft: init.graceLeft };
+  } else { players = p.players; meId = p.meId; mode = p.mode; diff = p.diff; seed = p.seed; size = p.size; lightsOut = p.lightsOut === true; }
+  size = size || MR.sizeFor(mode, diff, players.length);
+  const run = MR.isRun(mode);
+  const hideRemainingHint = diff === MR.DIFFS.length - 1;
+  const who = (name, me) => (me && name !== T('你') ? name + T('（你）') : name);
+
+  const input = new Input(); input.setScheme(store.get('ctrl'));
+  const canvas = h('canvas', { class: 'cv', role: 'img', 'aria-label': T('3D 迷宮遊戲畫面') });
+  const hudMode = h('span', { class: 'hmode' }), hudTime = h('b', { class: 'htime', text: '0:00' }), hudExtra = h('span', { class: 'hextra' });
+  const hudTop = h('div', { class: 'hudTop' }, hudMode, hudTime, hudExtra);
+  const latencyValue = h('b', { class: 'latencyValue', text: '--ms' });
+  const latencyBadge = h('div', { class: 'latencyBadge', hidden: !online, role: 'status', 'aria-live': 'off' },
+    h('span', { class: 'latencyLight', 'aria-hidden': 'true' }), latencyValue);
+  const setLatency = (ms) => {
+    const value = Number.isFinite(ms) ? Math.max(0, Math.round(ms)) : null;
+    latencyValue.textContent = value == null ? '--ms' : `${value}ms`;
+    latencyBadge.classList.toggle('is-good', value != null && value <= 120);
+    latencyBadge.classList.toggle('is-warn', value != null && value > 120 && value <= 250);
+    latencyBadge.classList.toggle('is-bad', value != null && value > 250);
+    const label = value == null ? T('連線延遲，等待回應') : T('連線延遲 {ms} 毫秒', { ms: value });
+    latencyBadge.setAttribute('aria-label', label);
+  };
+  if (online) setLatency(net.state === 'online' ? net.rtt : null);
+  const graceValue = h('b', { class: 'graceValue', text: '' });
+  const graceCountdown = h('div', { class: 'graceCountdown', hidden: true, role: 'status', 'aria-live': 'polite', 'aria-label': T('結算倒數') },
+    h('span', { class: 'graceDial' }, graceValue));
+  const hudStack = h('div', { class: 'hudStack' }, hudTop);
+  const mini = h('canvas', { class: 'mini', width: 240, height: 240, 'aria-hidden': 'true' });
+  const miniBtn = h('button', { type: 'button', class: 'miniBtn', 'aria-label': T('放大小地圖'), title: T('放大小地圖') }, mini, h('span', { class: 'miniZoom', 'aria-hidden': 'true' }, icon('zoom')));
+  miniBtn.addEventListener('pointerdown', (e) => e.stopPropagation()); // 不要觸發搖桿
+  const knob = h('div', { class: 'knob' }), stick = h('div', { class: 'stick', 'aria-label': T('虛擬搖桿') }, knob), stickZone = h('div', { class: 'stickZone' }, stick);
+  const countEl = h('div', { class: 'countdown', 'aria-live': 'assertive' }), banner = h('div', { class: 'banner', hidden: true });
+  const roundEnd = h('div', { class: 'roundEnd', hidden: true, role: 'status', 'aria-live': 'assertive' },
+    h('div', { class: 'roundEndCard' },
+      h('span', { class: 'roundEndSeal', 'aria-hidden': 'true' }, icon('flag')),
+      h('b', { class: 'roundEndTitle', text: T('遊戲結束') }),
+      h('span', { class: 'roundEndTrim', 'aria-hidden': 'true' }, icon('star'))));
+  const badge = h('span', { class: 'badge', hidden: true });
+  const sideTab = h('button', { type: 'button', class: 'btn sideTab', 'aria-label': T('開關對局資訊'), 'aria-expanded': 'true' }, icon(online ? 'chat' : 'people'), badge);
+  const respawnBtn = h('button', { type: 'button', class: 'btn respawnBtn', 'aria-label': T('回到起點（R）'), title: T('回到起點（R）') }, icon('undo'), h('span', { class: 'rl', text: T('回起點') }));
+  const arena = h('div', { class: 'arena' }, canvas, hudStack, latencyBadge, graceCountdown, miniBtn, respawnBtn, stickZone, countEl, banner, sideTab, roundEnd);
+  const sumList = h('div', { class: 'sumList' });
+  const lvTxt = cfg && cfg.kind === 'level' ? T('第 {level} 關', { level: cfg.level }) : cfg && cfg.kind === 'daily' ? T('每日挑戰') : '';
+  const sumHead = h('div', { class: 'sumHead' }, h('b', { text: MODE_INFO[mode].name }), h('small', { text: `${T(MR.DIFFS[diff])}${lvTxt ? '・' + lvTxt : ''}・${size}×${size}${lightsOut ? '・' + T('關燈') : ''}` }));
+  const chat = online ? ChatBox() : null;
+  const side = h('aside', { class: 'panelSide gameSide' }, h('div', { class: 'sideTop' }, sumHead, ScrollArea(sumList, { class: 'sumScroll', label: T('排行') })), chat ? h('div', { class: 'sideChat' }, h('h3', { text: T('聊天室') }), chat) : null);
+  const root = h('section', { class: 'screen gameScreen' + (online ? ' online' : '') + (online ? '' : ' local') }, side, arena);
+  $screen.append(root);
+
+  // 版面：寬版左側欄可收合；窄版／直向改為左側抽屜
+  const mq = matchMedia('(max-width: 899px), (max-aspect-ratio: 1/1)');
+  let sideOpen = !mq.matches;
+  const layout = () => { root.classList.toggle('narrow', mq.matches); root.classList.toggle('sideOpen', sideOpen); sideTab.setAttribute('aria-expanded', String(sideOpen)); if (sideOpen) { session.unread = 0; badge.hidden = true; } };
+  const onMq = () => { sideOpen = !mq.matches; layout(); };
+  mq.addEventListener('change', onMq);
+  sideTab.addEventListener('click', () => { sideOpen = !sideOpen; layout(); });
+  const miniOn = () => { miniBtn.style.display = store.get('minimap') ? '' : 'none'; };
+
+  let game, resultM = null, pauseM = null, last = null, finished = false;
+  const showBanner = (text, btn) => { banner.hidden = false; rc(banner, h('b', { text }), btn); };
+  const hooks = {
+    onCount(n) { countEl.textContent = n == null ? '' : n === 0 ? T('出發！') : String(n); countEl.classList.toggle('go', n === 0); countEl.style.display = n == null ? 'none' : ''; },
+    onMe(state) {
+      if (state === 'out') {
+        root.classList.add('playerOut');
+        showBanner(T('你掉下去了…'), !online && game.world.players.some((q) => q.alive) ? Button({ label: T('直接看結果'), size: 'small', onClick: () => { game.fastForward(); banner.hidden = true; } }) : h('small', { text: T('可以繼續觀戰') }));
+      }
+    },
+    onHud(hd) {
+      last = hd; const w = game.world;
+      hudMode.textContent = MODE_INFO[mode].name;
+      hudTime.textContent = hd.left != null ? fmt(hd.left) : fmt(hd.t);
+      hudTime.classList.toggle('warn', hd.left != null && hd.left < 10);
+      const graceActive = run && hd.state === 'play' && hd.grace != null && hd.grace > 0;
+      let ex = '';
+      if (mode === 'escape' && !(run && hd.grace != null && hd.grace > 0)) {
+        const v = game.me() || w.byId.get(hd.follow); if (v) { const left = Math.min(...Array.from(v.open).filter((x) => x > 0 && x < 1e8)); ex = T('逃出進度 {a}/{b}', { a: w.passed(v), b: w.esc.doors.length }) + (isFinite(left) ? '・' + T('機關 {x1} 秒', { x1: Math.ceil(left) }) : ''); }
+      }
+      else if (mode === 'collapse') ex = T('剩 {alive} 人', { alive: hd.alive });
+      else if (mode === 'stars') { const me = game.me(); ex = me ? T('你 {score} ★', { score: me.score }) : ''; }
+      hudExtra.textContent = ex;
+      graceCountdown.hidden = !graceActive;
+      if (graceActive) {
+        const seconds = Math.ceil(hd.grace);
+        if (graceValue.textContent !== String(seconds)) {
+          graceValue.textContent = String(seconds);
+          audio.beep(seconds === 1, seconds <= 3);
+          graceCountdown.setAttribute('aria-label', `${T('結算倒數')} ${seconds}`);
+          graceCountdown.classList.remove('tick');
+          void graceCountdown.offsetWidth;
+          graceCountdown.classList.add('tick');
+        }
+      } else graceCountdown.classList.remove('tick');
+      const shapes = store.get('shapes');
+      sumList.replaceChildren(...hd.rows.map((r) => {
+        let val;
+        if (run) {
+          if (r.done) val = fmt(r.fin);
+          else if (r.alive && !hideRemainingHint) val = T('剩 {n} 格', { n: Math.round(r.rem) });
+          else val = '';
+        } else if (mode === 'stars') val = r.score + ' ★';
+        else val = r.alive ? T('存活') : T('淘汰');
+        const done = r.done || !r.alive;
+        const selectView = () => {
+          game.setFollow(r.me && r.alive && !r.done ? null : r.id);
+          if (done || game.meState === 'out') banner.hidden = true;
+        };
+        return h('button', {
+          type: 'button',
+          class: 'srow' + (r.me ? ' me' : '') + (r.id === hd.follow ? ' fol' : '') + (r.alive ? '' : ' dead'),
+          'aria-label': T('第 {rank} 名 {name} {val}，點一下鏡頭跟隨', { rank: r.rank, name: r.name, val }),
+          on: { pointerdown: selectView, click: selectView },
+        },
+          h('span', { class: 'rk', text: String(r.rank) }), h('span', { class: 'dot', style: { background: BALL_COLORS[r.idx % 8] }, text: shapes ? SHAPES[r.idx % 8] : '' }),
+          h('span', { class: 'nm', text: who(r.name, r.me) }), h('span', { class: 'val', text: val }));
+      }));
+    },
+    onEscape(e) {
+      if (e.e === 'key') toast(T('拿到鑰匙了！走到同色的門前就能開門'), 2600);
+      else if (e.e === 'unlock') toast(T('門打開了！'), 1800);
+      else toast(T('機關啟動！{x1} 秒內衝過那道門', { x1: Math.round(e.T) }), 2600);
+    },
+    onStart() {
+      if (meId) window.GameAnalytics.start({
+        mode: online ? 'online' : players.length > 1 ? 'ai' : 'solo',
+        variant: mode, difficulty: String(diff),
+        players: players.length
+      }, online ? session.room.code + '|' + seed : null);
+    },
+    onEnding() {
+      if (mapM) mapM.close('end');
+      if (pauseM) pauseM.close('end');
+      input.enabled = false;
+      banner.hidden = true; graceCountdown.hidden = true; countEl.style.display = 'none';
+      respawnBtn.style.display = 'none'; stickZone.style.display = 'none';
+      roundEnd.classList.toggle('still', store.get('reduce'));
+      roundEnd.hidden = false;
+    },
+    onEnd(info) { roundEnd.hidden = true; showResults(info); },
+  };
+  game = new Game({ canvas, mode, diff, seed, size, lightsOut, players, meId, online: online ? { net } : null, input, minimapEl: mini, hooks, snapshot });
+  activeGame = game; window.__MRGAME = game;
+  input.attach(arena, stick); miniOn(); layout();
+  if (!meId) { stickZone.style.display = 'none'; input.enabled = false; }
+  hooks.onCount(null);
+  game._hud();
+  if (mode === 'escape' && meId) toast(T('目標：拿鑰匙、踩踏板開門，逃到終點旗！'), 4200);
+  if (online) { if (!snapshot || snapshot.state === 'count') { /* 等待伺服器倒數 */ } } else game.startCountdown();
+  if (!online) {
+    const pb = IconButton({ icon: 'pause', ariaLabel: T('暫停'), onClick: () => openPause() });
+    chromeRight.insertBefore(pb, chromeRight.firstChild);
+  }
+
+  function openPause() {
+    if (pauseM || online || game.state !== 'play') return;
+    game.pause(true); let why = 'resume';
+    pauseM = Modal({
+      title: T('暫停'), class: 'pauseModal', body: h('p', { class: 'note', text: T('遊戲已暫停。') }),
+      actions: [Button({ label: T('繼續'), variant: 'primary', onClick: () => pauseM.close('resume') }), Button({ label: T('重新開始'), onClick: () => { why = 'restart'; pauseM.close('restart'); againLocal(); } }), Button({ label: T('回到首頁'), onClick: () => { why = 'home'; pauseM.close('home'); go('home'); } })],
+      onClose: (w) => { pauseM = null; if (w !== 'restart' && w !== 'home' && activeGame === game) game.pause(false); },
+    });
+  }
+  // 小地圖放大：對局持續進行，所有玩家與場地動態由共用地圖繪製持續更新。
+  let mapM = null;
+  const openMap = () => {
+    if (mapM || modalOpen() || game.state === 'ended') return;
+    const big = h('canvas', { class: 'bigMap', width: 720, height: 720, role: 'img', 'aria-label': T('迷宮地圖') });
+    const w = game.world, dots = w.players.map((p) => h('span', { class: 'lgItem' }, h('i', { class: 'lgDot' + (p.id === meId ? ' me' : ''), style: { background: BALL_COLORS[p.idx % 8] } }), h('span', { text: who(p.name, p.id === meId) })));
+    const legend = h('div', { class: 'mapLegend' }, ...dots, w.run ? h('span', { class: 'lgItem' }, icon('flag'), h('span', { text: T('終點') })) : null, w.stars ? h('span', { class: 'lgItem' }, icon('star'), h('span', { text: T('星星') })) : null, w.esc ? h('span', { class: 'lgItem' }, icon('key'), h('span', { text: T('鑰匙・踏板・門（同色一組）') })) : null, w.esc && w.esc.portals.length ? h('span', { class: 'lgItem' }, h('i', { class: 'lgDot', style: { background: 'transparent', border: '3px solid ' + w.esc.portals[0].color } }), h('span', { text: T('傳送門（同色成對）') })) : null);
+    game.bigMapEl = big;
+    mapM = Modal({ title: T('迷宮地圖'), class: 'mapModal', body: h('div', { class: 'mapBody' }, big, legend, h('p', { class: 'hint', text: T('點一下空白處或按 Esc 關閉') })),
+      actions: [Button({ label: T('關閉'), variant: 'primary', onClick: () => mapM.close('ok') })],
+      onClose: () => { window.removeEventListener('resize', onRs); game.bigMapEl = null; mapM = null; window.dispatchEvent(new Event('mapclose')); try { document.querySelectorAll('.scrim').forEach((e) => e.dispatchEvent(new Event('mapclose'))); } catch (e) {} } });
+    game._drawMini(big);
+    const fit = () => { // 依可用空間縮放地圖，確保不出現捲軸：先放到最大，有溢出就扣掉溢出量
+      const body = big.parentElement, view = body && (body.closest('.sa-view') || body.parentElement); if (!view) return;
+      let sz = Math.max(120, Math.min(540, body.clientWidth - 24)); big.style.width = sz + 'px';
+      for (let i = 0; i < 5; i++) { const over = view.scrollHeight - view.clientHeight; if (over <= 0 || sz <= 120) break; sz = Math.max(120, sz - over - 1); big.style.width = sz + 'px'; }
+    };
+    const onRs = () => fit(); window.addEventListener('resize', onRs);
+    requestAnimationFrame(() => { fit(); setTimeout(fit, 260); setTimeout(fit, 800); });
+    const dialog = mapM;
+    dialog.scrim.addEventListener('click', (e) => { if (e.target === dialog.scrim || e.target.closest('.mapBody') && !e.target.closest('button')) dialog.close('tap'); });
+  };
+  miniBtn.addEventListener('click', openMap);
+  const doRespawn = () => { if (game.respawn()) { respawnBtn.disabled = true; respawnBtn.classList.add('cool'); setTimeout(() => { respawnBtn.disabled = false; respawnBtn.classList.remove('cool'); }, 1000); } };
+  respawnBtn.addEventListener('pointerdown', (e) => e.stopPropagation()); respawnBtn.addEventListener('click', doRespawn);
+  const rsVis = () => { const me = game.me(); respawnBtn.style.display = meId && me && me.alive && !(game.world.run && me.fin != null) && game.state === 'play' ? '' : 'none'; };
+  const rsT = setInterval(rsVis, 250); rsVis();
+  const againLocal = () => { if (cfg) startLocal(cfg); };
+  const backLocal = () => { if (!cfg) return go('home'); if (cfg.kind === 'daily') return go('daily', { mode: cfg.mode, lightsOut }); if (cfg.kind === 'level') go('levels', { diff: cfg.diff, mode: cfg.mode, lightsOut }); else go('setup', { kind: cfg.kind, mode: cfg.mode, diff: cfg.diff, lightsOut, ai: cfg.ais && cfg.ais.length ? cfg.ais : undefined }); };
+
+  function showResults(info) {
+    if (mapM) mapM.close('end');
+    const { world, results, mine } = info, solo = world.players.length === 1;
+    if (meId && mine) window.GameAnalytics.end({
+      result: mine.dnf ? 'dnf' : solo ? 'complete' : mine.place === 1 ? 'win' : 'lose'
+    });
+    let title, lines = [], extra = [], nextBtn = null, newBest = false, bestTxt = '', isLevel = false;
+    const mineP = meId ? world.byId.get(meId) : null;
+    if (!meId) title = T('本局結束');
+    else if (mode === 'escape') title = mine && mine.dnf ? T('時間到，沒能逃出迷宮') : solo ? T('成功逃出迷宮！') : mine.place === 1 ? T('你第一個逃出來了！') : T('第 {place} 名', { place: mine.place });
+    else if (run) title = mine && mine.dnf ? T('時間到，沒能抵達終點') : solo ? T('抵達終點！') : mine.place === 1 ? T('你第一個抵達！') : T('第 {place} 名', { place: mine.place });
+    else if (mode === 'stars') title = solo ? T('時間到！') : mine.place === 1 ? T('你是星星王！') : T('第 {place} 名', { place: mine.place });
+    else title = solo ? T('掉下去了…') : mine.alive ? T('你是最後的贏家！') : mine.place === 1 ? T('你贏了！') : T('第 {place} 名', { place: mine.place });
+    // 紀錄與闖關進度（只有單機）
+    if (!online && mineP) {
+      if (cfg && cfg.kind === 'level' && run && mine && !mine.dnf) {
+        const st = MR.levelStars(mine.time, world.maze, world.esc), saved = store.setLevelStars(cfg.diff, cfg.level, st, mode, lightsOut);
+        const lk = (mode === 'escape' ? 'lve-' : 'lv-') + cfg.diff + '-' + cfg.level; newBest = store.recordBest(lk, mine.time, true, lightsOut); bestTxt = fmtShort(store.getBest(lk, lightsOut)); isLevel = true;
+        lines.push(h('p', { class: 'resLevel', text: T(MR.DIFFS[cfg.diff]) + ' · ' + T('第 {x1} 關', { x1: cfg.level }) }),
+          h('div', { class: 'resStars', role: 'img', 'aria-label': st + ' / 3 ' + T('星星') }, [0, 1, 2].map((i) => h('span', { class: 'rs' + (i < st ? ' on' : ''), style: { animationDelay: (0.15 + i * 0.18) + 's' } }, icon('star')))));
+        if (cfg.level < 100) nextBtn = Button({ label: T('下一關（第 {x1} 關）', { x1: cfg.level + 1 }), variant: 'primary', onClick: () => { resultM.close(); startLocal(Object.assign({}, cfg, { level: cfg.level + 1 })); } });
+        else lines.push(h('p', { class: 'note', text: T('這個難度的 100 關全部通過了！') }));
+      } else if (cfg && cfg.kind === 'daily' && run && mine && !mine.dnf) {
+        const st = MR.levelStars(mine.time, world.maze, world.esc), bestKey = dailyRecordKey('daily', cfg.mode, cfg.date, cfg.diff), starsKey = dailyRecordKey('dailys', cfg.mode, cfg.date, cfg.diff);
+        store.recordBest(starsKey, st, false, lightsOut); newBest = store.recordBest(bestKey, mine.time, true, lightsOut); bestTxt = fmtShort(store.getBest(bestKey, lightsOut)); isLevel = true;
+        const streak = store.dailyStreak(cfg.date);
+        lines.push(h('p', { class: 'resLevel', text: T('每日挑戰') + ' · ' + MODE_INFO[cfg.mode].name + ' · ' + cfg.date + ' · ' + T(MR.DIFFS[cfg.diff]) }),
+          h('div', { class: 'resStars', role: 'img', 'aria-label': st + ' / 3 ' + T('星星') }, [0, 1, 2].map((i) => h('span', { class: 'rs' + (i < st ? ' on' : ''), style: { animationDelay: (0.15 + i * 0.18) + 's' } }, icon('star')))),
+          streak ? h('p', { class: 'note', text: T('連續挑戰 {n} 天', { n: streak }) }) : null);
+      } else if (cfg && cfg.kind === 'practice' && mine) {
+        const key = mode + '-' + diff; let nb = false, val = '';
+        if (run && !mine.dnf) { nb = store.recordBest(key, mine.time, true, lightsOut); val = fmtShort(mine.time); }
+        else if (mode === 'stars') { nb = store.recordBest(key, mine.score, false, lightsOut); val = T('{n} 顆星星', { n: mine.score }); }
+        else if (mode === 'collapse') { nb = store.recordBest(key, mine.time, false, lightsOut); val = T('存活 {t} 秒', { t: mine.time.toFixed(2) }); }
+        if (nb) newBest = true;
+        const bst = store.getBest(key, lightsOut);
+        if (bst != null) bestTxt = run ? fmtShort(bst) : mode === 'stars' ? T('{n} 顆星星', { n: bst }) : T('存活 {t} 秒', { t: (+bst).toFixed(2) });
+      }
+    }
+    const shapes = store.get('shapes');
+    const table = h('div', { class: 'rtable' }, results.map((r) => {
+      const pl = world.byId.get(r.id); const v = run ? (r.dnf ? T('未完賽') : fmtShort(r.time)) : mode === 'stars' ? r.score + ' ★' : r.alive ? T('最後倖存') : T('存活 {t} 秒', { t: r.time.toFixed(2) });
+      return h('div', { class: 'rrow' + (r.id === meId ? ' me' : '') }, h('span', { class: 'rk', text: String(r.place) }), h('span', { class: 'dot', style: { background: BALL_COLORS[pl.idx % 8] }, text: shapes ? SHAPES[pl.idx % 8] : '' }), h('span', { class: 'nm', text: who(pl.name, r.id === meId) }), h('span', { class: 'val', text: v }));
+    }));
+    let again, back, home;
+    if (!online) {
+      again = Button({ label: T('再來一局'), variant: nextBtn ? '' : 'primary', onClick: () => { resultM.close(); againLocal(); } });
+      const backLabel = cfg && cfg.kind === 'daily' ? T('回到每日挑戰') : cfg && cfg.kind === 'level' ? T('回到關卡選擇') : T('回到玩法設定');
+      back = Button({ label: backLabel, onClick: () => { resultM.close(); backLocal(); } });
+    } else {
+      const isHost = session.room && session.room.host === session.you;
+      again = Button({ label: isHost ? T('再來一局') : T('再來一局（請房主開始）'), variant: 'primary', disabled: !meId, onClick: function () { net.send({ t: 'rematch' }); if (!isHost) { this.disabled = true; toast(T('已通知房主，等房主開始')); } } });
+      back = Button({ label: T('回到房間'), onClick: () => { net.send({ t: 'back' }); resultM.close(); go('room'); } });
+    }
+    home = Button({ label: T('回到首頁'), onClick: () => { resultM.close(); if (online) net.send({ t: 'leave' }); go('home'); } });
+    const tiles = [];
+    if (meId && mine) {
+      if (!isLevel) tiles.push({ k: T('名次'), v: run && mine.dnf ? '—' : mine.place + ' / ' + world.players.length });
+      const mainV = run ? (mine.dnf ? T('未完賽') : fmtShort(mine.time)) : mode === 'stars' ? mine.score + ' ★' : mine.alive ? T('最後倖存') : T('{t} 秒', { t: mine.time.toFixed(2) });
+      tiles.push({ k: run ? T('用時') : mode === 'stars' ? T('星星數') : T('存活時間'), v: mainV, badge: newBest ? T('新紀錄') : '' });
+      if (bestTxt) tiles.push({ k: isLevel ? T('本關最佳') : T('本機最佳'), v: bestTxt, span: !isLevel });
+    }
+    const tileEl = tiles.length ? h('dl', { class: 'resStats' }, tiles.map((t) => h('div', { class: 'resStat' + (t.span ? ' span' : '') }, h('dt', {}, h('span', { text: t.k }), t.badge ? h('b', { class: 'resBadgeTag', text: t.badge }) : null), h('dd', { text: t.v })))) : null;
+    const won = !!meId && (run ? !!mine && !mine.dnf && (solo || mine.place === 1) : mode === 'stars' ? !!mine && (solo || mine.place === 1) : !!mine && (solo ? false : (mine.alive || mine.place === 1)));
+    if (lightsOut) lines.push(h('p', { class: 'note', text: online ? T('關燈挑戰') : T('關燈挑戰・成績分開記錄') }));
+    const hero = h('div', { class: 'resHero' }, h('div', { class: 'resBadge', 'aria-hidden': 'true' }, icon(mode === 'escape' ? 'key' : run ? 'flag' : mode === 'stars' ? 'star' : 'crown')), lines.length ? h('div', { class: 'resLines' }, ...lines) : null);
+    resultM = Modal({ title, class: 'resultModal m-' + mode + (won ? ' win' : ' lose'), dismissible: false, transparent: true, body: h('div', { class: 'result', 'data-result-share': '' }, hero, tileEl, table, nextBtn ? h('div', { class: 'nextRow' }, nextBtn) : null), actions: [again, back, home] });
+    resultM.el.setAttribute('data-result-image', '');
+  }
+
+  // 設定即時套用
+  const offStore = store.on((k) => {
+    if (k === 'ctrl' || k === '*') input.setScheme(store.get('ctrl'));
+    if (k === 'cam' || k === '*') game.scene.setCam(store.get('cam'));
+    if (k === 'shapes' || k === '*') game.scene.setShapes(store.get('shapes'));
+    if (k === 'ball' || k === '*') game.scene.setBall(store.get('ball'));
+    if (k === 'trail' || k === '*') game.scene.setTrail(store.get('trail'));
+    if (k === 'reduce' || k === '*') game.scene.reduce = store.get('reduce');
+    if (k === 'minimap' || k === '*') miniOn();
+    if (last) hooks.onHud(last);
+  });
+  const sub = (m) => {
+    if (m.t === '_rtt') { setLatency(m.rtt); return; }
+    if (m.t === '_state') { setLatency(null); return; }
+    if (m.t === 'chat') { chat && chat.draw(); if (!sideOpen && !m.sys) { badge.hidden = false; badge.textContent = String(Math.min(9, session.unread)); } else session.unread = 0; if (!m.sys && m.from !== session.you) audio.chat(); }
+    else if (m.t === 'init' && online) { if (resultM) resultM.close(); go('game', { online: true, init: m }); }
+    else if (m.t === 'room') { /* 名單變動不影響對局 */ }
+    else if (m.t === 'err') toast(M(m.msg));
+    else game.net(m);
+  };
+  if (online) session.subs.add(sub);
+  const key = (e) => { if ((e.key === 'r' || e.key === 'R') && !e.repeat && !modalOpen() && !(e.target && /input|textarea/i.test(e.target.tagName))) { doRespawn(); return; }
+    if (e.key === 'Escape' && !online && !modalOpen()) { e.preventDefault(); openPause(); } };
+  const vis = () => { if (document.hidden && !online) openPause(); };
+  addEventListener('keydown', key); document.addEventListener('visibilitychange', vis);
+  return () => {
+    clearInterval(rsT); removeEventListener('keydown', key); document.removeEventListener('visibilitychange', vis); mq.removeEventListener('change', onMq); offStore();
+    session.subs.delete(sub); if (mapM) mapM.close('home'); if (resultM) resultM.close(); if (pauseM) pauseM.close('home');
+    game.stop(); input.destroy(); if (activeGame === game) activeGame = null;
+  };
+}
+
+const SCREENS = { home: homeScreen, daily: dailyScreen, levels: levelsScreen, setup: setupScreen, online: onlineScreen, room: roomScreen, game: gameScreen };
+
+// ---------- 開機 ----------
+function inviteFromHash() {
+  const m = /^#\/join\/([A-Za-z0-9]{3,8})\/([A-Za-z0-9]{6,32})$/.exec(location.hash || '');
+  return m ? { code: m[1].toUpperCase(), token: m[2] } : null;
+}
+function boot() { applyLang(); const inv = inviteFromHash(); if (inv) go('online', { invite: inv }); else go('home'); }
+// 已開著遊戲時又點了邀請連結：同樣先到大廳確認暱稱（不自動入房）
+addEventListener('hashchange', () => { const inv = inviteFromHash(); if (inv && !session.room && current !== 'game') go('online', { invite: inv }); });
+window.__MRAPP = { go, startLocal, session, getGame: () => activeGame, store };
+boot();

@@ -1,0 +1,23 @@
+# Render 藍圖：連接 GitHub 的 PJH-Eric/draw-guess 並選 New > Blueprint。
+# 免費方案支援 WebSocket（Socket.IO），但閒置約 15 分鐘會休眠，
+# 第一次連線需要等十幾秒喚醒；房間只存在記憶體，服務重啟房間就會消失。
+services:
+  - type: web
+    name: draw-guess
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    autoDeployTrigger: commit
+    buildCommand: npm ci --omit=dev && npm test
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "26.12.1"
+      # 允許這個 GitHub 帳號的 Pages 前端跨來源連線；Render 自己的同源前端也能連線。
+      - key: GAME_ALLOWED_ORIGIN
+        value: https://pjh-eric.github.io
+      # 對局推進間隔（毫秒）。免費方案 CPU 有限，500 是穩定又夠流暢的值。
+      - key: ROOM_TICK_MS
+        value: "500"

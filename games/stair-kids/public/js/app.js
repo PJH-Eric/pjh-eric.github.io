@@ -1,0 +1,1797 @@
+/* ===== app.js — 畫面流程、遊戲迴圈、設定與本機紀錄 =====
+ * 規則一律問 rules.js，這裡只負責「什麼時候問」與「畫出來」。
+ */
+(function () {
+  'use strict';
+
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => [...document.querySelectorAll(sel)];
+  /* 多語系：所有使用者看得到的文字都走字典（locales.js） */
+  const T = (k, p) => I18N.t(k, p);
+  const diffName = id => T('diff.' + id);
+  /** 範圍文字：上下界一樣就只寫一個數字 */
+  const rangeText = r => (r[0] === r[1] ? String(r[0]) : T('fmt.range', { a: r[0], b: r[1] }));
+
+  const els = {
+    nav: $('#screen-nav'), back: $('#btn-back'), lobbyLink: $('#lobby-home-link'),
+    leaveRoom: $('#btn-leave-room'),
+    settingsBtn: $('#btn-settings'), finishBtn: $('#btn-finish'),
+    homeArt: $('#home-art'), homeRecords: $('#home-records'),
+    nickname: $('#in-nickname'), charPicker: $('#char-picker'),
+    diffPicker: $('#diff-picker'), diffNote: $('#diff-note'),
+    foeField: $('#foe-field'), foePicker: $('#foe-picker'), foeNote: $('#foe-note'),
+    setupTitle: $('#setup-title'), setupHint: $('#setup-hint'), diffLabel: $('#diff-label'),
+    vsAi: $('#btn-vs-ai'), start: $('#btn-start'),
+    sideFoe: $('#side-foe'), hudFoeName: $('#hud-foe-name'), hudFoeLabel: $('#hud-foe-label'),
+    hudFoeDepth: $('#hud-foe-depth'), hudFoeHp: $('#hud-foe-hp'),
+    canvas: $('#canvas'), actors: $('#actors'), stage: $('#stage'),
+    wrap: $('.game-wrap'), side: $('#side'), tools: $('.corner-tools'),
+    hudDepth: $('#hud-depth'), hudHp: $('#hud-hp'), hudHpRow: $('#hud-hp-row'),
+    hudDiff: $('#hud-diff'), hudSpeed: $('#hud-speed'),
+    hudWorld: $('#hud-world'), hudNext: $('#hud-next'),
+    sideWorld: $('#side-world'), hudDiffRow: $('#hud-diff-row'),
+    hudAvatar: $('#hud-avatar'), hudName: $('#hud-name'), hudWorldFill: $('#hud-world-fill'),
+    liveSpikes: $('#live-spikes'), liveSprings: $('#live-springs'),
+    liveFakes: $('#live-fakes'), liveCeil: $('#live-ceil'),
+    hudNet: $('#hud-net'), hudBest: $('#hud-best'),
+    hurtFlash: $('#overlay-hurt'), lowHp: $('#low-hp-glow'),
+    dmgPop: $('#dmg-pop'),
+    countdown: $('#overlay-countdown'), countdownNum: $('#countdown-num'),
+    countdownTip: $('#countdown-tip'),
+    milestone: $('#overlay-milestone'), milestoneText: $('#milestone-text'),
+    rotateTip: $('#rotate-tip'), rotateClose: $('#rotate-close'),
+    pads: $('#pads'), padLeft: $('#pad-left'), padRight: $('#pad-right'),
+    pause: $('#overlay-pause'), pauseTitle: $('#pause-title'),
+    resume: $('#btn-resume'), restart: $('#btn-restart'), goHome: $('#btn-home'),
+    spectateTag: $('#spectate-tag'), sideChat: $('#side-chat'), toast: $('#toast'),
+    ovResult: $('#ov-result'),
+    resultTitle: $('#result-title'), resultHero: $('#result-hero'), resultNew: $('#result-new'),
+    resultList: $('#result-list'), again: $('#btn-again'), changeDiff: $('#btn-change-diff'),
+    resultHome: $('#btn-result-home'),
+    modal: $('#modal-settings'), modalClose: $('#btn-settings-close'), setMsg: $('#set-msg'),
+    setBgm: $('#set-bgm'), setBgmVol: $('#set-bgm-vol'),
+    setSfx: $('#set-sfx'), setSfxVol: $('#set-sfx-vol'),
+    setVibrate: $('#set-vibrate'), setMotion: $('#set-motion'),
+    setColor: $('#set-color'), setGuide: $('#set-guide'),
+    setClear: $('#set-clear'), setReset: $('#set-reset'), setDone: $('#set-done'),
+    setBgmNum: $('#set-bgm-num'), setSfxNum: $('#set-sfx-num'),
+    setBgmRow: $('#row-bgm-vol'), setSfxRow: $('#row-sfx-vol'),
+    settingsBadge: $('#settings-badge'),
+    helpSteps: $('#help-steps'), helpCeiling: $('#help-ceiling'), helpDiff: $('#help-diff')
+  };
+
+  let store = Store.load();
+  /* 先帶入本機設定，首次使用者手勢解鎖音訊時才不會回到預設開啟。 */
+  const sound = Sound.create({
+    bgm: store.bgm,
+    bgmVol: store.bgmVol,
+    sfx: store.sfx,
+    sfxVol: store.sfxVol
+  });
+  const input = Input.create();
+  const view = Render.create(els.canvas, els.actors);
+  const settingsModal = SvgUI.modal(els.modal, els.settingsBtn);
+
+  /* 線上模式。伺服器位置一律問 config.js，這裡不硬編碼也不回退 localhost。 */
+  const online = Online.create({
+    serverUrl: (self.Config && Config.serverUrl) || null,
+    /* 沒自己取名字就送空的，讓伺服器配一個可愛的隨機暱稱 ——
+     * 不然兩個人都會叫「小玩家」，對手欄根本分不出誰是誰 */
+    nameOf: () => (store.nickname || '').trim(),
+    charOf: () => G.char,
+    /* 這台裝置的螢幕想看幾格：伺服器開局時會把全房統一成一個值（死亡線只能有一條） */
+    viewHOf: () => wantViewH(),
+    onNameChange: name => {
+      store.nickname = name;
+      Store.save(store);
+      els.nickname.value = name;
+    },
+    /* 畫面內插要在每個固定步之前存一份位置，線上跟單機走同一套 */
+    beforeStep: st => snapshotPrev(st),
+    onNotice: (text, kind) => toast(text, kind),
+    onEnterRoom: () => { if (G.screen !== 'game') show('room'); },
+    onMatchStart: info => startOnlineMatch(info),
+    onMatchEnd: (result, meId) => finish(result, meId),
+    onBackToLobby: () => {
+      /* 三種情況都走這裡：這一局收場了（回房間等下一局）、離開／被踢、連線斷了。
+       * 要去哪裡一律看「還在不在房間裡」，不能看 G.mode —— 玩家可能已經自己按過
+       * 結算上的「回到房間」，那時 G.mode 早就變回 solo，再把他送去大廳
+       * 等於憑空被踢出房間，下一局也就開不起來了。 */
+      if (G.screen === 'game') { backFromOnlineMatch(); return; }
+      if (G.screen !== 'room') return;
+      if (!online.room) { show('lobby'); return; }
+      online.renderRoom();
+    }
+  });
+
+  const G = {
+    screen: 'home',
+    match: null,
+    raf: 0,
+    last: 0,
+    acc: 0,
+    time: 0,                 /* 給動畫用的連續時間 */
+    paused: false,
+    mode: 'solo',                /* 'solo' 一個人玩｜'ai' 跟電腦對戰｜'online' 線上 */
+    ai: null,                    /* 對戰時的 AI 控制器 */
+    meId: 'p1',                  /* 哪一位是「我」（線上時是伺服器給的 id；觀戰時借用一號位） */
+    spectating: false,
+    menu: false,                 /* 線上模式的 Esc 選單（遊戲照跑，不暫停） */
+    netInfo: '',
+    difficulty: store.difficulty || 'normal',
+    char: store.char || 'yuan',
+    scene: Scenes.sceneFor(0),
+    sceneFrom: null,
+    sceneT: 1,
+    milestoneTimer: 0,
+    sinkBeep: 0,
+    prev: { ready: false, cameraTop: 0, players: {} },
+    healPulse: false
+  };
+
+  const charOf = id => Characters.byId(id);
+
+  /* 「我」不一定是 players[0]：線上對戰的席位順序由伺服器決定，觀戰時根本沒有我。
+   * 所有 HUD 與結算都走這兩個函式，才不會在線上模式顯示錯人的血量。 */
+  const mePlayer = s => (s && s.players.find(p => p.id === G.meId)) || (s && s.players[0]) || null;
+
+  /** 這個事件是不是發生在「我」身上。
+   * 震動、紅光、跳出來的 −N、手機震動都是第一人稱的痛感反饋，只有本人該收到；
+   * 對手被扎照樣有聲音與噴出來的粒子，看得到發生什麼事，畫面不會替別人痛一次。
+   * 觀戰時 G.meId 會借用一號位（見 enterOnlineMatch），但觀戰者並沒有在玩，
+   * 所以一律不算自己 —— 旁觀者的畫面不該被別人的傷害震到。 */
+  const isMine = e => !G.spectating && e.player === G.meId;
+  /**
+   * 這個事件該不該在「我這台機器上」出聲音／做反饋。
+   *
+   * 對手踩到刺、回血、彈跳、快掉出去，以前一律照播音效，下沉還會震動 ——
+   * 玩家明明什麼事都沒有，卻聽到慘叫又感覺到震動，會以為是自己出事（Eric 回報）。
+   * 對手發生什麼事，看他的角色、粒子與 HUD 就知道了，不必也不該打到我身上。
+   *
+   * 兩個例外照樣要有聲音：
+   *   1. 沒有 player 的是場地事件（倒數、里程碑、假階崩解），跟誰都無關；
+   *   2. 觀戰沒有「我」，全部都要播，不然整場靜音。
+   */
+  const forMe = e => e.player == null || G.spectating || e.player === G.meId;
+  /* 事件的粒子要噴在「畫面上看到的位置」。線上的對手有兩個位置：
+   * p.x／p.y 是超前的推測位置（推擠判定用），viewX／viewY 才是畫面上那一個。 */
+  const shownX = p => (p && p.viewX != null ? p.viewX : (p ? p.x : 0));
+  const shownY = p => (p && p.viewY != null ? p.viewY : (p ? p.y : 0));
+  const foePlayer = s => {
+    const m = mePlayer(s);
+    return (s && s.players.find(p => p !== m)) || null;
+  };
+
+  /* ================= 短提示 ================= */
+
+  let toastTimer = 0;
+  function toast(text, kind) {
+    if (!els.toast || !text) return;
+    els.toast.textContent = text;
+    els.toast.classList.toggle('bad', kind === 'bad');
+    els.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { els.toast.hidden = true; }, 3200);
+  }
+
+  /* ================= 色彩：換世界的 0.8 秒漸變 ================= */
+
+  function hex2rgb(h) {
+    const s = String(h).replace('#', '');
+    const v = s.length === 3 ? s.split('').map(c => c + c).join('') : s;
+    return [parseInt(v.slice(0, 2), 16), parseInt(v.slice(2, 4), 16), parseInt(v.slice(4, 6), 16)];
+  }
+  function lerpColor(a, b, t) {
+    if (typeof a !== 'string' || typeof b !== 'string' || a[0] !== '#' || b[0] !== '#') return b;
+    const x = hex2rgb(a), y = hex2rgb(b);
+    const c = x.map((v, i) => Math.round(v + (y[i] - v) * t));
+    return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+  const PAIR_KEYS = ['sky', 'wood', 'belt', 'spring', 'spike', 'fake'];
+  const SOLO_KEYS = ['far', 'mid', 'woodEdge'];
+
+  /** 兩套主題之間的中間態；t=1 就是完全切到 b */
+  function blendScene(a, b, t) {
+    if (!a || t >= 1) return b;
+    const out = Object.assign({}, b);
+    for (const k of PAIR_KEYS) out[k] = b[k].map((c, i) => lerpColor(a[k][i], c, t));
+    for (const k of SOLO_KEYS) out[k] = lerpColor(a[k], b[k], t);
+    out.deco = t < 0.5 ? a.deco : b.deco;
+    out.decoColors = t < 0.5 ? a.decoColors : b.decoColors;
+    return out;
+  }
+
+  /* ================= 畫面切換 ================= */
+
+  const BACK_TO = { setup: 'home', online: 'home', help: 'home', lobby: 'online', room: 'lobby' };
+
+  /**
+   * 量左上角的「離開房間」與右上角的「設定／結束這局」實際佔多寬，丟給 CSS 用。
+   *
+   * 這兩組是 position: fixed，手機直向的資訊欄被壓成上方薄狀態列之後，
+   * 它們就正好疊在狀態列上，狀態列要讓開這麼多才不會被蓋掉深度與血量。
+   * 寬度不是固定值：左邊的字會在「返回／離開房間」之間換，右邊幼幼班還會多一顆
+   * 「結束這局」，而且中文字寬會隨裝置字體變 —— 在 CSS 裡抄死一個數字一定會對不上，
+   * 所以量出來（跟 fitStage() 量 --side-w 同一個做法）。
+   */
+  function measureCorners() {
+    const set = (name, el, visible) => {
+      const w = visible && el ? Math.ceil(el.getBoundingClientRect().width) : 0;
+      document.documentElement.style.setProperty(name, w + 'px');
+    };
+    set('--nav-w', els.nav, !els.nav.hidden);
+    set('--tools-w', els.tools, true);
+  }
+
+  /**
+   * 焦點還留在輸入框（房間的聊天、暱稱欄）就進對局的話，input.js 的 typing()
+   * 會把方向鍵全部擋掉 —— 一開局就完全不能動。開局前一律把鍵盤還給遊戲。
+   */
+  function blurTyping() {
+    const el = document.activeElement;
+    if (!el || el === document.body || !el.blur) return;
+    const tag = (el.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable) el.blur();
+  }
+
+  function show(name) {
+    if (window.ServerOutage) window.ServerOutage.setScreen(name);
+    G.screen = name;
+    if (window.NetworkLatency) window.NetworkLatency.setActive(name === 'game' && G.mode === 'online');
+    $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
+    /* 左上角是全站統一的「退出」位置：選單畫面是返回上一層，
+     * 房間與遊戲中則是離開這間房／這一局。原本遊戲畫面完全沒有這顆，
+     * 只能按 Esc，觸控裝置根本沒有 Esc 可以按。
+     * 首頁再往上一層就是遊戲大廳（這個遊戲是從那裡點進來的），所以首頁放「回遊戲大廳」——
+     * 少了它玩家只能按瀏覽器的上一頁，從大廳直接開分頁進來的人根本回不去。
+     * 兩顆共用同一個位置，一次只會出現一顆。 */
+    const atHome = name === 'home';
+    els.back.hidden = atHome;
+    if (els.lobbyLink) els.lobbyLink.hidden = !atHome;
+    els.nav.hidden = !atHome && !BACK_TO[name] && name !== 'game';
+    if (BACK_TO[name]) els.back.dataset.go = BACK_TO[name];
+    els.back.textContent = T((name === 'game' || name === 'room') ? 'nav.leave' : 'nav.back');
+    G.backName = name;
+    document.body.classList.toggle('in-game', name === 'game');
+    els.pads.classList.toggle('hidden', name !== 'game');
+    if (name !== 'game' && els.ovResult) els.ovResult.hidden = true;
+    syncPads();
+    els.finishBtn.hidden = true;
+    measureCorners();
+    if (name === 'home') renderHomeRecords();
+    if (name === 'setup') renderSetup();
+    /* 進遊戲畫面才量得到真正的尺寸（隱藏中的 section 量出來是 0），所以在這裡重新收邊 */
+    if (name === 'game') { blurTyping(); applyRenderOptions(); updateRotateTip(); }
+    if (name === 'lobby') {
+      online.syncMe((store.nickname || '').trim(), G.char);
+      online.connect();
+      online.renderLobby();
+    }
+    if (name === 'room') online.renderRoom();
+    /* 進大廳、進房間都重報一次螢幕想看幾格：連線可能是上次留下來的（hello 早就送過了），
+     * 中間轉過向就會對不上。開局時伺服器就是拿這個值把全房統一。 */
+    if (name === 'lobby' || name === 'room') reportViewH();
+    if (name !== 'game') {
+      if (els.spectateTag) els.spectateTag.hidden = true;
+      if (els.sideChat) els.sideChat.hidden = true;
+    }
+  }
+
+  function goto(name) {
+    const leavingRoom = (G.screen === 'room' || (G.screen === 'game' && G.mode === 'online')) &&
+      name !== 'room' && name !== 'game';
+    if (G.screen === 'game' && name !== 'game') stopMatch();
+    /* 從房間或對局裡走掉就是離開房間（對局中離開＝判輸，規劃書 §4.4） */
+    if (leavingRoom) {
+      const c = online.client();
+      if (c) c.actions.leave();
+    }
+    /* 完全離開線上區域就把連線收掉，房間才不會一直掛著一個離線的人 */
+    if (name !== 'lobby' && name !== 'room' && name !== 'game') online.disconnect();
+    show(name);
+  }
+
+  const currentName = () =>
+    (els.nickname.value || '').trim() || store.nickname || els.nickname.placeholder || T('common.playerName');
+
+  /* ================= 首頁 ================= */
+
+  function renderHomeArt() {
+    const picks = ['yuan', 'bobo', 'xing'].map(id =>
+      '<svg viewBox="0 0 100 166" width="100" height="166" x="0" y="0">' +
+      Render.buildKid(charOf(id), { id: 'home-' + id }) + '</svg>');
+    els.homeArt.innerHTML = SvgUI.homeArt(picks);
+  }
+
+  function renderHomeRecords() {
+    const chips = [];
+    for (const id of Rules.DIFFICULTY_LIST) {
+      const r = store.records[id];
+      if (r && r.depth > 0) {
+        chips.push('<span class="rec-chip">' + diffName(id) +
+          '<b>' + r.depth + ' m</b></span>');
+      }
+    }
+    if (store.bestWorld > 0) {
+      chips.push('<span class="rec-chip soft">' + T('home.rec.visited', { name: Scenes.sceneFor(store.bestWorld).name }) + '</span>');
+    }
+    const fav = Store.favoriteChar(store);
+    if (fav) chips.push('<span class="rec-chip soft">' + T('home.rec.fav', { name: charOf(fav).name }) + '</span>');
+    const vs = store.versus || {};
+    const on = vs.online || { win: 0, lose: 0 };
+    if (on.win + on.lose > 0) {
+      chips.push('<span class="rec-chip soft">' + T('home.rec.online', { w: on.win, l: on.lose }) + '</span>');
+    }
+    els.homeRecords.innerHTML = chips.length
+      ? chips.join('')
+      : '<span class="rec-chip soft">' + T('home.rec.none') + '</span>';
+  }
+
+  /* ================= 一個人玩：選角色與難度 ================= */
+
+  /** 難度說明一律從規則核心算出來 —— 寫死的數字改了規則就會騙人（之前真的騙了） */
+  function diffNote(id) {
+    const d = Rules.DIFFICULTY[id];
+    if (!d) return '';
+    if (d.ceilInterval == null) {
+      return T('diff.note.baby', { hp: d.hp });
+    }
+    const near = Rules.spikeDamageRange(d, 0);
+    const far = Rules.spikeDamageRange(d, Rules.C.SPIKE_DEEP_WORLDS);
+    const deep = Rules.C.SPIKE_DEEP_WORLDS * Rules.C.MILESTONE;
+    return T('diff.note', {
+      hp: d.hp, near: rangeText(near), far: rangeText(far), deep: deep,
+      speed: d.scrollBase, every: d.accelEvery, rate: Math.round(d.accelRate * 100), cap: d.scrollCap,
+      spike: Math.round(d.spikeRate * 100), fake: Math.round(d.fakeRate * 100)
+    });
+  }
+
+  /** 難度卡上的兩行數字：三段的差別要用眼睛就看得出來 */
+  function diffCardLines(id) {
+    const d = Rules.DIFFICULTY[id];
+    if (d.ceilInterval == null) {
+      return ['<small>' + T('diff.hp', { n: d.hp }) + '</small>',
+        '<small>' + T('diff.speed', { n: d.scrollBase }) + '</small>',
+        '<small class="diff-hurt">' + T('diff.safe') + '</small>'];
+    }
+    const near = Rules.spikeDamageRange(d, 0);
+    /* 一行放一件事，卡片才不會在窄一點的螢幕上把「格/秒」折成兩行 */
+    return ['<small>' + T('diff.hp', { n: d.hp }) + '</small>',
+      '<small>' + T('diff.speed', { n: d.scrollBase }) + '</small>',
+      '<small class="diff-hurt">' + T('diff.spike', { n: rangeText(near) }) + '</small>'];
+  }
+
+  /** 對戰不開放幼幼班：不會死就分不出勝負（規劃書 §0.2） */
+  function diffChoices() {
+    return G.mode === 'ai'
+      ? Rules.DIFFICULTY_LIST.filter(id => Rules.DIFFICULTY[id].versus)
+      : Rules.DIFFICULTY_LIST;
+  }
+
+  function renderSetup() {
+    const vs = G.mode === 'ai';
+    els.setupTitle.textContent = T(vs ? 'setup.title.ai' : 'setup.title.solo');
+    els.setupHint.textContent = T(vs ? 'setup.hint.ai' : 'setup.hint.solo');
+    els.diffLabel.textContent = T(vs ? 'setup.diff.vs' : 'setup.diff');
+    els.start.textContent = T(vs ? 'setup.start.ai' : 'setup.start.solo');
+    /* 從一個人玩切到對戰時，如果原本選的是幼幼班就退回普通 */
+    if (vs && !Rules.DIFFICULTY[G.difficulty].versus) G.difficulty = 'normal';
+
+    els.nickname.value = store.nickname || '';
+    els.nickname.placeholder = Nicknames.random();
+
+    els.charPicker.innerHTML = Characters.CHARACTERS.map(c =>
+      '<button class="char-opt" type="button" role="radio" data-char="' + c.id + '" aria-checked="' +
+      (c.id === G.char) + '">' + Render.kidAvatarSvg(c, 56) + c.name + '</button>').join('');
+
+    els.diffPicker.innerHTML = diffChoices().map(id => {
+      const d = Rules.DIFFICULTY[id];
+      const r = store.records[id];
+      return '<button class="diff-opt" type="button" role="radio" data-diff="' + id + '" aria-checked="' +
+        (id === G.difficulty) + '"><strong>' + diffName(id) + '</strong>' +
+        diffCardLines(id).join('') +
+        '<em>' + (r && r.depth ? T('diff.best', { n: r.depth }) : T('diff.unplayed')) + '</em></button>';
+    }).join('');
+    els.diffNote.textContent = diffNote(G.difficulty);
+    renderFoePicker(vs);
+  }
+
+  /** 電腦對手強度：跟遊戲難度一樣，或是神話（只有對電腦才有；遊戲規則仍照上面選的難度） */
+  function renderFoePicker(vs) {
+    els.foeField.hidden = !vs;
+    if (!vs) return;
+    const myth = !!store.foeMythic;
+    const sameName = diffName(G.difficulty);
+    els.foePicker.innerHTML =
+      '<button class="diff-opt" type="button" role="radio" data-foe="same" aria-checked="' + (!myth) + '">' +
+      '<strong>' + sameName + '</strong><small>' + T('foe.same') + '</small></button>' +
+      '<button class="diff-opt foe-myth" type="button" role="radio" data-foe="mythic" aria-checked="' + myth + '">' +
+      '<strong>' + T('diff.mythic') + '</strong><small>' + T('foe.mythic.desc') + '</small></button>';
+    els.foeNote.textContent = T(myth ? 'foe.note.mythic' : 'foe.note.same', { name: sameName });
+  }
+  els.foePicker.addEventListener('click', e => {
+    const btn = e.target.closest('[data-foe]');
+    if (!btn) return;
+    store.foeMythic = btn.dataset.foe === 'mythic';
+    Store.save(store);
+    sound.play('click');
+    renderSetup();
+  });
+
+  els.charPicker.addEventListener('click', e => {
+    const btn = e.target.closest('[data-char]');
+    if (!btn) return;
+    G.char = btn.dataset.char;
+    /* 換了角色就同步給伺服器，房間卡片與名牌才會跟著換 */
+    online.syncMe((store.nickname || '').trim(), G.char);
+    store.char = G.char; Store.save(store);
+    sound.play('click');
+    renderSetup();
+  });
+  els.diffPicker.addEventListener('click', e => {
+    const btn = e.target.closest('[data-diff]');
+    if (!btn) return;
+    G.difficulty = btn.dataset.diff;
+    store.difficulty = G.difficulty; Store.save(store);
+    sound.play('click');
+    renderSetup();
+  });
+
+  /* ================= 開始一局 ================= */
+
+  /** 第一次玩才在倒數時提示操作方式（玩過一次就記住，不再出現） */
+  function armFirstTimeTip() {
+    if (!els.countdownTip) return;
+    const first = !store.seenHelp;
+    els.countdownTip.hidden = !first;
+    if (!first) return;
+    els.countdownTip.textContent = T(wantsPads() ? 'hud.tip.pads' : 'hud.tip.keys');
+    store.seenHelp = true;
+    Store.save(store);
+  }
+
+  function startMatch() {
+    const name = (els.nickname.value || '').trim() || els.nickname.placeholder || T('common.playerName');
+    store.nickname = name;
+    store.char = G.char;
+    store.difficulty = G.difficulty;
+    Store.save(store);
+
+    /* 每一局都換新的樓梯 seed（不做同座樓梯重打） */
+    const seed = RNG.newSeed();
+    const vs = G.mode === 'ai';
+    const players = [{ id: 'p1', name: name, char: G.char, kind: 'human' }];
+    /* 電腦強度：預設跟遊戲難度一樣，也可以選只有電腦才有的「神話」 */
+    const foeLevel = vs && store.foeMythic ? 'mythic' : G.difficulty;
+    if (vs) {
+      /* 電腦對手：難度跟玩家共用同一個（規劃書 §1.7），角色挑一隻跟你不一樣的 */
+      const foeChar = Characters.CHARACTERS.find(c => c.id !== G.char) || Characters.CHARACTERS[0];
+      /* 別跟玩家撞名 */
+      let foeName = Nicknames.random();
+      for (let i = 0; i < 12 && foeName === name; i++) foeName = Nicknames.random();
+      players.push({
+        id: 'ai1',
+        name: T('ai.name', { name: foeName, level: diffName(foeLevel) }),
+        char: foeChar.id,
+        kind: 'ai',
+        aiLevel: foeLevel
+      });
+    }
+    G.match = Rules.createMatch({
+      difficulty: G.difficulty,
+      mode: vs ? 'versus' : 'solo',
+      players: players,
+      /* 這一局看幾格（＝死亡線）在開局時就定下來，整局不再變 —— 轉向也不變，
+       * 不然沉到一半轉個方向就能把死亡線往下挪，那是漏洞不是功能。 */
+      viewH: wantViewH()
+    }, seed);
+    G.ai = vs ? Ai.create(foeLevel, 'ai1', seed) : null;
+    GameAnalytics.start({ mode: vs ? 'ai' : 'solo', difficulty: G.difficulty, players: players.length });
+
+    G.paused = false;
+    G.acc = 0;
+    G.last = 0;
+    G.milestoneTimer = 0;
+    G.prev = { ready: false, cameraTop: 0, players: {} };
+    G.scene = Scenes.sceneFor(0);
+    G.sceneFrom = null;
+    G.sceneT = 1;
+    view.clearActors();
+    applyRenderOptions();
+    sound.setScene(0);
+    sound.setTempo(1);
+    els.milestone.hidden = true;
+    if (els.ovResult) els.ovResult.hidden = true;
+    armFirstTimeTip();
+    show('game');
+    els.finishBtn.hidden = !G.match.diff.endless;
+    measureCorners();
+    updateHud(true);
+    input.clear();
+    loop(0);
+  }
+
+  /** 伺服器說開打了（自己上場或觀戰都走這裡） */
+  function startOnlineMatch(info) {
+    G.mode = 'online';
+    G.spectating = !!info.spectating;
+    const s = online.match;
+    if (!s) return;
+    if (!G.spectating) GameAnalytics.start({ mode: 'online', difficulty: s.difficulty, players: s.players.length }, s.seed);
+    /* 觀戰沒有「我」，借一號位當主視角，HUD 才有東西可以顯示 */
+    G.meId = G.spectating ? (s.players[0] && s.players[0].id) : info.meId;
+    G.match = s;
+    G.difficulty = s.difficulty;
+    G.paused = false;
+    G.menu = false;
+    G.acc = 0;
+    G.last = 0;
+    G.milestoneTimer = 0;
+    G.prev = { ready: false, cameraTop: 0, players: {} };
+    G.scene = Scenes.sceneFor(0);
+    G.sceneFrom = null;
+    G.sceneT = 1;
+    /* 上一局還沒讀完的事件先倒掉，不然新的一局第一格會補放上一局的音效，
+     * 連結算都可能被重播一次。 */
+    online.takeEvents();
+    view.clearActors();
+    applyRenderOptions();
+    sound.setScene(0);
+    sound.setTempo(1);
+    els.milestone.hidden = true;
+    if (els.ovResult) els.ovResult.hidden = true;
+    armFirstTimeTip();
+    show('game');
+    els.finishBtn.hidden = true;
+    measureCorners();
+    if (els.spectateTag) els.spectateTag.hidden = !G.spectating;
+    if (els.sideChat) els.sideChat.hidden = false;
+    /* 觀戰不給方向鍵（也不會送輸入意圖） */
+    els.pads.classList.toggle('hidden', G.spectating);
+    online.renderChat();
+    updateHud(true);
+    input.clear();
+    loop(0);
+  }
+
+  /** 這一局收掉了（結算停留結束）→ 回房間等下一局 */
+  function backFromOnlineMatch() {
+    if (G.mode !== 'online' && G.screen !== 'game') return;
+    stopMatch();
+    G.mode = 'solo';
+    G.meId = 'p1';
+    G.spectating = false;
+    /* 房間還在就回房間等下一局；房間沒了（被踢、房主關掉）就回大廳 */
+    show(online.room ? 'room' : 'lobby');
+  }
+
+  function stopMatch() {
+    if (G.raf) cancelAnimationFrame(G.raf);
+    G.raf = 0;
+    G.match = null;
+    G.ai = null;
+    G.paused = false;
+    els.pause.hidden = true;
+    els.countdown.hidden = true;
+    els.milestone.hidden = true;
+    if (els.ovResult) els.ovResult.hidden = true;
+    if (els.hurtFlash) els.hurtFlash.classList.remove('blink');
+    if (els.lowHp) els.lowHp.classList.remove('on');
+    if (els.spectateTag) els.spectateTag.hidden = true;
+    if (els.sideChat) els.sideChat.hidden = true;
+    G.menu = false;
+    view.clearActors();
+    input.clear();
+  }
+
+  /* ================= 遊戲迴圈（固定步長） ================= */
+
+  function loop(now) {
+    G.raf = requestAnimationFrame(loop);
+    /* 線上模式的狀態物件由 net.js 保管：收到完整快照時它會重建一份，
+     * 所以每一格都要重新問，不能抓著舊的。 */
+    if (G.mode === 'online') G.match = online.match;
+    const s = G.match;
+    if (!s) return;
+    if (!G.last) G.last = now;
+    let dt = (now - G.last) / 1000;
+    G.last = now;
+    if (dt > 0.25) dt = 0.25;                 /* 切到別的分頁回來不要一次補一大段 */
+
+    if (G.mode === 'online') {
+      onlineFrame(s, now, dt);
+      return;
+    }
+
+    if (!G.paused && s.phase !== 'over') {
+      G.time += dt;
+      G.acc += dt * 1000;
+      let guard = 0;
+      while (G.acc >= Rules.STEP_MS && guard++ < 12) {
+        G.acc -= Rules.STEP_MS;
+        /* 畫面內插用：推進之前先記下「上一格」的鏡頭與角色位置 */
+        snapshotPrev(s);
+        const cmd = input.read();
+        const inputs = { p1: { dir: cmd.dir } };
+        /* AI 跟真人走同一個管道，也在同一個固定步長裡決策 */
+        if (G.ai) inputs.ai1 = G.ai.read(s, Rules.STEP);
+        const r = Rules.stepMatch(s, inputs, Rules.STEP_MS);
+        handleEvents(r.events);
+        if (s.phase === 'over') break;
+      }
+      /* 還在往下沉就持續嗶，越接近掉出去嗶得越密 */
+      const me = s.players[0];
+      if (me && me.alive && me.sinking > 0) {
+        G.sinkBeep -= dt;
+        if (G.sinkBeep <= 0) {
+          sound.play('sink');
+          G.sinkBeep = Math.max(0.12, 0.42 - me.sinking * 0.05);
+        }
+      } else {
+        G.sinkBeep = 0;
+      }
+      if (G.milestoneTimer > 0) {
+        G.milestoneTimer -= dt;
+        if (G.milestoneTimer <= 0) els.milestone.hidden = true;
+      }
+      if (G.sceneT < 1) {
+        G.sceneT = Math.min(1, G.sceneT + dt / 0.8);   /* 0.8 秒漸變 */
+      }
+    }
+
+    els.countdown.hidden = s.phase !== 'countdown';
+    if (s.phase === 'countdown') els.countdownNum.textContent = Math.max(1, Math.ceil(s.countdown));
+
+    const scene = blendScene(G.sceneFrom, G.scene, G.sceneT);
+    /* 用「上一格」與「這一格」之間的內插來畫，畫面才不會跟著 60Hz 的固定步長一格一格跳。
+     * 規則核心完全不動，只是畫的時候取中間值。 */
+    view.draw(interpolated(s), scene, charOf, G.time, G.paused ? 0 : dt);
+    updateHud(false);
+  }
+
+  /**
+   * 線上模式的一格。跟單機最大的差別：
+   *   · 不自己推進規則核心 —— 交給 net.js（本地預測 ＋ 收到快照後回溯重演校正）
+   *   · 不能暫停（伺服器不會停），所以沒有 G.paused 這條路
+   *   · 觀戰不讀輸入，也不送輸入意圖
+   */
+  function onlineFrame(s, now, dt) {
+    G.time += dt;
+    const cmd = G.spectating ? { dir: 0 } : input.read();
+    online.frame(now, cmd.dir);
+    handleEvents(online.takeEvents());
+    /* 結算 callback 會在事件處理中取消動畫並清掉角色；不要讓同一幀在清除後又畫回最後一幀。 */
+    if (!G.raf || G.screen !== 'game') return;
+
+    els.countdown.hidden = s.phase !== 'countdown';
+    if (s.phase === 'countdown') els.countdownNum.textContent = Math.max(1, Math.ceil(s.countdown));
+
+    if (G.milestoneTimer > 0) {
+      G.milestoneTimer -= dt;
+      if (G.milestoneTimer <= 0) els.milestone.hidden = true;
+    }
+    if (G.sceneT < 1) G.sceneT = Math.min(1, G.sceneT + dt / 0.8);
+
+    const scene = blendScene(G.sceneFrom, G.scene, G.sceneT);
+    /* 校正之後的視覺補正只加在自己身上，這樣回溯重演不會看到瞬移 */
+    view.draw(interpolated(s, online.alpha(), online.visualOffset()), scene, charOf, G.time, dt);
+    updateHud(false);
+  }
+
+  /* ---------- 畫面內插（讓滾動變柔順） ---------- */
+
+  /**
+   * 規則核心是固定 1/60 秒一步，但畫面可能是 60Hz、120Hz 或不穩定的間隔。
+   * 直接畫「最後跑完那一步」的狀態，就會有些畫格重複、有些跳兩格 —— 看起來就是頓。
+   * 所以每一步之前先存一份位置，畫的時候按照累積器的餘數插值。
+   */
+  function snapshotPrev(s) {
+    G.prev.cameraTop = s.cameraTop;
+    for (const p of s.players) {
+      let e = G.prev.players[p.id];
+      if (!e) { e = G.prev.players[p.id] = { x: p.x, y: p.y }; }
+      e.x = p.x;
+      e.y = p.y;
+    }
+    G.prev.ready = true;
+  }
+
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  /**
+   * @param {number} [alpha] 這一格落在兩個固定步之間的哪裡；沒給就用單機的累積器
+   * @param {{x:number,y:number}} [offset] 只加在「我」身上的視覺補正（線上校正用）
+   */
+  function interpolated(s, alpha, offset) {
+    if (!G.prev.ready || G.paused || s.phase !== 'playing') return s;
+    const t = Math.max(0, Math.min(1, alpha == null ? G.acc / Rules.STEP_MS : alpha));
+    /* 用原型繼承做一層薄薄的「畫面用狀態」：只覆蓋位置，
+     * 其他欄位（階梯、難度、狀態旗標）都直接讀原本的，階梯的動畫計時也還是寫回同一份物件。 */
+    const view = Object.create(s);
+    view.cameraTop = lerp(G.prev.cameraTop, s.cameraTop, t);
+    /* 這一層固定步長內插只有「本地預測」的角色能吃。
+     * 線上的對手不是本地預測出來的：net.js 已經照「快照時間軸」把他內插好了
+     * （刻意畫在 100ms 前，見 net.js 的 RENDER_DELAY），而 G.prev 存的是
+     * 「本地預測時間軸」上、回溯重演之後的超前位置 —— 兩者差了大約
+     * 100ms ＋ 單向延遲。把兩套時間軸混在一起 lerp，對手每一幀就會在
+     * 「超前位置」與「延遲位置」之間來回跳（實測來回幅度 2～5 格），
+     * 眼睛看到的就是移動時有殘影。所以對手直接用 net.js 算好的位置。
+     * 觀戰時兩個人都不是本地預測的，兩個都不能吃這一層。 */
+    const localOnly = G.mode === 'online';
+    const predictedId = localOnly && !G.spectating ? G.meId : null;
+    view.players = s.players.map(p => {
+      if (localOnly && p.id !== predictedId) {
+        /* 對手畫在 net.js 內插好的「延遲位置」上（順）；
+         * p.x／p.y 留著給推擠判定用（準）—— 兩者刻意不同，見 net.js。 */
+        if (p.viewX == null) return p;
+        const shown = Object.create(p);
+        shown.x = p.viewX;
+        shown.y = p.viewY;
+        return shown;
+      }
+      const e = G.prev.players[p.id];
+      if (!e) return p;
+      const shown = Object.create(p);
+      shown.x = lerp(e.x, p.x, t);
+      shown.y = lerp(e.y, p.y, t);
+      if (offset && p.id === G.meId) { shown.x += offset.x; shown.y += offset.y; }
+      return shown;
+    });
+    if (localOnly) {
+      /* 自己與對手使用不同的內插時間軸。疊人時以畫面上的支撐者為準，
+       * 否則一起下落會出現半幀的穿頭或懸空；只改畫面，不動權威座標。 */
+      view.players = view.players.map(p => {
+        if (!p.alive || !p.onPlayer) return p;
+        const support = view.players.find(other => other.id === p.onPlayer && other.alive);
+        if (!support) return p;
+        const shown = Object.create(p);
+        shown.y = support.y - Rules.C.PLAYER_H;
+        return shown;
+      });
+    }
+    return view;
+  }
+
+  /* ================= 事件 → 音效、粒子、震動 ================= */
+
+  function handleEvents(events) {
+    const s = G.match;
+    for (const e of events) {
+      /* 音效與「打在我身上」的反饋（震動、閃紅、鏡頭抖、愛心跳）只給我自己的事件；
+       * 對手的事件照樣在他的位置畫粒子與姿勢，但不出聲、不震動（見 forMe 的說明）。 */
+      const mine = forMe(e);
+      switch (e.type) {
+        case 'countdown':
+          sound.play('click');
+          break;
+        case 'start':
+          els.countdown.hidden = true;
+          break;
+        case 'land':
+          if (mine && (e.kind === 'normal' || e.kind === 'belt')) sound.play('land');
+          break;
+        case 'spring': {
+          if (mine) sound.play('spring');
+          const st = Rules.stepById(s, e.step);
+          /* 粒子留著：它噴在那一階上（可能是對手踩的），看得出那裡有彈簧，不是打在我身上 */
+          if (st) view.burst('spring', (st.x0 + st.x1) / 2, st.depth, s.cameraTop);
+          break;
+        }
+        case 'fakeCrack':
+          if (mine) sound.play('fake');
+          break;
+        case 'fakeBreak':
+          view.burst('fake', e.x, e.depth, s.cameraTop);
+          break;
+        case 'spike': {
+          if (mine) sound.play('spike');
+          const st = Rules.stepById(s, e.step);
+          const p = s.players.find(x => x.id === e.player);
+          /* 粒子從刺階的接觸點往上噴，比從角色身上噴更看得懂發生了什麼 */
+          if (p) view.burst('spike', shownX(p), st ? st.depth : shownY(p), s.cameraTop);
+          break;
+        }
+        case 'hurt': {
+          /* 震動、閃紅光、跳出來的數字都跟「這一下扣幾顆」成正比 ——
+           * 傷害改成 1～5 隨機之後，玩家要能一眼分出「刮到一下」跟「踩慘了」。 */
+          const amount = e.amount || 1;
+          const hpTarget = syncHpHud(e.player, e.hp);
+          if (mine && e.source === 'ceiling') {
+            /* 天花板上面也是刺，被刺到的反饋要跟踩到刺階一樣明顯 */
+            sound.play('warn');
+            sound.play('spike');
+          }
+          if (hpTarget === 'foe') pulseFoeHp();
+          if (hpTarget === 'me') hitHearts(els.hudHp);
+          if (!isMine(e)) {
+            /* 對手受傷：在他頭上飄出「−N」，不用盯著側欄也看得到是誰扣血 */
+            const fp = s.players.find(x => x.id === e.player);
+            if (fp) view.pop('−' + amount, '#D6314F', shownX(fp), shownY(fp) - 1.6, s.cameraTop);
+            break;
+          }
+          view.kick(6 + amount * 2.5);
+          flashHurt(amount >= 2);
+          buzz(20 + amount * 18);
+          popDamage(amount);
+          break;
+        }
+        case 'milestone': {
+          sound.play('milestone');
+          els.milestoneText.textContent = T('hud.milestone', { m: e.meters, scene: Scenes.sceneFor(e.world).name });
+          els.milestone.hidden = false;
+          G.milestoneTimer = 1.4;
+          /* 慶祝的彩帶噴在「我」身上（觀戰沒有我，就噴在主視角那一位）——
+           * 以前寫死 players[0]，線上當二號位的時候彩帶會噴到對手身上。 */
+          const p = mePlayer(s) || s.players[0];
+          view.burst('milestone', shownX(p), shownY(p), s.cameraTop);
+          /* 換世界：0.8 秒漸變，樓梯不停、操作不中斷 */
+          G.sceneFrom = blendScene(G.sceneFrom, G.scene, G.sceneT);
+          G.scene = Scenes.sceneFor(e.world);
+          G.sceneT = store.reduceMotion ? 1 : 0;
+          sound.setScene(e.scene);
+          break;
+        }
+        case 'heal': {
+          syncHpHud(e.player, e.hp);
+          /* 回血在那位玩家的腳邊冒出愛心與「+1」；對手的也畫（位置上看得出是誰），只是不出聲 */
+          const hp = s.players.find(x => x.id === e.player);
+          if (hp) {
+            view.burst('heal', shownX(hp), shownY(hp), s.cameraTop);
+            view.pop('+1', '#E0405F', shownX(hp), shownY(hp) - 1.2, s.cameraTop);
+          }
+          if (!mine) break;                  /* 對手回血只更新他的 HUD，我的愛心不要跟著跳 */
+          sound.play('heal');
+          /* 愛心排跳一下（updateHud 會重畫 innerHTML，所以要在下一格才加 class） */
+          G.healPulse = true;
+          break;
+        }
+        case 'sinking':
+          if (!mine) break;                  /* 對手快掉出去不該讓我的手機震動 */
+          sound.play('sink');
+          buzz(15);
+          break;
+        case 'fell':
+          if (mine) sound.play('fell');
+          if (!isMine(e)) break;
+          view.kick(12);
+          flashHurt(true);
+          buzz(80);
+          break;
+        case 'eliminated':
+          if (mine) sound.play('dead');
+          if (!isMine(e)) break;
+          view.kick(10);
+          buzz(60);
+          break;
+        case 'over':
+          /* 線上模式的結算一律由 online.js 發（它才知道「我」是誰，也才有去重）。
+           * 這裡再自己叫一次會重複寫一筆本機紀錄，勝負也可能跟伺服器的判定不一樣。 */
+          if (G.mode === 'online') break;
+          finish(e.result);
+          break;
+      }
+    }
+  }
+
+  /** 跳出「−N」告訴玩家這一下扣了幾顆愛心 */
+  let dmgTimer = 0;
+  let foeHpTimer = 0;
+  function popDamage(n) {
+    const el = els.dmgPop;
+    if (!el) return;
+    el.textContent = '−' + n;
+    el.classList.toggle('big', n >= 3);
+    el.hidden = false;
+    /* 跟 flashHurt 一樣：先拿掉 class 強制重排，連續被扎才會每一下重新播 */
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+    clearTimeout(dmgTimer);
+    dmgTimer = setTimeout(() => { el.hidden = true; el.classList.remove('pop'); }, 700);
+  }
+
+  /** 受傷事件抵達時先同步血量，對手的愛心不必等下一次狀態輪詢才變化。 */
+  function syncHpHud(playerId, hp) {
+    const s = G.match;
+    if (!s || hp == null) return null;
+    const p = s.players.find(x => x.id === playerId);
+    if (!p) return null;
+    const compact = s.diff.hpAsNumber || narrowHud();
+    if (p.id === G.meId) {
+      els.hudHp.innerHTML = SvgUI.hearts(hp, p.hpMax, compact);
+      els.hudHp.setAttribute('aria-label', T('hud.hpAria', { a: hp, b: p.hpMax }));
+      return 'me';
+    }
+    const foe = foePlayer(s);
+    if (!foe || foe.id !== p.id) return null;
+    els.hudFoeHp.innerHTML = SvgUI.hearts(hp, p.hpMax, compact);
+    els.hudFoeHp.setAttribute('aria-label', T('hud.hpAria', { a: hp, b: p.hpMax }));
+    return 'foe';
+  }
+
+  /** 對手受傷時讓血量欄短暫提示，避免只看到角色姿勢卻誤以為沒有扣血。 */
+  function pulseFoeHp() {
+    const el = els.hudFoeHp;
+    if (!el) return;
+    el.classList.remove('foe-hit');
+    void el.offsetWidth;
+    el.classList.add('foe-hit');
+    clearTimeout(foeHpTimer);
+    foeHpTimer = setTimeout(() => el.classList.remove('foe-hit'), 450);
+  }
+
+  /** 自己的愛心排被打到：抖一下並泛紅光（對手那排用 pulseFoeHp） */
+  let heartHitTimer = 0;
+  function hitHearts(el) {
+    if (!el) return;
+    el.classList.remove('hit');
+    void el.offsetWidth;
+    el.classList.add('hit');
+    clearTimeout(heartHitTimer);
+    heartHitTimer = setTimeout(() => el.classList.remove('hit'), 480);
+  }
+
+  /** 血量只剩三成以下：畫面邊緣持續緩緩脈動紅光，提醒該找回血的階梯了 */
+  function updateLowHp(p) {
+    if (!els.lowHp) return;
+    /* 幼幼班不嚇小朋友：沒有紅色脈動 */
+    const low = !!p && p.alive && p.hpMax > 0 && p.hp / p.hpMax <= 0.3 && !(G.match && G.match.diff.cloudCeiling);
+    els.lowHp.classList.toggle('on', low);
+  }
+
+  /** 受傷時畫面閃一圈紅光。減少動態時不關掉、只調弱（這是透明度不是位移） */
+  let hurtTimer = 0;
+  function flashHurt(strong) {
+    const el = els.hurtFlash;
+    if (!el) return;
+    const peak = store.reduceMotion ? (strong ? 0.45 : 0.3) : (strong ? 1 : 0.75);
+    el.style.setProperty('--peak', String(peak));
+    /* 先拿掉 class 並強制重排，動畫才會從頭播 —— 連續被刺時每一下都要重新閃 */
+    el.classList.remove('blink');
+    void el.offsetWidth;
+    el.classList.add('blink');
+    clearTimeout(hurtTimer);
+    hurtTimer = setTimeout(() => el.classList.remove('blink'), 560);
+  }
+
+  function buzz(ms) {
+    if (!store.vibrate) return;
+    try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* 忽略 */ }
+  }
+
+  /* ================= 資訊欄 ================= */
+
+  let hudCache = { depth: -1, hp: -1, foeHp: -1, foeId: null, world: -1, speed: '', compact: null, sideSig: '' };
+
+  /** 窄的薄狀態列擠不下一整排愛心（手機直向 10 顆就會被裁掉），改用「愛心＋數字」。
+   * 平板直向有 800 多 px，照樣排一整排愛心比較好讀，所以要看寬度不是只看方向。 */
+  function narrowHud() {
+    try {
+      return window.matchMedia('(orientation: portrait)').matches && window.innerWidth < 620;
+    } catch (e) { return false; }
+  }
+
+  function updateHud(force) {
+    const s = G.match;
+    if (!s) return;
+    const p = mePlayer(s);
+    if (!p) return;
+    const meters = Math.floor(p.best);
+    if (force || meters !== hudCache.depth) {
+      els.hudDepth.textContent = meters;
+      hudCache.depth = meters;
+    }
+    const compact = s.diff.hpAsNumber || narrowHud();
+    if (force || p.hp !== hudCache.hp || compact !== hudCache.compact) {
+      els.hudHp.innerHTML = SvgUI.hearts(p.hp, p.hpMax, compact);
+      els.hudHp.setAttribute('aria-label', T('hud.hpAria', { a: p.hp, b: p.hpMax }));
+      hudCache.hp = p.hp;
+      hudCache.compact = compact;
+      updateLowHp(p);
+      if (G.healPulse) {
+        const row = els.hudHp.querySelector('.hearts');
+        if (row) { row.classList.remove('gain'); void row.offsetWidth; row.classList.add('gain'); }
+      }
+    }
+    G.healPulse = false;
+    const speed = '×' + s.scrollMul.toFixed(1);
+    if (force || speed !== hudCache.speed) {
+      els.hudSpeed.textContent = speed;
+      hudCache.speed = speed;
+      sound.setTempo(s.scrollMul);
+    }
+    if (force || s.world !== hudCache.world || compact !== hudCache.compactWorld) {
+      const sc = Scenes.sceneFor(s.world);
+      /* 直向只放世界名稱，「（第 N 層）」擠不下也不重要 */
+      els.hudWorld.textContent = compact ? sc.name : sc.name + T('hud.worldLayer', { n: s.world + 1 });
+      hudCache.world = s.world;
+      hudCache.compactWorld = compact;
+    }
+    const nextAt = (s.world + 1) * Rules.C.MILESTONE;
+    const left = Math.max(0, Math.ceil(nextAt - p.best));
+    els.hudNext.textContent = T('hud.next', { n: left });
+    if (els.liveSpikes) {
+      els.liveSpikes.textContent = p.stats.spikes;
+      els.liveSprings.textContent = p.stats.springs;
+      els.liveFakes.textContent = p.stats.fakes;
+      els.liveCeil.textContent = T('fmt.sec', { n: p.stats.ceilingSeconds.toFixed(1) });
+    }
+    /* 線上模式順便把延遲寫在同一行，連線變差看得出來 */
+    if (G.mode === 'online') {
+      const label = netLabel();
+      if (label !== G.netInfo) { els.hudNet.textContent = label; G.netInfo = label; }
+    }
+    if (els.hudWorldFill) {
+      const into = Math.max(0, Math.min(1, (p.best % Rules.C.MILESTONE) / Rules.C.MILESTONE));
+      els.hudWorldFill.style.width = (into * 100).toFixed(1) + '%';
+    }
+    /* 對手（只給數字，不顯示領先／落後差距 —— 規劃書 §0.3） */
+    const foe = foePlayer(s);
+    if (foe) {
+      els.hudFoeDepth.textContent = Math.floor(foe.best);
+      if (force || foe.id !== hudCache.foeId || foe.hp !== hudCache.foeHp || compact !== hudCache.compact) {
+        els.hudFoeHp.innerHTML = SvgUI.hearts(foe.hp, foe.hpMax, compact);
+        els.hudFoeHp.setAttribute('aria-label', T('hud.hpAria', { a: foe.hp, b: foe.hpMax }));
+        hudCache.foeHp = foe.hp;
+        hudCache.foeId = foe.id;
+      }
+      if (force) els.hudFoeName.textContent = foe.name + (foe.alive ? '' : T('hud.out'));
+      if (!foe.alive) els.hudFoeName.textContent = foe.name + T('hud.out');
+    } else {
+      hudCache.foeHp = -1;
+      hudCache.foeId = null;
+    }
+    if (force) {
+      els.sideFoe.hidden = !foe;
+      /* 觀戰的人沒有「對手」，兩個都是別人 */
+      if (els.hudFoeLabel) els.hudFoeLabel.textContent = T(G.spectating ? 'hud.other' : 'hud.foe');
+      els.hudDiff.textContent = diffName(s.difficulty);
+      els.hudNet.textContent = netLabel();
+      const rec = store.records[s.difficulty];
+      els.hudBest.textContent = rec && rec.depth ? T('hud.best', { n: rec.depth }) : T('hud.noBest');
+      els.hudHpRow.hidden = false;
+      els.hudName.textContent = p.name;
+      els.hudAvatar.innerHTML = Render.kidAvatarSvg(charOf(p.char), 50);
+    }
+    /* 內容的寬度變了才重新量狀態列（深度多一位數、愛心變少、換世界、對手出現或淘汰）。
+     * 每一格都量太貴，量得太少又會有一段時間是溢出到設定按鈕底下的。 */
+    const sig = [String(meters).length, els.hudHp.textContent, els.hudWorld.textContent,
+      els.hudFoeDepth.textContent.length, els.sideFoe.hidden ? 0 : 1].join('|');
+    if (force || sig !== hudCache.sideSig) {
+      hudCache.sideSig = sig;
+      fitSideBar();
+    }
+  }
+
+  function netLabel() {
+    if (G.mode !== 'online') {
+      return T(foePlayer(G.match) ? 'hud.net.ai' : 'hud.net.solo');
+    }
+    const st = online.stats();
+    if (window.NetworkLatency) window.NetworkLatency.report(st && st.rtt);
+    const ping = st && st.rtt ? T('hud.net.ping', { n: st.rtt }) : '';
+    return T(G.spectating ? 'hud.net.spec' : 'hud.net.online') + ping;
+  }
+
+  /* ================= 結算 ================= */
+
+  function fmtTime(sec) {
+    const s = Math.max(0, Math.round(sec));
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function finish(result, meId) {
+    const online2 = G.mode === 'online';
+    if (online2 && window.NetworkLatency) window.NetworkLatency.setActive(false);
+    const watching = online2 && G.spectating;
+    const me = result.players.find(p => p.id === (meId || G.meId)) || result.players[0];
+    const foe = result.players.find(p => p !== me) || null;
+    const win = foe ? result.winner === me.id : null;
+    if (!watching) GameAnalytics.end({ result: foe ? (result.winner == null ? 'draw' : (win ? 'win' : 'lose')) : 'complete' });
+    /* 觀戰不是自己的成績，不寫進本機紀錄 */
+    const saved = watching
+      ? { record: false, best: (store.records[result.difficulty] || { depth: 0 }) }
+      : Store.record(store, {
+        difficulty: result.difficulty,
+        depth: me.depth,
+        world: me.world,
+        char: me.char,
+        versus: foe ? { kind: online2 ? 'online' : 'ai', win: win } : null
+      });
+    if (!watching) store = Store.load();
+
+    G.resultView = { result: result, me: me, foe: foe, win: win, saved: saved, watching: watching, online2: online2 };
+    paintResult();
+    if (saved.record || win) { sound.play('win'); view.burst('milestone', Rules.C.FIELD_W / 2, 0, 0); }
+    else if (foe) sound.play('dead');
+    finishUi();
+  }
+
+  const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /** 結算畫面上所有文字（語言切換時會重畫一次） */
+  function paintResult() {
+    const v = G.resultView;
+    if (!v) return;
+    const result = v.result, me = v.me, foe = v.foe, win = v.win, saved = v.saved;
+    const watching = v.watching, online2 = v.online2;
+    els.resultTitle.textContent = watching
+      ? (result.draw ? T('res.draw') : T('res.win', { name: (result.players.find(p => p.id === result.winner) || me).name }))
+      : foe
+      ? (result.draw ? T('res.draw') : win ? T('res.youWin') : T('res.youLose'))
+      : result.endedBy === 'manual' ? T('res.over')
+      : result.endedBy === 'fell' ? T('res.fell')
+      : T('res.dead');
+
+    /* 結算主視覺：
+     * 單機＝大角色（破紀錄開心、其他暈眩）＋超大深度數字；
+     * 對戰／觀戰＝左右兩張選手卡（玩家色外框），勝者戴皇冠表情開心，敗者流眼淚，各自顯示深度。 */
+    const tagOf = p => p.forfeit ? T('res.tag.forfeit') : p.fell ? T('res.tag.fell') : p.alive ? '' : T('res.tag.dead');
+    const survived = p => T('res.survived', { t: fmtTime(p.survived) }) + tagOf(p);
+    const subLine = () => T('res.sub', { diff: diffName(result.difficulty), scene: Scenes.sceneFor(me.world).name });
+    const subExtra = () => (foe && foe.forfeit ? T('res.forfeitFoe', { name: foe.name }) : '') +
+      (foe && me.forfeit ? T('res.forfeitMe') : '');
+    if (foe) {
+      const RING = ['#4F86D6', '#F2545B'];
+      const cards = result.players.slice(0, 2).map((p, i) => {
+        const champ = !result.draw && result.winner === p.id;
+        const loser = !result.draw && !champ;
+        const mood = loser ? 'sad' : 'happy';
+        const you = !watching && p.id === me.id;
+        return '<div class="rh-card p' + (i + 1) + (champ ? ' win' : '') + (loser ? ' lose' : '') + '">' +
+          (champ ? '<span class="rh-crown">' + SvgUI.crownIcon(30) + '</span>' : '') +
+          '<span class="rh-face">' + Render.kidAvatarSvg(charOf(p.char), champ ? 84 : 66, RING[i], mood) + '</span>' +
+          '<span class="rh-name">' + esc(p.name) + (you ? T('room.you') : '') + '</span>' +
+          '<span class="rh-num"><b>' + p.meters + '</b><i>m</i></span>' +
+          '<span class="rh-sub">' + esc(survived(p)) + '</span>' +
+          '</div>';
+      }).join('<span class="rh-vs" aria-hidden="true">VS</span>');
+      els.resultHero.innerHTML =
+        '<div class="rh-versus">' + cards + '</div>' +
+        '<div class="result-line">' + subLine() + subExtra() + '</div>';
+    } else {
+      const mood = saved.record || result.endedBy === 'manual' ? 'happy' : 'dizzy';
+      els.resultHero.innerHTML =
+        '<div class="rh-solo">' +
+          '<div class="rh-kid">' + Render.kidFullSvg(charOf(me.char), 132, null, mood) + '</div>' +
+          '<div class="rh-depth">' +
+            '<span class="rh-label">' + T('res.depthLabel') + '</span>' +
+            '<span class="rh-num big"><b>' + me.meters + '</b><i>m</i></span>' +
+            '<span class="rh-sub">' + esc(me.name) + '・' + esc(survived(me)) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="result-line">' + subLine() + '</div>';
+    }
+    els.resultNew.hidden = !saved.record;
+    if (!saved.record && !watching && saved.best && saved.best.depth > me.meters) {
+      /* 沒破紀錄就講差多少 —— 比只說「沒破」有動力得多 */
+      els.resultNew.hidden = false;
+      els.resultNew.textContent = T('res.near', { n: saved.best.depth - me.meters });
+      els.resultNew.classList.add('near');
+    } else {
+      els.resultNew.innerHTML = SvgUI.medalIcon(30) + '<span>' + esc(T('res.new')) + '</span>';
+      els.resultNew.classList.remove('near');
+    }
+
+    /* 線上結算只留一顆「回房間」按鈕；停留時間結束也會自動回房。
+     * 單機則提供再玩一次、換難度與回首頁。 */
+    els.again.hidden = online2;
+    els.again.textContent = T(online2 ? 'res.rematch' : 'res.again');
+    els.changeDiff.hidden = online2;
+    els.changeDiff.textContent = T(online2 ? 'res.toRoom' : 'res.changeDiff');
+    els.resultHome.textContent = T(online2 ? 'res.toRoom2' : 'res.home');
+    els.resultHome.classList.toggle('primary', online2);
+
+    /* 這局統計（一人挑戰自動省略「被推開」） */
+    const rows = [
+      [T('res.spikes'), T('fmt.times', { n: me.stats.spikes })],
+      [T('res.ceil'), T('fmt.sec', { n: me.stats.ceilingSeconds.toFixed(1) })],
+      [T('res.springs'), T('fmt.times', { n: me.stats.springs })],
+      [T('res.fakes'), T('fmt.times', { n: me.stats.fakes })],
+      [T('res.heals'), T('fmt.hearts', { n: me.stats.heals })],
+      [T('res.deepest'), Scenes.sceneFor(me.stats.deepestWorld).name],
+      [T('res.best'), saved.best.depth + ' m']
+    ];
+    if (result.mode === 'versus') rows.splice(4, 0, [T('res.pushes'), T('fmt.times', { n: me.stats.pushes })]);
+    if (foe) rows.push([T('res.foeBest'), foe.meters + ' m']);
+    if (online2) {
+      const st = online.stats();
+      if (st) rows.push([T('res.ping'), st.rtt + ' ms']);
+    }
+    if (watching) rows.unshift([T('res.role'), T('res.spectator')]);
+    els.resultList.innerHTML = rows.map(r =>
+      '<li><span>' + r[0] + '</span><b>' + r[1] + '</b></li>').join('');
+  }
+
+  /** 結算的非文字部分：收起觸控鍵、停動畫、焦點 */
+  function finishUi() {
+    const result = G.resultView.result;
+    const online2 = G.resultView.online2;
+    els.finishBtn.hidden = true;
+    measureCorners();
+    /* 側欄的「本機最深」要跟著更新，不然會停在這局開始前的值 */
+    if (els.hudBest) {
+      const rec = store.records[result.difficulty];
+      els.hudBest.textContent = rec && rec.depth ? T('hud.best', { n: rec.depth }) : T('hud.noBest');
+    }
+    /* 結算會立刻停止動畫，沒有下一幀可讓渲染器依 alive 清理，所以先清掉畫面角色。 */
+    view.clearActors();
+    /* 不換路由：樓梯定格留在後面，結算蓋在上面（跟打地鼠一樣） */
+    els.ovResult.hidden = false;
+    if (els.lowHp) els.lowHp.classList.remove('on');
+    els.pads.classList.add('hidden');
+    input.clear();
+    if (G.raf) { cancelAnimationFrame(G.raf); G.raf = 0; }
+    /* 不要讓聚焦把卡片捲到按鈕，標題與主視覺要先看得到 */
+    (online2 ? els.resultHome : els.again).focus({ preventScroll: true });
+    if (els.ovResult.querySelector('.ov-card')) els.ovResult.querySelector('.ov-card').scrollTop = 0;
+  }
+
+  /* ================= 暫停選單（Esc；只有三顆） ================= */
+
+  /** 暫停選單的標題與「回首頁」按鈕文字（線上與單機不同；語言切換時也會重畫） */
+  function paintPause() {
+    const online2 = G.mode === 'online';
+    if (els.pauseTitle) els.pauseTitle.textContent = T(online2 ? 'pause.menu' : 'pause.title');
+    els.goHome.textContent = T(online2 ? 'pause.leave' : 'pause.home');
+  }
+
+  function togglePause(on) {
+    const s = G.match;
+    if (!s || s.phase === 'over' || G.screen !== 'game') return;
+    if (settingsModal.isOpen) return;
+
+    /* 線上對戰不能暫停：伺服器不會停，停下來只會被天花板追死。
+     * 所以 Esc 只是打開一個選單，遊戲照跑，按鈕也換成「離開房間」。 */
+    if (G.mode === 'online') {
+      G.menu = on == null ? !G.menu : !!on;
+      G.paused = false;
+      els.pause.hidden = !G.menu;
+      paintPause();
+      els.restart.hidden = true;
+      return;
+    }
+    paintPause();
+    els.restart.hidden = false;
+    G.paused = on == null ? !G.paused : !!on;
+    els.pause.hidden = !G.paused;
+    if (G.paused) { input.clear(); els.resume.focus(); } else { G.last = 0; }
+  }
+
+  /* ================= 設定彈窗 ================= */
+
+  /**
+   * 寬螢幕上把整組面板收到「場地 ＋ 兩條窄牆」的寬度。
+   *
+   * 為什麼要這樣做：場地的像素寬度是被視窗高度綁死的（要放得下可見高度 ＋ 天花板），
+   * 舞台再寬也只是把多出來的空間畫成牆。收邊之後可玩區域佔面板的比例才拉得上來。
+   * 不會來回震盪：收到的寬度一定 ≥ 場地寬度，所以 scale 仍然由高度決定。
+   */
+  const sideWidth = () => (els.side ? els.side.getBoundingClientRect().width : 0);
+
+  /* 直向薄狀態列收東西的順序（最不重要的先收）。規劃書 §7.1 的優先序是
+   * 深度 ＞ 血量 ＞ 對手深度 ＞ 速度倍率 ＞ 世界，反過來就是這一串。
+   * 深度與血量永遠留著 —— 玩到一半看不到血量比看不到世界名稱嚴重得多。 */
+  const sideDropOrder = () => [els.sideWorld, els.hudDiffRow, els.sideFoe];
+
+  /** 狀態列裡「現在真的看得到」的那幾塊加起來有多寬（含中間的 gap） */
+  function sideContentWidth(gap) {
+    let sum = 0;
+    let n = 0;
+    for (const el of els.side.children) {
+      if (!el || el.offsetParent == null || !el.offsetWidth) continue;
+      sum += el.offsetWidth;
+      n++;
+    }
+    return n ? sum + gap * (n - 1) : 0;
+  }
+
+  /**
+   * 手機直向的薄狀態列是唯一「寬度真的不夠」的版面：左右各要讓開一顆固定按鈕，
+   * 中間還要塞深度、血量、速度倍率、世界，線上再多一塊對手深度。
+   * 實測 390px 的手機在線上對局要 314px，位置只有 218px —— 溢出的那一段會滑到
+   * 右上角的設定按鈕底下被蓋掉（flex 溢出時不會替你留 padding-right，
+   * 所以光是把 padding 讓夠沒有用，內容一定要真的放得下）。
+   *
+   * CSS 的斷點猜不準這些組合：深度會從 1 位數長到 4 位數、愛心會變少、
+   * 世界名稱長短不一、線上才有對手 —— 所以量出來，照優先序從最不重要的開始收。
+   */
+  function fitSideBar() {
+    const side = els.side;
+    if (!side || !side.children || !window.getComputedStyle) return;
+    const drops = sideDropOrder();
+    /* 先全部放回來再重新判斷：視窗變寬、對手淘汰之後要收得回去 */
+    for (const el of drops) if (el && el.classList) el.classList.remove('hud-drop');
+    if (G.screen !== 'game') return;
+    let portrait = false;
+    try { portrait = window.matchMedia('(orientation: portrait)').matches; } catch (e) { portrait = false; }
+    if (!portrait) return;                       /* 橫向是左邊的直欄，高度夠、不會擠 */
+    const cs = window.getComputedStyle(side);
+    const gap = parseFloat(cs.columnGap) || 0;
+    const avail = side.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    if (!Number.isFinite(avail) || avail <= 0) return;
+    for (const el of drops) {
+      const w = sideContentWidth(gap);
+      if (!Number.isFinite(w) || w <= avail) return;
+      if (el && el.classList) el.classList.add('hud-drop');
+    }
+  }
+
+  function fitStage() {
+    if (!els.wrap) return;
+    /* 轉向與縮放視窗都會改變按鈕的寬度（斷點會換字級），所以每次收邊都重量一次 */
+    measureCorners();
+    fitSideBar();
+    /* 先把上一次留下的高度上限放開再量，量到的才是「這一格真正有多少空間」。
+     * 不放開就量的話：收窄過的盒子會讓 scale 改由高度決定，算出來的 wantStageH
+     * 就永遠等於現在的高度，樓梯畫面再也長不回來 —— 換一局的可見高度時必中
+     * （上一局 16 格收成 446px，下一局想要 23 格也只會停在 446px）。 */
+    els.stage.style.maxHeight = '';
+    view.resize();
+    const st = view.view;
+    const box = els.canvas.getBoundingClientRect();
+    /* 直向與窄螢幕不收（那些情況是寬度吃緊，場地本來就已經佔滿）；
+     * 遊戲畫面還沒顯示的時候量不到尺寸，這時候一定要把上限清掉 ——
+     * 否則會用「隱藏時量到的 0」算出一個超窄的上限，等畫面顯示出來就塌掉。 */
+    const measurable = st && st.wantStageW && box.width >= 240 && box.height >= 240;
+    if (!measurable) {
+      els.wrap.style.maxWidth = '';
+      els.stage.style.maxHeight = '';
+      return;
+    }
+    /* 橫向寬螢幕：收掉多出來的寬度（那些只會變成兩片牆） */
+    const wide = window.innerWidth >= 1100 && window.innerWidth > window.innerHeight * 0.9;
+    if (wide) {
+      els.wrap.style.maxWidth = Math.round(sideWidth() + st.wantStageW) + 'px';
+    } else {
+      els.wrap.style.maxWidth = '';
+    }
+    /* 橫向的方向鍵要避開左邊的資訊欄（不然會蓋在「本機最深」那些字上面）。
+     * 資訊欄的寬度會隨斷點變，所以量出來丟給 CSS 用，不要在 CSS 裡抄一份。 */
+    document.documentElement.style.setProperty('--side-w', Math.round(sideWidth()) + 'px');
+    /* 直向舞台填滿操作區上方；render 的 fitHeight 同步延展樓梯與角色，
+     * 保持既有死亡線與深淵比例，不讓剩餘高度變成空白。 */
+    if (wantsPads() && window.matchMedia('(orientation: portrait)').matches) {
+      const controls = els.pads.getBoundingClientRect();
+      els.stage.style.maxHeight = Math.max(240, controls.top - box.top) + 'px';
+    } else if (wantsPads() && box.height > st.wantStageH + 8) {
+      els.stage.style.maxHeight = st.wantStageH + 'px';
+    } else {
+      els.stage.style.maxHeight = '';
+    }
+  }
+
+  /**
+   * 這台裝置這一局想看幾格（＝死亡線要放在哪）。
+   *
+   * 為什麼要有這個：手機直向的畫面是 1:2 的細長形，而場地是 16 格寬的近正方形，
+   * 縮放一定是寬度先到限制（scale ＝ 螢幕寬 / 16），所以「天花板 1.1 ＋ 可見 16 ＋ 深淵 1.2」
+   * 這 18.3 格算出來的樓梯畫面只有螢幕的 53%，方向鍵佔 15%，中間剩 21% 是誰都用不到的空白。
+   * 那塊空白沒辦法變成樓梯畫面（多給高度只會長出深淵，見 fitStage），
+   * 也不想拿去放大方向鍵（Eric 指定），唯一能把它變回「遊戲」的辦法就是**多看幾格**。
+   *
+   * 量而不是算：狀態列高度、safe-area、方向鍵大小都隨裝置與斷點變，抄死一定會對不上。
+   * 回傳值只是「想要」，真正的上下限由 rules.js 的 clampViewH 把關。
+   */
+  function wantViewH() {
+    const base = Rules.C.VIEW_H;
+    /* 桌機沒有方向鍵要擺，畫面本來就是高度吃緊，維持原本的視野 */
+    if (!wantsPads()) return base;
+    let portrait = false;
+    try { portrait = window.matchMedia('(orientation: portrait)').matches; } catch (e) { return base; }
+    if (!portrait) return base;               /* 橫向是高度先到限制，多看只會把畫面縮小 */
+    const st = view.view;
+    /* 還沒量過畫面（wantStageH 是 resize() 才算的）就先照預設值，不要拿 NaN 去猜 */
+    if (!st || !st.scale || !st.viewH || !st.wantStageH) return base;
+    return measureOnGameScreen(() => {
+      const box = els.stage.getBoundingClientRect();
+      const padTop = els.padLeft.getBoundingClientRect().top;
+      if (box.width < 240 || !(padTop > box.top)) return base;
+      /* 天花板＋深淵佔掉幾格：問 render.js 現在用的預算，不要在這裡再抄一份 */
+      const extra = st.wantStageH / st.scale - st.viewH;
+      /* 留 6px 不讓樓梯畫面的下緣跟按鍵黏在一起（.stage 還有 3px 的分隔線要畫）。
+       * 換算與夾上下限都在 rules.js（那是規則參數，前端只負責量） */
+      return Rules.viewHForBox(box.width, padTop - box.top - 6, extra);
+    });
+  }
+
+  /**
+   * 在「遊戲畫面是顯示中」的狀態下量一次尺寸。
+   * 隱藏中的 section 量出來全是 0，而這個值在大廳（要回報給伺服器）與
+   * 開局前（createMatch 的參數）都得知道 —— 那兩個時機遊戲畫面都還沒亮。
+   * 同一個 task 內開了再關，瀏覽器不會畫出來，使用者看不到閃動。
+   */
+  function measureOnGameScreen(fn) {
+    const scr = $('#screen-game');
+    if (!scr || !scr.classList) return fn();
+    const wasActive = scr.classList.contains('active');
+    const wasHidden = els.pads.classList.contains('hidden');
+    if (!wasActive) { scr.classList.add('active'); els.pads.classList.remove('hidden'); }
+    try {
+      return fn();
+    } finally {
+      if (!wasActive) {
+        scr.classList.remove('active');
+        els.pads.classList.toggle('hidden', wasHidden);
+      }
+    }
+  }
+
+  function applyRenderOptions() {
+    view.setOptions({
+      fitHeight: wantsPads() && window.matchMedia('(orientation: portrait)').matches,
+      reduceMotion: store.reduceMotion,
+      colorAssist: store.colorAssist,
+      depthGuide: store.depthGuide,
+      /* 看幾格＝這一局開局時定下來的死亡線（rules.js 的 s.viewH）。
+       * 畫面一定要照這一局的值畫：畫得比死亡線淺會「看起來還在畫面裡卻死了」，
+       * 畫得比死亡線深則是把死亡線畫在畫面中間。還沒開局就先用預設值。
+       * 手機橫向原本會縮成 14 格放大角色，那會讓判定線跑到畫面外，所以不縮。 */
+      viewH: (G.match && G.match.viewH) || Rules.C.VIEW_H
+    });
+    /* 先量一次拿到「場地要多寬」，收邊，再量一次（收邊之後舞台變窄了）。
+     * 兩次就會收斂：收到的寬度一定 ≥ 場地寬度，所以 scale 仍然由高度決定。 */
+    view.resize();
+    fitStage();
+    view.resize();
+  }
+
+  /** 手機橫向：高度不足 → 縮短可見高度到 14 格並放大角色 */
+  function shortStage() {
+    return window.matchMedia('(orientation: landscape)').matches && window.innerHeight <= 480;
+  }
+
+  function syncSettingsUi() {
+    els.setBgm.checked = store.bgm;
+    els.setBgmVol.value = Math.round(store.bgmVol * 100);
+    els.setSfx.checked = store.sfx;
+    els.setSfxVol.value = Math.round(store.sfxVol * 100);
+    els.setVibrate.checked = store.vibrate;
+    els.setMotion.checked = store.reduceMotion;
+    els.setColor.checked = store.colorAssist;
+    els.setGuide.checked = store.depthGuide;
+    syncVolNums();
+    syncVolEnabled();
+    disarmClear();
+  }
+
+  /** 聲音關掉的時候音量條要停用並變灰 —— 原本還拖得動，拖了卻完全沒反應，
+   * 使用者只會覺得「這個設定壞了」。 */
+  function syncVolEnabled() {
+    const set = (row, input, on) => {
+      if (input) input.disabled = !on;
+      if (row && row.classList) row.classList.toggle('off', !on);
+    };
+    set(els.setBgmRow, els.setBgmVol, store.bgm);
+    set(els.setSfxRow, els.setSfxVol, store.sfx);
+  }
+
+  function pushSettings() {
+    Store.save(store);
+    sound.set('bgm', store.bgm);
+    sound.set('bgmVol', store.bgmVol);
+    sound.set('sfx', store.sfx);
+    sound.set('sfxVol', store.sfxVol);
+    input.setVibrate(store.vibrate);
+    applyRenderOptions();
+  }
+
+  let clearArmed = false;
+  let clearTimer = 0;
+  function disarmClear() {
+    clearArmed = false;
+    clearTimeout(clearTimer);
+    if (!els.setClear) return;
+    els.setClear.textContent = T('set.clear');
+    els.setClear.classList.remove('danger-armed');
+  }
+
+  /** 音量的百分比要看得到，不然拉了不知道拉到哪 */
+  function syncVolNums() {
+    if (els.setBgmNum) els.setBgmNum.textContent = Math.round((store.bgmVol || 0) * 100) + '%';
+    if (els.setSfxNum) els.setSfxNum.textContent = Math.round((store.sfxVol || 0) * 100) + '%';
+  }
+
+  function bindSetting(el, key, isRange) {
+    el.addEventListener('input', () => {
+      store[key] = isRange ? Number(el.value) / 100 : el.checked;
+      pushSettings();
+      syncVolNums();
+      syncVolEnabled();
+      els.setMsg.textContent = '';
+    });
+  }
+  bindSetting(els.setBgm, 'bgm');
+  bindSetting(els.setBgmVol, 'bgmVol', true);
+  bindSetting(els.setSfx, 'sfx');
+  bindSetting(els.setSfxVol, 'sfxVol', true);
+  bindSetting(els.setVibrate, 'vibrate');
+  bindSetting(els.setMotion, 'reduceMotion');
+  bindSetting(els.setColor, 'colorAssist');
+  bindSetting(els.setGuide, 'depthGuide');
+
+  els.settingsBtn.addEventListener('click', () => {
+    sound.unlock();
+    syncSettingsUi();
+    els.setMsg.textContent = '';
+    settingsModal.open(els.settingsBtn);
+  });
+  els.modalClose.addEventListener('click', () => settingsModal.close());
+  /* 右上角那顆 × 很小，而且「設定好了要按哪裡」不該用猜的 —— 底下給一顆明確的「完成」 */
+  if (els.setDone) els.setDone.addEventListener('click', () => { sound.play('click'); settingsModal.close(); });
+  els.modal.addEventListener('click', e => { if (e.target === els.modal) settingsModal.close(); });
+  els.setClear.addEventListener('click', () => {
+    /* 清紀錄是不可逆的，所以第一下只是「舉手」，要再按一次才真的清 */
+    if (!clearArmed) {
+      clearArmed = true;
+      els.setClear.textContent = T('set.clear.again');
+      els.setClear.classList.add('danger-armed');
+      els.setMsg.textContent = T('set.clear.warn');
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(disarmClear, 5000);
+      return;
+    }
+    disarmClear();
+    store = Store.clearRecords(store);
+    els.setMsg.textContent = T('set.clear.done');
+    renderHomeRecords();
+    if (G.screen === 'setup') renderSetup();
+  });
+  els.setReset.addEventListener('click', () => {
+    store = Store.resetSettings(store);
+    syncSettingsUi();
+    pushSettings();
+    els.setMsg.textContent = T('set.reset.done');
+  });
+
+  /* ================= 怎麼玩：靜態圖文 ================= */
+
+  function renderHelp() {
+    const steps = ['normal', 'belt', 'spring', 'spike', 'fake', 'flip'];
+    els.helpSteps.innerHTML = steps.map(id =>
+      '<li>' + SvgUI.stepIcon(id) + '<div><b>' + T('help.step.' + id) + '</b><span>' +
+      T('help.step.' + id + '.d') + '</span></div></li>').join('');
+
+    els.helpCeiling.innerHTML =
+      '<figure>' + SvgUI.ceilingIcon(false) + '<figcaption>' + T('help.ceil.spike') + '</figcaption></figure>' +
+      '<figure>' + SvgUI.ceilingIcon(true) + '<figcaption>' + T('help.ceil.cloud') + '</figcaption></figure>';
+
+    els.helpDiff.innerHTML = Rules.DIFFICULTY_LIST.map(id => {
+      const d = Rules.DIFFICULTY[id];
+      /* 傷害是範圍，而且越往下玩越痛，所以淺處與深處都寫出來 */
+      const near = Rules.spikeDamageRange(d, 0);
+      const far = Rules.spikeDamageRange(d, Rules.C.SPIKE_DEEP_WORLDS);
+      const hurt = d.ceilInterval == null
+        ? T('help.diff.noHurt')
+        : T('help.diff.hurt', {
+          hp: d.hp, near: rangeText(near), far: rangeText(far),
+          deep: Rules.C.SPIKE_DEEP_WORLDS * Rules.C.MILESTONE, every: d.ceilInterval
+        });
+      return '<li>' + T('help.diff.line', {
+        name: diffName(id), speed: d.scrollBase, every: d.accelEvery,
+        rate: Math.round(d.accelRate * 100), cap: d.scrollCap, hurt: hurt,
+        spike: Math.round(d.spikeRate * 100), fake: Math.round(d.fakeRate * 100)
+      }) + '</li>';
+    }).join('');
+  }
+
+  /* ================= 觸控能力 ================= */
+
+  /**
+   * 要不要顯示左右兩顆大按鍵。
+   *
+   * 判斷依據是「主要指向裝置是不是滑鼠」，不是「這台機器支不支援觸控」——
+   * 觸控筆電、觸控螢幕的桌機 maxTouchPoints 都 > 0，但那些人是用鍵盤玩的，
+   * 跳出兩顆大按鍵只是擋住畫面（Eric：「桌機不需要方向鍵」）。
+   * 真的用手指點下去的時候（下面那個 pointerdown）才把按鍵放出來。
+   */
+  let padsForced = false;
+  function wantsPads() {
+    if (padsForced) return true;
+    try {
+      /* any-hover: hover ＝這台機器上有一個「可以停留」的指標，也就是有滑鼠或觸控板。
+       * 桌機、觸控筆電都會命中；平板與手機不會。這是判斷「有沒有滑鼠」最直接的問法，
+       * 比 pointer: fine 可靠（觸控筆電的主要指標有時候會回報成 coarse）。 */
+      if (window.matchMedia('(any-hover: hover)').matches) return false;
+      if (window.matchMedia('(pointer: fine)').matches) return false;
+      if (navigator.maxTouchPoints > 0) return true;
+      if (window.matchMedia('(pointer: coarse)').matches) return true;
+    } catch (e) { /* 忽略 */ }
+    return 'ontouchstart' in window;
+  }
+  function syncPads() {
+    els.pads.classList.toggle('no-touch', !wantsPads());
+  }
+  /* 真的用手指碰螢幕了：把按鍵放出來，並重新排版（空間要讓給按鍵） */
+  window.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch' || padsForced) return;
+    padsForced = true;
+    els.pads.classList.remove('no-touch');
+    applyRenderOptions();
+  }, true);
+
+  /* ================= 手機橫向提示 ================= */
+
+  function updateRotateTip() {
+    const show = shortStage() && !store.seenRotateTip;
+    els.rotateTip.hidden = !show;
+  }
+  els.rotateClose.addEventListener('click', () => {
+    store.seenRotateTip = true;
+    Store.save(store);
+    els.rotateTip.hidden = true;
+  });
+
+  /* ================= 綁事件 ================= */
+
+  $$('[data-go]').forEach(btn => btn.addEventListener('click', () => {
+    sound.unlock();
+    sound.play('click');
+    /* 首頁的「一個人玩」與跟別人玩畫面的「一個人玩」都要切回單機模式 */
+    if (btn.dataset.go === 'setup') G.mode = 'solo';
+    if (btn.dataset.go === 'home') G.mode = 'solo';
+    goto(btn.dataset.go);
+  }));
+  els.vsAi.addEventListener('click', () => {
+    sound.unlock();
+    sound.play('click');
+    G.mode = 'ai';
+    goto('setup');
+  });
+  els.start.addEventListener('click', () => { sound.unlock(); startMatch(); });
+  els.again.addEventListener('click', () => {
+    sound.unlock();
+    /* 線上不能自己開局（伺服器說了才算），所以這顆是「回房間並自動準備好」 */
+    if (G.mode === 'online') { online.rematch(); return; }
+    startMatch();
+  });
+  els.changeDiff.addEventListener('click', () => {
+    if (G.mode === 'online') { online.backToRoom(); return; }
+    goto('setup');
+  });
+  els.resultHome.addEventListener('click', () => {
+    if (els.again.hidden) { online.backToRoom(); return; }
+    goto('home');
+  });
+  /* 左上角的「離開」。這顆原本沒有任何 listener —— index.html 上沒有 data-go，
+   * 而 $('[data-go]') 是綁事件時就抓好的快照陣列，屬性是後來才由 show() 補的，
+   * 所以每一個畫面上的返回鈕其實都按不動。 */
+  els.back.addEventListener('click', () => {
+    sound.unlock();
+    sound.play('click');
+    /* 遊戲中不直接跳走：開選單讓玩家確認 —— 線上是「離開房間（算輸）」，
+     * 單機是先暫停再回首頁，誤觸不會直接毀掉正在跑的一局。 */
+    if (G.screen === 'game') { togglePause(true); return; }
+    /* 房間畫面轉呼叫現成的「離開房間」，它會通知伺服器把位子放掉；
+     * 自己另寫一套 goto('lobby') 會留下幽靈佔位。 */
+    if (G.screen === 'room' && els.leaveRoom) { els.leaveRoom.click(); return; }
+    const to = els.back.dataset.go;
+    if (!to) return;
+    if (to === 'home' || to === 'setup') G.mode = 'solo';
+    goto(to);
+  });
+  els.resume.addEventListener('click', () => togglePause(false));
+  els.restart.addEventListener('click', () => { togglePause(false); startMatch(); });
+  els.goHome.addEventListener('click', () => {
+    togglePause(false);
+    /* 線上模式：離開房間（對局中離開＝判輸），回到大廳而不是首頁 */
+    if (G.mode === 'online') { goto('lobby'); return; }
+    goto('home');
+  });
+  els.finishBtn.addEventListener('click', () => {
+    if (!G.match || G.match.phase === 'over') return;
+    finish(Rules.endMatch(G.match, 'manual'));
+  });
+
+  /* 結算畫面上 Enter／空白鍵＝主要按鈕（桌機想連玩的時候不用去找滑鼠）。
+   * 只在結算開著、而且焦點不在輸入框裡的時候才接手。 */
+  window.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (!els.ovResult || els.ovResult.hidden) return;
+    const tag = (document.activeElement && document.activeElement.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+    e.preventDefault();
+    (els.again.hidden ? els.resultHome : els.again).click();
+  });
+
+  input.attach({ left: els.padLeft, right: els.padRight, pad: els.pads });
+  input.onFirstGesture(() => sound.unlock());
+  input.onEsc(() => togglePause());
+  input.setVibrate(store.vibrate);
+  els.padLeft.innerHTML = SvgUI.arrowIcon(-1);
+  els.padRight.innerHTML = SvgUI.arrowIcon(1);
+  els.settingsBtn.innerHTML = SvgUI.gearIcon();
+  els.modalClose.innerHTML = SvgUI.closeIcon();
+  if (els.settingsBadge) els.settingsBadge.innerHTML = SvgUI.gearIcon();
+  /* 設定頁每一組的小圖示（聲音／手感／看得清楚／資料）。圖示只是輔助，
+   * 所以放 data-set-icon 由 JS 填，HTML 裡不必塞四段 svg 原始碼。 */
+  $$('[data-set-icon]').forEach(el => { el.innerHTML = SvgUI.settingIcon(el.dataset.setIcon); });
+
+  window.addEventListener('resize', () => {
+    applyRenderOptions();
+    view.resize();
+    updateRotateTip();
+    syncPads();
+    reportViewH();
+    if (G.match) updateHud(true);
+  });
+  window.addEventListener('orientationchange', () => setTimeout(() => {
+    applyRenderOptions(); view.resize(); updateRotateTip(); reportViewH();
+  }, 120));
+
+  /** 轉向之後這台裝置想看的格數會變，趁還沒開局先告訴伺服器。
+   * 對局中（人在遊戲畫面上）不報：這一局的死亡線開局就定了，中途改等於改規則。
+   * 回到房間就要再報一次，下一局才照新的方向算。 */
+  function reportViewH() {
+    if (G.screen === 'game') return;
+    online.syncViewH(wantViewH());
+  }
+  document.addEventListener('visibilitychange', () => {
+    /* 線上模式不能靠切分頁暫停（伺服器照跑），所以只有單機才自動暫停 */
+    if (G.mode === 'online') return;
+    if (document.hidden && G.match && G.match.phase !== 'over') togglePause(true);
+  });
+
+  /* 設定頁的暱稱改了就同步給伺服器（房間卡片、名牌、觀戰名單都要跟著換） */
+  els.nickname.addEventListener('change', () => {
+    store.nickname = (els.nickname.value || '').trim();
+    Store.save(store);
+    online.syncMe((store.nickname || '').trim(), G.char);
+  });
+
+  /* ================= 多語系 ================= */
+
+  /** 切換語言：把目前畫面上由 JS 組出來的文字全部重畫一次（靜態 HTML 由 i18n 核心處理） */
+  function relang() {
+    els.back.textContent = T((G.backName === 'game' || G.backName === 'room') ? 'nav.leave' : 'nav.back');
+    if (els.lobbyLink) els.lobbyLink.href = I18N.withLang(LOBBY_URL);
+    renderHomeArt();
+    renderHomeRecords();
+    renderHelp();
+    if (G.screen === 'setup') renderSetup();
+    online.relang();
+    if (G.match) {
+      updateHud(true);
+      G.netInfo = null;
+      els.hudNet.textContent = netLabel();
+      const rec = store.records[G.match.difficulty];
+      if (els.hudBest) els.hudBest.textContent = rec && rec.depth ? T('hud.best', { n: rec.depth }) : T('hud.noBest');
+      if (els.pause && !els.pause.hidden) paintPause();
+      if (els.ovResult && !els.ovResult.hidden) paintResult();
+    }
+    if (els.countdownTip && !els.countdownTip.hidden) {
+      els.countdownTip.textContent = T(wantsPads() ? 'hud.tip.pads' : 'hud.tip.keys');
+    }
+    disarmClear();
+    if (els.setMsg) els.setMsg.textContent = '';
+    if (window.NetworkLatency && window.NetworkLatency.relang) window.NetworkLatency.relang();
+    measureCorners();
+    if (G.screen === 'game') { view.resize(); fitSideBar(); }
+  }
+  const LOBBY_URL = els.lobbyLink ? els.lobbyLink.getAttribute('href') : '';
+  /* 語言切換鈕固定放在設定鈕旁（右上角工具列） */
+  I18N.mountToggle({ after: els.settingsBtn });
+  I18N.onChange(relang);
+  if (els.lobbyLink) els.lobbyLink.href = I18N.withLang(LOBBY_URL);
+
+  /* ================= 起手 ================= */
+
+  renderHomeArt();
+  renderHelp();
+  syncPads();
+  renderHomeRecords();
+  syncSettingsUi();
+  applyRenderOptions();
+  input.setVibrate(store.vibrate);
+  if (!store.char) { store.char = 'yuan'; }
+  G.char = store.char;
+  G.difficulty = store.difficulty || 'normal';
+  show('home');
+
+  /* 網址帶 ?invite=xxx（朋友貼給你的連結）→ 先到大廳確認暱稱，再加入那間房。
+   * token 有效性由伺服器驗，無效會回一句看得懂的話。 */
+  if (online.takeInviteFromUrl()) {
+    toast(T('invite.toast'));
+    show('lobby');
+  }
+})();

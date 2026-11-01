@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-i18n-title="meta.title">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F4EEFF">
+<title>你畫我猜｜免費線上多人畫圖猜謎</title>
+<!--SEO:HEAD-->
+<script>window.GAME_ANALYTICS_CONFIG={"measurement_id":"G-PG79WZK8QY","game_id":"draw-guess","page_location":"https://pjh-eric.github.io/draw-guess/"};</script>
+<meta name="description" data-i18n-content="meta.desc" content="免費免下載的你畫我猜，輪流當畫家，用畫筆、形狀與油漆桶畫出題目，猜中答案搶積分。單機練習或開房間邀朋友同樂，支援觀戰與猜題紀錄，手機平板都能作畫。">
+<link rel="canonical" href="https://pjh-eric.github.io/draw-guess/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:title" content="你畫我猜｜免費線上多人畫圖猜謎">
+<meta property="og:description" content="免費免下載的你畫我猜，輪流當畫家，用畫筆、形狀與油漆桶畫出題目，猜中答案搶積分。單機練習或開房間邀朋友同樂，支援觀戰與猜題紀錄，手機平板都能作畫。">
+<meta property="og:url" content="https://pjh-eric.github.io/draw-guess/">
+<meta property="og:image" content="https://pjh-eric.github.io/draw-guess/assets/images/seo.webp">
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="你畫我猜 遊戲封面">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="你畫我猜｜免費線上多人畫圖猜謎">
+<meta name="twitter:description" content="免費免下載的你畫我猜，輪流當畫家，用畫筆、形狀與油漆桶畫出題目，猜中答案搶積分。單機練習或開房間邀朋友同樂，支援觀戰與猜題紀錄，手機平板都能作畫。">
+<meta name="twitter:image" content="https://pjh-eric.github.io/draw-guess/assets/images/seo.webp">
+<meta name="twitter:image:alt" content="你畫我猜 遊戲封面">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"你畫我猜","url":"https://pjh-eric.github.io/draw-guess/","description":"免費免下載的你畫我猜，輪流當畫家，用畫筆、形狀與油漆桶畫出題目，猜中答案搶積分。單機練習或開房間邀朋友同樂，支援觀戰與猜題紀錄，手機平板都能作畫。","applicationCategory":"GameApplication","operatingSystem":"Any","inLanguage":"zh-Hant","genre":"畫圖猜謎","offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"image":"https://pjh-eric.github.io/draw-guess/assets/images/seo.webp","thumbnailUrl":"https://pjh-eric.github.io/draw-guess/assets/images/seo.webp","isPartOf":{"@type":"WebSite","url":"https://pjh-eric.github.io/game-lobby/"}}</script>
+<!--SEO:END-->
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/latency.css?v=20261002c">
+
+<link rel="icon" type="image/png" sizes="96x96" href="favicon-96.png">
+<link rel="icon" type="image/svg+xml" sizes="any" href="favicon.svg">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="stylesheet" href="css/server-outage.css?v=20261026">
+<script src="js/server-outage.js?v=20261026"></script>
+</head>
+<body>
+<div id="bgdeco" aria-hidden="true"></div>
+
+<div id="app">
+
+  <!-- 右上角固定系統設定入口：所有畫面共用，位置在安全區內 -->
+  <button class="btn3d icononly settings-fab" data-color="cream" id="b-settings" type="button"
+          title="開啟系統設定" aria-label="開啟系統設定" aria-haspopup="dialog"
+          aria-controls="settings-modal" aria-expanded="false" data-i18n-attr="aria-label=text.443;title=text.443"><span class="ico" data-ico="gear"></span></button>
+
+  <!-- ============================== 主選單 ============================== -->
+  <section class="screen flexcenter active" id="s-home" aria-label="主選單" data-i18n-attr="aria-label=text.444">
+    <a class="lobby-home-link" href="https://pjh-eric.github.io/game-lobby/" aria-label="回遊戲大廳" data-i18n-attr="aria-label=text.445"><span data-i18n="text.333">← 回遊戲大廳</span></a>
+    <div class="home-wrap">
+      <div class="logo" id="logo"></div>
+      <div class="home-btns">
+        <button class="btn3d big" data-color="mint" id="b-solo"><span class="ico" data-ico="board"></span><span data-i18n="text.334">單機練習（自己畫著玩）</span></button>
+        <button class="btn3d big" data-color="grape" id="b-online"><span class="ico" data-ico="people"></span><span data-i18n="text.335">線上對戰（找朋友）</span></button>
+        <div class="home-row">
+          <button class="btn3d" data-color="sky" id="b-help"><span data-i18n="text.336">玩法教學</span></button>
+          <button class="btn3d" data-color="lemon" id="b-stats"><span class="ico" data-ico="trophy"></span><span data-i18n="text.337">我的戰績</span></button>
+        </div>
+      </div>
+      <p class="home-note" id="home-note"><span data-i18n="text.338">輪流當畫家：畫家從三個題目挑一個畫出來，其他人把答案打進猜題框。猜得越快分數越高，畫得越好懂畫家也拿越多分。</span></p>
+    </div>
+  </section>
+
+  <!-- ============================== 單機設定 ============================== -->
+  <section class="screen" id="s-solo" aria-label="單機練習設定" data-i18n-attr="aria-label=text.446">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="text.339">◀ 返回</span></button>
+        <h2><span data-i18n="text.212">單機練習</span></h2>
+        <span class="spacer"></span>
+      </div>
+
+      <p class="hint-note"><span data-i18n="text.340">挑一個題目，想畫多久都可以。按「換題」練習下一題，練夠了直接離開。只有你自己作畫，不限時，也不計分。</span></p>
+
+      <h3 class="lbl"><span data-i18n="text.341">題目難度</span></h3>
+      <div class="chiprow" id="opt-worddiff" role="radiogroup" aria-label="題目難度" data-i18n-attr="aria-label=text.341"></div>
+
+      <div class="panel-foot">
+        <button class="btn3d big" data-color="grape" id="b-solo-start"><span data-i18n="text.342">開始畫！ ▶</span></button>
+        <button class="btn3d" data-color="sky" id="b-solo-load-home" type="button"><span data-i18n="text.181">載入作品</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 玩法教學（純文字） ============================== -->
+  <section class="screen" id="s-help" aria-label="玩法教學" data-i18n-attr="aria-label=text.336">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="text.339">◀ 返回</span></button>
+        <h2><span data-i18n="text.336">玩法教學</span></h2>
+        <span class="spacer"></span>
+      </div>
+
+      <p class="tut-progress" id="tut-progress" role="status" aria-live="polite"><span data-i18n="text.343">第 1 段 / 共 7 段</span></p>
+      <div class="tut-box" id="tut-box" tabindex="-1"></div>
+
+      <div class="tut-nav">
+        <button class="btn3d small" data-color="cream" id="b-tut-prev"><span data-i18n="text.344">◀ 上一段</span></button>
+        <button class="btn3d small" data-color="lemon" id="b-tut-skip"><span data-i18n="text.345">跳過教學</span></button>
+        <button class="btn3d small" data-color="mint" id="b-tut-next"><span data-i18n="text.220">下一段 ▶</span></button>
+      </div>
+
+      <div class="panel-foot">
+        <button class="btn3d" data-color="grape" id="b-tut-practice"><span data-i18n="text.346">立即練習</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 我的戰績 ============================== -->
+  <section class="screen" id="s-stats" aria-label="我的戰績" data-i18n-attr="aria-label=text.337">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="text.339">◀ 返回</span></button>
+        <h2><span data-i18n="text.337">我的戰績</span></h2>
+        <span class="spacer"></span>
+      </div>
+      <div class="statgrid" id="statgrid"></div>
+      <p class="hint-note"><span data-i18n="text.347">戰績只存在這台裝置的瀏覽器裡，不會上傳，也不會跟別人共用。清除瀏覽器資料就會歸零。</span></p>
+    </div>
+  </section>
+
+  <!-- ============================== 線上大廳 ============================== -->
+  <section class="screen" id="s-lobby" aria-label="線上大廳" data-i18n-attr="aria-label=text.447">
+    <div class="panel">
+      <div class="panel-head">
+        <button class="btn3d small" data-color="cream" data-back="s-home"><span data-i18n="text.339">◀ 返回</span></button>
+        <h2><span data-i18n="text.211">線上對戰</span></h2>
+        <span class="spacer"></span>
+      </div>
+
+      <!-- 沒有伺服器時：講清楚原因與怎麼開，不做假的房間列表 -->
+      <div class="lobby-off" id="lobby-off" hidden>
+        <div class="state-face" aria-hidden="true">🔌</div>
+        <h3 id="lobby-off-title"><span data-i18n="text.348">目前連不到遊戲伺服器</span></h3>
+        <p id="lobby-off-note"><span data-i18n="text.019">線上對戰需要一台開著的伺服器。單機練習完全不受影響，可以直接玩。</span></p>
+        <details class="lobby-help">
+          <summary><span data-i18n="text.349">要怎麼開啟線上對戰？</span></summary>
+          <div>
+            <p><span data-i18n="text.350">1. 自己跑一台：在電腦上執行</span> <code>npm start</code><span data-i18n="text.351">（或雙擊「啟動遊戲.bat」），畫面會印出這台電腦的區網網址，例如</span> <code>http://192.168.1.20:3030</code><span data-i18n="text.352">。同一個 Wi-Fi 的另一台裝置直接用瀏覽器開那個網址就能一起玩。</span></p>
+            <p><span data-i18n="text.353">2. 部署到雲端：把整個專案推到 Git，用 Render 之類的免費方案部署，兩台不同網路的裝置就都能連。</span></p>
+            <p><span data-i18n="text.354">3. 前端和伺服器不在同一台時，用</span> <code><span data-i18n="text.355">?server=（伺服器網址）</span></code> <span data-i18n="text.356">指定，例如</span> <code><span data-i18n="text.357">index.html?server=https://你的服務網址</span></code>。</p>
+            <p><span data-i18n="text.358">詳細步驟寫在專案的 README。</span></p>
+          </div>
+        </details>
+        <div class="state-btns">
+          <button class="btn3d" data-color="mint" id="b-lobby-retry"><span data-i18n="text.359">🔄 再試一次</span></button>
+          <button class="btn3d" data-color="cream" data-back="s-home"><span data-i18n="text.360">🏠 回主選單</span></button>
+        </div>
+      </div>
+
+      <div id="lobby-live">
+        <div class="lobby-me">
+          <label class="lobby-nick" for="lobby-nick">
+            <span><span data-i18n="text.361">你的暱稱</span></span>
+            <input id="lobby-nick" maxlength="12" autocomplete="off" spellcheck="false" placeholder="路過的畫家" data-i18n-attr="placeholder=text.448">
+          </label>
+          <div class="lobby-me-btns">
+            <button class="btn3d" data-color="mint" id="b-lobby-host"><span data-i18n="text.362">開一間房</span></button>
+          </div>
+        </div>
+
+        <!-- 邀請連結落地：先停在這裡讓被邀請者確認暱稱，自己選要當玩家還是觀戰，
+             選好才送出加入——連結本身不綁身分，身分由被邀請的人自己決定。 -->
+        <div class="lobby-help invitebox-land" id="lobby-invite" hidden>
+          <strong id="lobby-invite-title"><span data-i18n="text.363">收到房間邀請</span></strong>
+          <p id="lobby-invite-note"><span data-i18n="text.364">請先確認上面的暱稱，再選要當玩家還是觀戰。</span></p>
+          <div class="state-btns">
+            <button class="btn3d" data-color="mint" id="b-lobby-invite-player"><span data-i18n="text.365">加入當玩家</span></button>
+            <button class="btn3d small" data-color="sky" id="b-lobby-invite-spectator"><span data-i18n="text.366">加入觀戰</span></button>
+            <button class="btn3d small" data-color="cream" id="b-lobby-invite-cancel"><span data-i18n="text.367">先不要</span></button>
+          </div>
+        </div>
+
+        <div class="lobby-join">
+          <label class="sr-only" for="lobby-code"><span data-i18n="text.368">房號</span></label>
+          <input id="lobby-code" maxlength="4" autocomplete="off" spellcheck="false" placeholder="有房號？直接輸入" aria-describedby="lobby-join-note" data-i18n-attr="placeholder=text.449">
+          <button class="btn3d small" data-color="grape" id="b-lobby-join"><span data-i18n="text.369">加入</span></button>
+        </div>
+        <p class="hint-note" id="lobby-join-note"><span data-i18n="text.370">房號是 4 個英數字，不會用到容易看錯的 I、O、0、1。也可以直接開朋友傳來的邀請連結。</span></p>
+
+        <div class="lobby-bar">
+          <h3 class="lbl"><span data-i18n="text.371">目前開著的房間</span></h3>
+          <button class="btn3d small" data-color="cream" id="b-lobby-refresh"><span data-i18n="text.372">🔄 重新整理</span></button>
+        </div>
+        <p class="lobby-state" id="lobby-state" role="status" aria-live="polite"><span data-i18n="text.018">正在連線…</span></p>
+        <p class="lobby-state" id="lobby-online-count" aria-live="polite" hidden></p>
+        <div class="roomlist" id="roomlist"></div>
+        <p class="hint-note"><span data-i18n="text.373">房間只存在伺服器的記憶體裡：伺服器重新部署或重啟，房間就會消失。房間裡沒有任何真人玩家時會立刻關閉（只剩觀戰者也一樣）。線上房間一律是真人，沒有電腦對手。</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== 開房間設定彈窗 ============================== -->
+  <div class="settings-modal" id="room-create-modal" role="dialog" aria-modal="true"
+       aria-labelledby="room-create-title" aria-hidden="true">
+    <div class="settings-backdrop" data-room-create-close></div>
+    <section class="settings-panel room-create-panel" id="room-create-panel" tabindex="-1">
+      <div class="settings-head">
+        <span class="settings-badge" aria-hidden="true">🏠</span>
+        <h2 id="room-create-title"><span data-i18n="text.374">開房間設定</span></h2>
+        <button class="settings-close" id="room-create-close" type="button" aria-label="關閉開房間設定" data-i18n-attr="aria-label=text.450">✕</button>
+      </div>
+
+      <div class="settings-body" id="room-create-body" tabindex="0" role="group" aria-label="新房間設定" data-i18n-attr="aria-label=text.451">
+        <div class="settings-group">
+          <h3><span class="gico" aria-hidden="true">🏷️</span><span data-i18n="text.375">房間資料</span></h3>
+          <label class="setting-text" for="lobby-room-name">
+            <span><b><span data-i18n="text.376">房間名稱</span></b><small><span data-i18n="text.377">讓朋友在房間列表裡一眼認出來</span></small></span>
+            <input id="lobby-room-name" type="text" maxlength="16" autocomplete="off" spellcheck="false" placeholder="大家的畫畫房" data-i18n-attr="placeholder=text.452">
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <h3><span class="gico" aria-hidden="true">📏</span><span data-i18n="text.378">房主規則</span></h3>
+          <div class="create-choice">
+            <span><b><span data-i18n="text.379">每人當幾次畫家</span></b><small><span data-i18n="text.380">輪數越多，整局越久</span></small></span>
+            <div class="chiprow" id="room-create-rounds" role="radiogroup" aria-label="新房間每人當幾次畫家" data-i18n-attr="aria-label=text.453"></div>
+          </div>
+          <div class="create-choice">
+            <span><b><span data-i18n="text.381">每題可以畫多久</span></b><small><span data-i18n="text.382">時間到就公布答案</span></small></span>
+            <div class="chiprow" id="room-create-drawsec" role="radiogroup" aria-label="新房間每題作畫秒數" data-i18n-attr="aria-label=text.454"></div>
+          </div>
+          <div class="create-choice">
+            <span><b><span data-i18n="text.341">題目難度</span></b><small><span data-i18n="text.383">混合以簡單題為主，偶爾出困難題</span></small></span>
+            <div class="chiprow" id="room-create-diff" role="radiogroup" aria-label="新房間題目難度" data-i18n-attr="aria-label=text.455"></div>
+          </div>
+        </div>
+
+        <p class="settings-note room-create-invite-note"><span data-i18n="text.384">房間建立後，邀請連結會放在等待畫面的「房間設定」裡；不會塞進右上角的對局設定。</span></p>
+      </div>
+
+      <div class="settings-foot">
+        <button class="btn3d small" data-color="gray" id="room-create-cancel" type="button"><span data-i18n="text.367">先不要</span></button>
+        <button class="btn3d settings-done" data-color="mint" id="room-create-submit" type="button"><span data-i18n="text.385">建立房間</span></button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================== 對戰畫面 ============================== -->
+  <section class="screen" id="s-game" aria-label="對戰畫面" data-i18n-attr="aria-label=text.456">
+    <div class="game" id="game">
+
+      <div class="game-main">
+
+        <!-- 對局抬頭：上排狀態 + 題目提示列。橫向時兩者合併成同一列，把高度還給畫布 -->
+        <div class="game-head">
+        <header class="game-top">
+          <button class="btn3d small icononly" data-color="cream" id="b-game-back" title="離開這一局" aria-label="離開這一局" data-i18n-attr="aria-label=text.279;title=text.279">◀</button>
+
+          <div class="statusbar">
+            <span class="chip chip-phase" id="phase-chip" role="status" aria-live="polite"><span data-i18n="text.386">準備中</span></span>
+            <span class="chip chip-round" id="round-chip"><span data-i18n="text.387">第 0 / 0 題</span></span>
+            <span class="chip chip-timer" id="timer-chip" hidden><span class="ico" data-ico="clock"></span><b id="timer-text">0</b></span>
+          </div>
+
+          <div class="game-top-actions" aria-label="對局工具" data-i18n-attr="aria-label=text.457">
+            <button class="btn3d small icononly aside-toggle" data-color="lemon" id="b-aside-toggle"
+                    title="開啟左側操作摘要" aria-label="開啟左側操作摘要" aria-expanded="false" aria-controls="game-aside" data-i18n-attr="aria-label=text.458;title=text.458">📋</button>
+            <button class="btn3d small icononly game-settings-toggle" data-color="sky" id="b-game-settings"
+                    title="開啟對局設定" aria-label="開啟對局設定" aria-haspopup="dialog"
+                    aria-controls="game-settings-modal" aria-expanded="false" data-i18n-attr="aria-label=text.459;title=text.459">🎮</button>
+          </div>
+        </header>
+
+        <!-- 題目提示：字數（底線）、種類與被揭開的那個字，都要等畫家按提示才會出現。
+             畫家看到的是真正的題目。這一列是全畫面最該看清楚的東西，字級刻意放到最大。 -->
+        <div class="wordbar" id="wordbar">
+          <span class="wordbar-label" id="wordbar-label"><span data-i18n="text.156">題目</span></span>
+          <b class="wordbar-mask" id="wordbar-mask">— — —</b>
+          <span class="wordbar-meta" id="wordbar-meta"></span>
+          <button class="pillbtn reference-toggle" id="b-reference" type="button" hidden
+                  aria-haspopup="dialog" aria-controls="reference-modal" aria-expanded="false"><span data-i18n="reference.open">查看範本</span></button>
+        </div>
+
+        <!-- 畫布上方一列：玩家名稱與分數，旁邊接著畫家的三張提示（橫式，小張就好）。
+             提示以前絕對定位壓在畫布上，窄螢幕會蓋掉一大塊畫圖區，所以搬到這裡；
+             一行放不下就自己掉到下一行，橫向時則排到名稱左邊（右上角有固定按鈕）。 -->
+        <div class="canvastop" id="canvastop">
+          <div class="playerstrip" id="playerstrip" aria-label="玩家與分數" data-i18n-attr="aria-label=text.460"></div>
+
+          <!-- 提示區塊：畫家專用，橫式擺在畫布正上方 -->
+          <div class="hintdock" id="hintrow" aria-label="給猜題者的提示" hidden data-i18n-attr="aria-label=text.461">
+            <span class="hintrow-label"><span data-i18n="text.388">提示</span></span>
+            <button class="btn3d small hintbtn" data-color="sky" id="b-hint-1" type="button"
+                    title="公開題目有幾個字" data-i18n-attr="title=text.462"><span data-i18n="text.389">①字數</span></button>
+            <button class="btn3d small hintbtn" data-color="sky" id="b-hint-2" type="button"
+                    title="公開題目的種類" data-i18n-attr="title=text.463"><span data-i18n="text.390">②種類</span></button>
+            <button class="btn3d small hintbtn" data-color="sky" id="b-hint-3" type="button"
+                    title="在底線上翻開其中一個字" data-i18n-attr="title=text.464"><span data-i18n="text.391">③一個字</span></button>
+            <span class="hintrow-note" id="hintrow-note"></span>
+          </div>
+        </div>
+        </div>
+
+        <!-- 遊戲主區：畫布 + 操作列。
+             直向時操作列在畫布下方；橫向／寬螢幕時移到畫布右側，
+             把寶貴的高度全部留給畫布（畫布是正方形，高度就是它的邊長）。 -->
+        <div class="playarea" id="playarea">
+        <div class="stage" id="stage">
+          <div class="stage-canvas" id="stage-canvas">
+            <canvas id="board" width="900" height="900" aria-label="畫布：畫家在這裡作畫，其他人看著猜" data-i18n-attr="aria-label=text.465"></canvas>
+          </div>
+        </div>
+
+        <div class="playbar" id="playbar">
+        <!-- 猜題列：輪到別人畫的時候，這是你的主要操作 -->
+        <form class="guessbar" id="guessbar" autocomplete="off" hidden>
+          <label class="sr-only" for="guess-input"><span data-i18n="text.392">你的猜測</span></label>
+          <input id="guess-input" maxlength="24" placeholder="猜猜看這是什麼？" enterkeyhint="send" data-i18n-attr="placeholder=text.077">
+          <button class="btn3d big" data-color="mint" type="submit" id="b-guess"><span data-i18n="text.393">猜！</span></button>
+        </form>
+
+        <!-- 工具列：只有輪到自己當畫家時才出現 -->
+        <div class="toolbar" id="toolbar" hidden>
+          <div class="paint-controls">
+            <div class="toolrow toolrow-tools" id="tool-list" role="radiogroup" aria-label="畫圖工具" data-i18n-attr="aria-label=text.466"></div>
+            <div class="toolrow toolrow-colors" id="color-list" role="radiogroup" aria-label="顏色" data-i18n-attr="aria-label=text.467"></div>
+            <!-- 粗細、填滿與編輯動作放同一條；窄版時這一條可以橫向捲動，
+                 但「畫完了／跳過這題」固定在右邊不會被捲走。 -->
+            <div class="toolrow toolrow-misc">
+              <div class="toolscroll" id="toolscroll">
+                <div class="widthgroup" id="width-list" role="radiogroup" aria-label="筆的粗細" data-i18n-attr="aria-label=text.468"></div>
+                <label class="fillbox" id="fillbox">
+                  <input type="checkbox" id="opt-filled">
+                  <span><span data-i18n="text.394">填滿</span></span>
+                </label>
+                <button class="toolbtn" id="b-undo" type="button" title="復原（Ctrl+Z）" aria-label="復原" data-i18n-attr="aria-label=text.323;title=tool.undoTitle"><span class="ico" data-ico="undo"></span></button>
+                <button class="toolbtn" id="b-redo" type="button" title="重做（Ctrl+Y）" aria-label="重做" data-i18n-attr="aria-label=text.322;title=tool.redoTitle"><span class="ico" data-ico="redo"></span></button>
+                <button class="toolbtn danger" id="b-clear" type="button" title="全部清除" aria-label="全部清除" data-i18n-attr="aria-label=text.321;title=text.321"><span class="ico" data-ico="trash"></span></button>
+              </div>
+              <!-- 「畫完了」只是告訴大家可以猜了，不會結束這一題；真的要結束是下面的「跳過這題」 -->
+              <div class="donebox">
+                <button class="btn3d small tool-done" data-color="lemon" id="b-done" type="button"
+                        title="告訴大家你畫完了（這一題還會繼續，時間也照跑）" data-i18n-attr="title=text.469"><span data-i18n="text.179">畫完了</span></button>
+                <button class="btn3d small tool-skip" data-color="peach" id="b-skip" type="button"
+                        title="直接結束這一題並公布答案" data-i18n-attr="title=text.470"><span data-i18n="text.395">跳過這題</span></button>
+              </div>
+            </div>
+          </div><!-- /.paint-controls -->
+          <div class="solo-file-actions" id="solo-file-actions" role="group" aria-label="作品與題目操作" hidden data-i18n-attr="aria-label=text.471">
+            <button class="btn3d small" data-color="mint" id="b-solo-save" type="button" title="下載可繼續編輯的作品存檔" data-i18n-attr="title=text.472"><span data-i18n="text.396">存檔</span></button>
+            <button class="btn3d small" data-color="lemon" id="b-solo-image" type="button"><span data-i18n="text.397">下載圖片</span></button>
+            <button class="btn3d small" data-color="sky" id="b-solo-load" type="button"><span data-i18n="text.398">載入</span></button>
+            <button class="btn3d small" data-color="peach" id="b-solo-next" type="button" title="跳過這題，換一個題目" data-i18n-attr="title=text.473"><span data-i18n="text.399">換題</span></button>
+          </div>
+          <p class="tool-hint" id="tool-hint" role="status" aria-live="polite"></p>
+        </div>
+        </div><!-- /.playbar -->
+        </div><!-- /.playarea -->
+
+        <!-- 房間設定／選題／結算／房間結束都疊在遊戲主區上。
+             蓋住整個主區（不只畫布），房間設定這種內容比較多的面板才有地方放。 -->
+        <div class="stage-overlay" id="stage-overlay" hidden>
+          <div class="overlay-card" id="overlay-card" tabindex="-1"></div>
+        </div>
+      </div>
+
+      <!-- 左側資訊欄：操作 Summary、比分，以及包含每一則猜題的「猜題紀錄」 -->
+      <aside class="game-aside" id="game-aside" aria-label="左側操作摘要" data-i18n-attr="aria-label=text.474">
+        <div class="aside-head">
+          <h3><span data-i18n="text.400">📋 操作摘要</span></h3>
+          <button class="aside-close" id="b-aside-close" type="button" aria-label="收起操作摘要" data-i18n-attr="aria-label=text.475">✕</button>
+        </div>
+        <div class="aside-body">
+          <div class="sumcard">
+            <div class="sum-line"><span><span data-i18n="text.401">目前階段</span></span><b id="sum-phase">—</b></div>
+            <div class="sum-line"><span><span data-i18n="text.035">這一題的畫家</span></span><b id="sum-drawer">—</b></div>
+            <div class="sum-line"><span><span data-i18n="text.402">你的角色</span></span><b id="sum-role">—</b></div>
+            <div class="sum-line"><span><span data-i18n="text.403">你可以做什麼</span></span><b id="sum-can">—</b></div>
+            <div class="sum-line"><span><span data-i18n="text.404">題目提示</span></span><b id="sum-hint">—</b></div>
+            <div class="sum-line"><span><span data-i18n="text.405">剩餘時間</span></span><b id="sum-timer">—</b></div>
+            <div class="sum-line"><span><span data-i18n="text.406">連線</span></span><b id="sum-conn">—</b></div>
+          </div>
+
+          <h4 class="sum-h"><span data-i18n="text.407">目前比分</span></h4>
+          <ol class="scorelist" id="scorelist"></ol>
+
+          <h4 class="sum-h"><span data-i18n="text.315">猜題紀錄</span></h4>
+          <ol class="sum-list" id="sum-list" role="log" aria-live="polite"></ol>
+          <p class="sum-empty" id="sum-empty"><span data-i18n="text.408">還沒有任何紀錄。猜題（包含猜錯的）都會列在這裡。</span></p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================== 畫家參考範本 ============================== -->
+  <div class="settings-modal reference-modal" id="reference-modal" role="dialog" aria-modal="true"
+       aria-labelledby="reference-title" aria-describedby="reference-note" aria-hidden="true">
+    <div class="settings-backdrop" id="reference-backdrop"></div>
+    <section class="settings-panel reference-panel" id="reference-panel" tabindex="-1">
+      <div class="settings-head">
+        <h2 id="reference-title"><span data-i18n="reference.title">畫家參考範本</span></h2>
+        <button class="settings-close" id="reference-close" type="button" aria-label="關閉範本" data-i18n-attr="aria-label=reference.close">✕</button>
+      </div>
+      <div class="reference-body">
+        <b class="reference-word" id="reference-word"></b>
+        <div class="reference-picture" id="reference-picture" role="img"></div>
+        <p class="reference-empty" id="reference-empty" hidden data-i18n="reference.empty">範本暫時無法顯示，請稍後再試。</p>
+        <div class="reference-steps" id="reference-steps" role="group" aria-label="範本步驟" data-i18n-attr="aria-label=reference.steps">
+          <button class="pillbtn" type="button" data-reference-step="1" aria-pressed="false" data-i18n="reference.step1">① 起筆</button>
+          <button class="pillbtn" type="button" data-reference-step="2" aria-pressed="false" data-i18n="reference.step2">② 加細節</button>
+          <button class="pillbtn" type="button" data-reference-step="3" aria-pressed="true" data-i18n="reference.step3">③ 完整圖</button>
+        </div>
+        <p class="reference-note" id="reference-note" data-i18n="reference.note">看輪廓與特徵就好，不必畫得一模一樣。範本不會放進你的畫布；線上回合仍會繼續計時。</p>
+      </div>
+      <div class="settings-foot">
+        <button class="btn3d settings-done" data-color="mint" id="reference-done" type="button"><span data-i18n="reference.back">回去畫畫</span></button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================== 系統設定彈窗 ============================== -->
+  <div class="settings-modal" id="settings-modal" role="dialog" aria-modal="true"
+       aria-labelledby="settings-title" aria-hidden="true">
+    <div class="settings-backdrop" data-settings-close></div>
+    <section class="settings-panel" id="settings-panel" tabindex="-1">
+      <div class="settings-head">
+        <span class="settings-badge" aria-hidden="true"><span class="ico" data-ico="gear"></span></span>
+        <h2 id="settings-title"><span data-i18n="text.409">系統設定</span></h2>
+        <button class="settings-close" id="settings-close" type="button" aria-label="關閉系統設定" data-i18n-attr="aria-label=text.476">✕</button>
+      </div>
+
+      <div class="settings-body" id="settings-body" tabindex="0" role="group" aria-label="設定項目" data-i18n-attr="aria-label=text.477">
+        <div class="settings-group">
+          <h3><span class="gico" aria-hidden="true">🎵</span><span data-i18n="text.410">聲音</span></h3>
+          <label class="setting-toggle" for="settings-music">
+            <span><b><span data-i18n="text.411">背景音樂</span></b><small id="settings-music-status"><span data-i18n="text.265">開啟</span></small></span>
+            <input id="settings-music" type="checkbox" checked>
+          </label>
+          <label class="setting-range" for="settings-music-volume">
+            <span><span data-i18n="text.412">音樂音量</span> <output id="settings-music-volume-value">55%</output></span>
+            <input id="settings-music-volume" type="range" min="0" max="100" step="5" value="55">
+          </label>
+          <label class="setting-toggle" for="settings-sfx">
+            <span><b><span data-i18n="text.413">遊戲音效</span></b><small id="settings-sfx-status"><span data-i18n="text.265">開啟</span></small></span>
+            <input id="settings-sfx" type="checkbox" checked>
+          </label>
+          <label class="setting-range" for="settings-sfx-volume">
+            <span><span data-i18n="text.414">音效音量</span> <output id="settings-sfx-volume-value">100%</output></span>
+            <input id="settings-sfx-volume" type="range" min="0" max="100" step="5" value="100">
+          </label>
+          <label class="setting-toggle" for="settings-pencue">
+            <span><b><span data-i18n="text.415">下筆沙沙聲</span></b><small><span data-i18n="text.416">畫線時的鉛筆摩擦聲</span></small></span>
+            <input id="settings-pencue" type="checkbox" checked>
+          </label>
+          <label class="setting-toggle" for="settings-chatcue">
+            <span><b><span data-i18n="text.417">猜題提示音</span></b><small><span data-i18n="text.418">有人猜題時輕輕響一聲</span></small></span>
+            <input id="settings-chatcue" type="checkbox" checked>
+          </label>
+          <p class="settings-note"><span data-i18n="text.419">聲音會在你第一次點畫面之後才開始播放，這是瀏覽器的規定。全部靜音也能完整遊玩，重要資訊都有文字。</span></p>
+        </div>
+
+        <div class="settings-group">
+          <h3><span class="gico" aria-hidden="true">🎮</span><span data-i18n="text.420">操作與顯示</span></h3>
+          <label class="setting-toggle" for="settings-haptic">
+            <span><b><span data-i18n="text.421">震動回饋</span></b><small><span data-i18n="text.422">猜對與無效操作時輕震一下（需裝置支援）</span></small></span>
+            <input id="settings-haptic" type="checkbox" checked>
+          </label>
+          <label class="setting-toggle" for="settings-motion">
+            <span><b><span data-i18n="text.423">減少動態</span></b><small><span data-i18n="text.424">關掉浮動裝飾與轉場動畫</span></small></span>
+            <input id="settings-motion" type="checkbox">
+          </label>
+          <label class="setting-toggle" for="settings-bigtools">
+            <span><b><span data-i18n="text.425">放大工具列</span></b><small><span data-i18n="text.426">工具與顏色的按鈕變大，手指比較好按</span></small></span>
+            <input id="settings-bigtools" type="checkbox">
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <h3><span class="gico" aria-hidden="true">🌐</span><span data-i18n="text.427">個人與連線</span></h3>
+          <label class="setting-text" for="settings-nick">
+            <span><b><span data-i18n="text.428">我的暱稱</span></b><small><span data-i18n="text.429">線上房間、猜題紀錄裡別人看到的名字；清空會自動幫你配一個</span></small></span>
+            <input id="settings-nick" type="text" maxlength="12" autocomplete="off" spellcheck="false" placeholder="留空會自動配一個" data-i18n-attr="placeholder=text.478">
+          </label>
+          <div class="setting-static">
+            <span><b><span data-i18n="text.430">遊戲伺服器</span></b><small id="settings-server-url">—</small></span>
+            <span class="server-pill" id="settings-server-pill" data-state="unset"><span data-i18n="text.431">尚未連線</span></span>
+          </div>
+          <p class="settings-note"><span data-i18n="text.433">伺服器位址只能從網址參數</span> <code>?server=</code> <span data-i18n="text.434">或部署時注入的設定取得，程式裡沒有寫死任何網域。</span></p>
+        </div>
+      </div>
+
+      <div class="settings-foot">
+        <button class="btn3d small settings-reset" data-color="gray" id="settings-reset" type="button"><span data-i18n="text.435">恢復預設</span></button>
+        <button class="btn3d settings-done" data-color="mint" id="settings-done" type="button"><span data-i18n="text.436">完成</span></button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================== 確認彈窗 ============================== -->
+  <!-- 通用的「再問一次」對話框：離開對局這種收不回來的動作都走這裡 -->
+  <div class="settings-modal confirm-modal" id="confirm-modal" role="dialog" aria-modal="true"
+       aria-labelledby="confirm-title" aria-describedby="confirm-text" aria-hidden="true">
+    <div class="settings-backdrop" data-confirm-close></div>
+    <section class="settings-panel confirm-panel" id="confirm-panel" tabindex="-1">
+      <div class="settings-head">
+        <span class="settings-badge" aria-hidden="true">❓</span>
+        <h2 id="confirm-title"><span data-i18n="text.437">確認</span></h2>
+      </div>
+      <div class="settings-body">
+        <p class="confirm-text" id="confirm-text"></p>
+      </div>
+      <div class="settings-foot">
+        <button class="btn3d small" data-color="gray" id="confirm-cancel" type="button"><span data-i18n="text.367">先不要</span></button>
+        <button class="btn3d settings-done" data-color="peach" id="confirm-ok" type="button"><span data-i18n="text.438">確定</span></button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================== 對局設定彈窗 ============================== -->
+  <div class="settings-modal" id="game-settings-modal" role="dialog" aria-modal="true"
+       aria-labelledby="game-settings-title" aria-hidden="true">
+    <div class="settings-backdrop" data-game-settings-close></div>
+    <section class="settings-panel" id="game-settings-panel" tabindex="-1">
+      <div class="settings-head">
+        <span class="settings-badge" aria-hidden="true">🎮</span>
+        <h2 id="game-settings-title"><span data-i18n="text.439">對局設定</span></h2>
+        <button class="settings-close" id="game-settings-close" type="button" aria-label="關閉對局設定" data-i18n-attr="aria-label=text.479">✕</button>
+      </div>
+
+      <div class="settings-body" id="game-settings-body" tabindex="0" role="group" aria-label="本局操作" data-i18n-attr="aria-label=text.441">
+        <div class="settings-group">
+          <h3><span class="gico" aria-hidden="true">🙋</span><span data-i18n="text.402">你的角色</span></h3>
+          <div class="setting-static">
+            <span><b id="gs-role">—</b><small id="gs-role-note">—</small></span>
+            <span class="roomcode-pill" id="gs-code">----</span>
+          </div>
+          <div class="setting-btns" id="gs-role-btns"></div>
+          <p class="settings-note"><span data-i18n="text.440">房主規則與邀請連結只在尚未開始時的中央「房間設定」裡管理；右上角只處理你的角色與本局操作。</span></p>
+        </div>
+
+        <div class="settings-group">
+          <h3><span class="gico" aria-hidden="true">🏳️</span><span data-i18n="text.441">本局操作</span></h3>
+          <div class="setting-btns">
+            <button class="btn3d small" data-color="lemon" id="gs-skip" type="button"><span data-i18n="text.442">跳過這一題（我畫不出來）</span></button>
+            <button class="btn3d small" data-color="peach" id="gs-quit" type="button"><span data-i18n="text.279">離開這一局</span></button>
+          </div>
+          <p class="settings-note" id="gs-note"><span data-i18n="text.026">目前沒有進行中的對局。</span></p>
+        </div>
+      </div>
+
+      <div class="settings-foot">
+        <button class="btn3d settings-done" data-color="mint" id="game-settings-done" type="button"><span data-i18n="text.436">完成</span></button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 全域提示（送出中、錯誤、成功） -->
+  <input id="solo-file-input" type="file" accept=".json,application/json" hidden aria-label="選擇作品存檔" data-i18n-attr="aria-label=text.480">
+  <div class="toast" id="toast" role="status" aria-live="assertive" hidden></div>
+</div>
+
+<script src="js/analytics.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/locales.js"></script>
+<script src="js/words.en.js"></script>
+<script src="js/words.zh-Hans.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/config.js"></script>
+<script src="js/rng.js"></script>
+<script src="js/words.js"></script>
+<script src="js/reference-path.js"></script>
+<script src="js/reference-kit.js"></script>
+<script src="js/reference-recipes.js"></script>
+<script src="js/reference.js"></script>
+<script src="js/meaning-reference.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/drawing-file.js"></script>
+<!-- js/ai.js 刻意不載入：單機已經沒有電腦對手，遊戲裡沒有任何程式用到它。
+     演算法保留在檔案裡供未來需要時取用，但不讓每個玩家白載一份。 -->
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/svgui.js"></script>
+<script src="js/paint.js"></script>
+<script src="js/latency.js?v=20261002c" data-skin="draw-guess"></script>
+<script src="js/sio-client.js"></script>
+<script src="js/online.js"></script>
+<script src="js/app.js"></script>
+<!--SEO:GAMEPLAY-->
+<noscript><div class="seo-gameplay"><section lang="zh-Hant">
+<h2>你畫我猜</h2>
+<p>單機自由畫畫、不限時也不計分；線上輪流當畫家，和朋友猜題搶分。</p>
+<p><strong>玩法模式：</strong>單機自由畫畫、線上房間、觀戰</p>
+<p><strong>操作方式：</strong>畫家用畫筆在畫布作畫，猜題者輸入答案</p>
+</section>
+<section lang="zh-Hans">
+<h2>你画我猜</h2>
+<p>单机自由画画、不限时也不计分；线上轮流当画家，和朋友猜题抢分。</p>
+<p><strong>玩法模式：</strong>单机自由画画、线上房间、观战</p>
+<p><strong>操作方式：</strong>画家用画笔在画布作画，猜题者输入答案</p>
+</section>
+<section lang="en">
+<h2>Draw &amp; Guess</h2>
+<p>Draw freely solo with no timer or scoring, or take turns drawing and guessing with friends online.</p>
+<p><strong>Game modes: </strong>Solo Free Drawing, Online Room, Spectate</p>
+<p><strong>How to play: </strong>The artist draws on the canvas; guessers type their answers</p>
+</section></div></noscript>
+<!--SEO:GAMEPLAY:END-->
+  <script defer src="js/locales/result-share.js"></script>
+  <script defer src="js/result-share.js"></script>
+</body>
+</html>

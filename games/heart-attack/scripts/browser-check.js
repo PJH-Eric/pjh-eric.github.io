@@ -1,0 +1,330 @@
+/* ===== scripts/browser-check.js — 無頭瀏覽器版面與流程檢查（node scripts/browser-check.js） =====
+ *
+ * 需要 Playwright（npm i -g playwright 或專案內安裝）；沒有就跳過，不算失敗。
+ * 檢查：各尺寸（手機／平板／桌機 × 直橫向）有沒有水平溢出、主要按鈕是否在畫面內且夠大、
+ * 設定彈窗（右上角 → Modal → Esc 關閉回到原焦點）、單機完整一局到結算、
+ * 線上：建房 → 邀請連結加入 → 觀戰 → 開局 → 聊天。截圖存到 screenshots/。
+ */
+'use strict';
+
+const path = require('path');
+const fs = require('fs');
+const { execSync } = require('child_process');
+
+let pw = null;
+try { pw = require('playwright'); } catch (e) {
+  try { pw = require(path.join(execSync('npm root -g').toString().trim(), 'playwright')); } catch (e2) { pw = null; }
+}
+if (!pw) { console.log('沒有安裝 Playwright，略過瀏覽器檢查。'); process.exit(0); }
+
+const { createServer } = require('../server.js');
+const OUT = path.join(__dirname, '..', 'screenshots');
+fs.mkdirSync(OUT, { recursive: true });
+
+let pass = 0, fail = 0;
+function ok(v, name) { if (v) { pass++; console.log('  ✔ ' + name); } else { fail++; console.log('  ✘ ' + name); } }
+
+const SIZES = [
+  ['手機直向', 390, 844, true], ['手機橫向', 844, 390, true],
+  ['平板直向', 820, 1180, true], ['平板橫向', 1180, 820, true],
+  ['桌機', 1440, 900, false]
+];
+
+async function layoutProblems(page) {
+  return page.evaluate(() => {
+    const out = [];
+    const W = innerWidth, H = innerHeight;
+    if (document.documentElement.scrollWidth > W + 1) out.push('水平溢出 ' + document.documentElement.scrollWidth + '>' + W);
+    for (const sel of ['#btn-settings', '.slap-btn', '.start-btn:not([hidden])', '#btn-menu-fab', '#side-open', '#chat-fab']) {
+      const el = document.querySelector(sel);
+      if (!el || el.offsetParent === null) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width < 44 || r.height < 44) out.push(sel + ' 太小 ' + Math.round(r.width) + 'x' + Math.round(r.height));
+      if (r.left < -1 || r.top < -1 || r.right > W + 1 || r.bottom > H + 1) out.push(sel + ' 超出畫面');
+    }
+    /* 拍牌鈕與設定鈕不能疊在一起 */
+    const a = document.querySelector('#btn-settings'), seats = [...document.querySelectorAll('.seat')];
+    if (a) {
+      const r = a.getBoundingClientRect();
+      for (const s of seats) {
+        const q = s.querySelector('.avatar').getBoundingClientRect();
+        if (q.left < r.right && q.right > r.left && q.top < r.bottom && q.bottom > r.top) out.push('設定鈕蓋到座位');
+      }
+    }
+    return out;
+  });
+}
+
+async function solo(browser, base) {
+  console.log('\n[單機：各尺寸版面]');
+  for (const [name, w, h, touch] of SIZES) {
+    const page = await browser.newPage({ viewport: { width: w, height: h }, hasTouch: touch });
+    const errs = [];
+    page.on('pageerror', e => errs.push(e.message));
+    await page.goto(base);
+    await page.screenshot({ path: path.join(OUT, name + '-首頁.png') });
+    let probs = await layoutProblems(page);
+    await page.click('#go-solo');
+    probs = probs.concat(await layoutProblems(page));
+    await page.click('#solo-start');
+    await page.waitForTimeout(300);
+    probs = probs.concat(await layoutProblems(page));
+    await page.screenshot({ path: path.join(OUT, name + '-等待開始.png') });
+    const sb = await page.$('.start-btn:not([hidden])');     /* 第一順位可能是電腦，電腦會自己按 */
+    if (sb) await sb.click({ force: true });
+    await page.waitForTimeout(3000);
+    probs = probs.concat(await layoutProblems(page));
+    await page.screenshot({ path: path.join(OUT, name + '-對局.png') });
+    ok(!probs.length && !errs.length, name + '：版面正常' + (probs.length ? '（' + [...new Set(probs)].join('；') + '）' : '') + (errs.length ? ' JS 錯誤：' + errs.join('；') : ''));
+    await page.close();
+  }
+
+  console.log('\n[單機：設定彈窗與完整一局]');
+  const page = await browser.newPage({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  await page.goto(base);
+  await page.click('#btn-settings');
+  ok(await page.isVisible('#settings-modal'), '右上角設定 → 開啟 Modal');
+  ok(await page.evaluate(() => document.activeElement && !!document.activeElement.closest('#settings-modal')), '焦點移進設定彈窗');
+  await page.click('[data-key="bgm"]');
+  ok(await page.evaluate(() => JSON.parse(localStorage.getItem('heart-attack')).bgm === false), '關掉背景音樂立刻存起來');
+  await page.keyboard.press('Escape');
+  ok(!(await page.isVisible('#settings-modal')), 'Esc 關閉設定');
+  ok(await page.evaluate(() => document.activeElement && document.activeElement.id === 'btn-settings'), '關閉後焦點回到設定鈕');
+  await page.reload();
+  ok(await page.evaluate(() => JSON.parse(localStorage.getItem('heart-attack')).bgm === false), '重新整理後設定仍保留');
+
+  /* 喊數語音：內建錄音要解得開，翻牌時真的有念 */
+  await page.click('#btn-settings');
+  await page.click('[data-voice="clip"]');
+  await page.waitForFunction(() => Sound.clipsReady === 13, null, { timeout: 5000 }).catch(() => {});
+  ok(await page.evaluate(() => Sound.clipsReady === 13), '13 段內建喊數錄音（A～K）都能解碼');
+  await page.click('#voice-test');
+  await page.waitForTimeout(2000);
+  ok(await page.evaluate(() => Sound.clipPlays >= 3), '「試聽」念出 A、二、三');
+  await page.keyboard.press('Escape');
+  await page.click('#go-solo');
+  await page.click('#solo-start');
+  const before = await page.evaluate(() => Sound.clipPlays);
+  const sb0 = await page.$('.start-btn:not([hidden])');
+  if (sb0) await sb0.click({ force: true });
+  await page.waitForTimeout(3500);
+  const flips = await page.evaluate(() => Solo._debug.state.flips);
+  const plays = await page.evaluate(() => Sound.clipPlays) - before;
+  ok(flips > 0 && plays >= flips - 1, '每翻一張牌就喊一次數字（翻 ' + flips + ' 張、喊 ' + plays + ' 次）');
+  await page.evaluate(() => Solo.stop());
+  await page.goto(base);
+
+  /* 單機：每個電腦各自的難度 */
+  await page.click('#go-solo');
+  while (await page.isEnabled('#solo-ai [data-step="1"]')) await page.click('#solo-ai [data-step="1"]');
+  await page.click('#solo-diff [data-diff="normal"]');
+  await page.click('#solo-ai-list [data-ai="0"][data-diff="kid"]');
+  await page.click('#solo-ai-list [data-ai="2"][data-diff="hard"]');
+  ok(!(await page.$('#solo-diff [aria-checked="true"]')) && /混合難度/.test(await page.textContent('#solo-diff-hint')), '電腦難度不一樣時顯示「混合難度」');
+  await page.screenshot({ path: path.join(OUT, '平板橫向-單機設定-混合難度.png') });
+  await page.click('#solo-start');
+  const mix = await page.evaluate(() => ({ ai: Solo._debug.state.seats.filter(s => s.ai).map(s => s.id + ':' + s.ai).sort().join(','), flip: Solo._debug.state.pace.flipMs, kind: Solo._debug.cfg.kind }));
+  ok(mix.ai === 'ai0:kid,ai1:normal,ai2:hard', '每個電腦照各自選的難度（' + mix.ai + '）');
+  ok(mix.flip === 1700 && mix.kind === 'mixed', '混合難度時翻牌節奏跟著最簡單的電腦（幼幼班）');
+  await page.evaluate(() => Solo.stop());
+  await page.goto(base);
+  await page.click('#go-help');
+  ok((await page.textContent('#help-body')).includes('最慢的人收牌'), '說明頁有完整的文字教學');
+  await page.click('#help-go');
+  await page.click('#solo-diff [data-diff="kid"]');
+  await page.click('#solo-start');
+  /* 把牌調成每人 1 張，快速打到結算 */
+  await page.evaluate(() => {
+    const g = Solo._debug;
+    g.state.seats.forEach((s, i) => { s.hand = [{ s: 'S', r: 9 + (i % 3) }]; });
+    g.state.pile = [];
+  });
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('#result:not([hidden])', { timeout: 15000 });
+  ok(await page.isVisible('#result'), '單機一局可以從開始打到結算');
+  await page.screenshot({ path: path.join(OUT, '平板橫向-結算.png') });
+  ok(await page.isVisible('#result .speed-table') && (await page.$$('#result .speed-table tbody tr')).length === 4, '結算列出每個人的拍速');
+  ok(await page.evaluate(() => JSON.parse(localStorage.getItem('heart-attack')).reaction.games === 1), '這局的拍速記到這台裝置');
+  await page.click('#res-again');
+  ok(await page.isHidden('#result') && await page.evaluate(() => Solo._debug.state.seats.reduce((a, s) => a + s.hand.length, 0) === 52), '「再來一局」重新發 52 張');
+  await page.keyboard.press('Escape');
+  ok(await page.isVisible('#menu-modal'), 'Esc 打開暫停選單');
+  await page.click('#m-home');
+  ok(await page.isVisible('#screen-home'), '暫停選單可以回首頁');
+
+  /* 我的拍速頁：放一些紀錄進去，看圖表、表格、提示、清除 */
+  await page.evaluate(() => {
+    const d = JSON.parse(localStorage.getItem('heart-attack'));
+    const h = [620, 540, 580, 470, 430].map((avg, i) => ({ d: '2026-09-2' + i, kind: i % 2 ? 'hard' : 'online', avg, best: avg - 120, hits: 6, wrong: 1, missed: 1 }));
+    d.reaction = { best: 310, hits: 30, sum: 30 * 528, wrong: 5, missed: 5, games: 5, byKind: { hard: { best: 310, hits: 12, sum: 12 * 505, bestAvg: 470 }, online: { best: 350, hits: 18, sum: 18 * 543, bestAvg: 430 } }, history: h };
+    localStorage.setItem('heart-attack', JSON.stringify(d));
+  });
+  await page.reload();
+  await page.click('#go-speed');
+  ok(await page.isVisible('#screen-speed') && (await page.textContent('.speed-hero')).includes('0.31'), '我的拍速：顯示最快一拍 0.31 秒');
+  ok((await page.$$('.speed-chart .bar')).length === 5, '最近 5 局的平均畫成 5 根長條');
+  await page.locator('.speed-chart .bar').last().click({ force: true });
+  ok(/平均 0\.43 秒/.test(await page.textContent('.chart-tip')), '點長條顯示那一局的數值');
+  ok((await page.textContent('#speed-body')).includes('困難') && (await page.textContent('#speed-body')).includes('線上'), '各難度表格有困難與線上');
+  await page.screenshot({ path: path.join(OUT, '平板橫向-我的拍速.png'), fullPage: true });
+  await page.click('#speed-clear');
+  await page.click('#speed-clear');
+  ok(await page.isVisible('.speed-empty'), '清除（按兩次確認）後回到空白狀態');
+  await page.click('#screen-speed [data-back="home"]');
+
+  /* 結束方式：打到只剩一人有牌 —— 自己先出完，看離場畫面，再等其他人打完 */
+  await page.click('#go-solo');
+  while (await page.isEnabled('#solo-ai [data-step="1"]')) await page.click('#solo-ai [data-step="1"]');
+  await page.click('[data-end="last"]');
+  await page.click('#solo-diff [data-diff="hard"]');
+  await page.click('#solo-start');
+  await page.evaluate(() => {
+    const g = Solo._debug, st = g.state;
+    const me = st.seats.findIndex(s => s.id === 'me');
+    const all = st.seats.flatMap(s => s.hand).concat(st.pile);
+    st.seats.forEach(s => { s.hand = []; });
+    st.pile = [];
+    /* 自己只留一張不會命中的牌，其他人平分剩下的（全部換成不會命中的點數，電腦也不會亂拍） */
+    st.seats[me].hand = [{ s: 'S', r: me === 0 ? 9 : 9 }];
+    const others = st.seats.map((s, i) => i).filter(i => i !== me);
+    let k = 0;
+    for (const c of all.slice(1)) st.seats[others[k++ % others.length]].hand.push(c);
+    st.starter = me;
+  });
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => Solo._debug.state.seats.find(s => s.id === 'me').out > 0, null, { timeout: 20000 }).catch(() => {});
+  const outInfo = await page.evaluate(() => ({
+    out: Solo._debug.state.seats.find(s => s.id === 'me').out,
+    phase: Solo._debug.state.phase,
+    dis: document.querySelector('.slap-btn').disabled && document.querySelector('.slap-btn').hidden,
+    wait: document.querySelector('.out-badge').hidden ? '' : document.querySelector('.out-badge').textContent,
+    flag: [...document.querySelectorAll('.seat-flag')].map(f => f.textContent).join('|')
+  }));
+  ok(outInfo.out === 1 && outInfo.phase !== 'over', '只剩一人模式：自己出完拿第 1 名，其他人繼續打');
+  ok(outInfo.dis && /第 1 名/.test(outInfo.wait) && /第 1 名/.test(outInfo.flag), '離場後拍牌鈕換成名次標示（' + outInfo.wait + '）');
+  await page.screenshot({ path: path.join(OUT, '平板橫向-只剩一人-自己出完.png') });
+  const flipsBefore = await page.evaluate(() => Solo._debug.state.flips);
+  await page.waitForFunction(n => Solo._debug.state.flips > n || Solo._debug.state.phase === 'over', flipsBefore, { timeout: 8000 }).catch(() => {});
+  ok(await page.evaluate(n => Solo._debug.state.flips > n, flipsBefore), '離場後牌局照常進行');
+  await page.evaluate(() => Solo.stop());
+  await page.goto(base);
+  await page.click('#go-solo');
+  await page.click('[data-end="first"]');
+  await page.goto(base);
+  await page.screenshot({ path: path.join(OUT, '平板橫向-暫停.png') });
+  ok(await page.isVisible('#screen-home'), '暫停選單可以回首頁');
+  await page.close();
+}
+
+async function online(browser, base) {
+  console.log('\n[線上：建房、邀請、觀戰、開局、聊天]');
+  const ctxA = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const ctxB = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const ctxC = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true });
+  const A = await ctxA.newPage(), B = await ctxB.newPage(), C = await ctxC.newPage();
+  const errs = [];
+  for (const p of [A, B, C]) p.on('pageerror', e => errs.push(e.message));
+
+  await A.goto(base);
+  await A.click('#go-online');
+  await A.waitForSelector('#lobby-conn.ok');
+  ok(true, '大廳連上伺服器');
+  await A.fill('#lobby-name', '房主阿明');
+  await A.click('#lobby-create');
+  await A.waitForSelector('#screen-room:not([hidden])');
+  ok(true, '建立房間進入等待室');
+  await A.click('[data-act="add-ai"]');
+  await A.waitForSelector('.seat-row .dd-btn');
+  ok(true, '房主可以加電腦');
+  ok(!(await A.$('#screen-room select')), '難度選單不是原生 <select>');
+  await A.click('.seat-row .dd-btn');
+  ok(await A.isVisible('#dd-pop') && (await A.$$('#dd-pop [role=option]')).length === 4, '點開自製選單，列出四段難度');
+  await A.screenshot({ path: path.join(OUT, '線上-桌機-電腦難度選單.png') });
+  await A.click('#dd-pop [data-value="kid"]');
+  await A.waitForFunction(() => Online.room.seats.some(s => s.kind === 'ai' && s.diff === 'kid'));
+  ok(await A.isHidden('#dd-pop') && (await A.textContent('.seat-row .dd-btn')).includes('幼幼班'), '點選項後改成幼幼班、選單收起');
+  /* 鍵盤：↓ 打開、↓↓ 移動、Enter 選取；Esc 關閉 */
+  await A.focus('.seat-row .dd-btn');
+  await A.keyboard.press('ArrowDown');
+  await A.keyboard.press('ArrowDown');
+  await A.keyboard.press('ArrowDown');
+  await A.keyboard.press('Enter');
+  await A.waitForFunction(() => Online.room.seats.some(s => s.kind === 'ai' && s.diff === 'normal'));
+  ok(true, '鍵盤也能選（幼幼班 → 往下兩格＝普通）');
+  await A.click('.seat-row .dd-btn');
+  await A.keyboard.press('Escape');
+  ok(await A.isHidden('#dd-pop'), 'Esc 關閉選單');
+  await A.click('.seat-row .dd-btn');
+  await A.mouse.click(5, 300);
+  ok(await A.isHidden('#dd-pop'), '點外面關閉選單');
+  await A.click('.seat-row .dd-btn');
+  await A.click('#dd-pop [data-value="kid"]');
+  await A.waitForFunction(() => Online.room.seats.some(s => s.kind === 'ai' && s.diff === 'kid'));
+  const link = await A.inputValue('#invite-url');
+  ok(/invite=/.test(link), '有邀請連結可以複製');
+  await A.screenshot({ path: path.join(OUT, '線上-桌機-等待室.png') });
+
+  await B.goto(link);
+  await B.waitForSelector('.invite-card button[data-as="player"]');
+  await B.screenshot({ path: path.join(OUT, '線上-手機-收到邀請.png') });
+  await B.click('.invite-card button[data-as="player"]');
+  await B.waitForSelector('#screen-room:not([hidden])');
+  ok(!(await B.evaluate(() => location.search.includes('invite'))), '加入後網址上的邀請參數被清掉');
+  await B.screenshot({ path: path.join(OUT, '線上-手機-等待室.png'), fullPage: true });
+
+  await C.goto(link);
+  await C.waitForSelector('.invite-card button[data-as="spectator"]');
+  await C.click('.invite-card button[data-as="spectator"]');
+  await C.waitForSelector('#screen-room:not([hidden])');
+  ok((await C.textContent('#room-role')).includes('觀戰'), '用同一個連結選觀戰 → 觀戰者');
+  ok((await C.textContent('#room-seats')).includes('電腦・幼幼班') && !(await C.$('#room-seats .dd-btn')), '其他人看得到電腦難度但不能改');
+
+  await B.click('[data-act="ready"]');
+  await A.waitForSelector('[data-act="start"]:not([disabled])');
+  await A.click('[data-act="start"]');
+  await A.waitForSelector('#screen-game:not([hidden])');
+  await B.waitForSelector('#screen-game:not([hidden])');
+  await C.waitForSelector('#screen-game:not([hidden])');
+  ok(true, '開局後三個人都進到牌桌');
+  ok(await C.isVisible('.spec-badge') && !(await C.isVisible('.slap-btn')), '觀戰者沒有拍牌鈕，顯示「你是觀戰者」');
+  ok(await A.isVisible('.side-chat'), '桌機：聊天室在左欄');
+  ok(await B.isVisible('#chat-fab'), '手機：左下角聊天入口');
+
+  /* 啟動者按開始（可能是任何人或電腦） */
+  for (const p of [A, B]) { const s = await p.$('.start-btn:not([hidden])'); if (s) await s.click({ force: true }); }
+  await A.waitForTimeout(2500);
+  await A.fill('.side-chat .chat-form input', '大家好！');
+  await A.press('.side-chat .chat-form input', 'Enter');
+  await B.waitForFunction(() => document.querySelector('#chat-unread') && !document.querySelector('#chat-unread').hidden, null, { timeout: 5000 });
+  ok(true, '手機收到訊息時聊天入口顯示未讀數');
+  await B.click('#chat-fab');
+  ok((await B.textContent('#chat-pop')).includes('大家好！'), '手機打開聊天室看得到訊息');
+  await B.screenshot({ path: path.join(OUT, '線上-手機-對局聊天.png') });
+  await B.click('#chat-pop-close');
+  await A.screenshot({ path: path.join(OUT, '線上-桌機-對局.png') });
+  await C.screenshot({ path: path.join(OUT, '線上-平板-觀戰.png') });
+  for (const p of [A, B, C]) {
+    const probs = await layoutProblems(p);
+    ok(!probs.length, '線上版面正常（' + p.viewportSize().width + '×' + p.viewportSize().height + '）' + (probs.length ? probs.join('；') : ''));
+  }
+  ok(!errs.length, '線上流程沒有 JS 錯誤' + (errs.length ? '：' + errs.join('；') : ''));
+  await ctxA.close(); await ctxB.close(); await ctxC.close();
+}
+
+(async () => {
+  console.log('\n海島心臟病 瀏覽器檢查');
+  const app = createServer();
+  app.start();
+  await new Promise(r => app.server.listen(0, r));
+  const base = 'http://127.0.0.1:' + app.server.address().port + '/';
+  let browser;
+  try {
+    browser = await pw.chromium.launch();
+    await solo(browser, base);
+    await online(browser, base);
+  } catch (e) { fail++; console.log('  ✘ 出錯：' + (e && e.stack)); }
+  if (browser) await browser.close();
+  app.stop(); app.server.close();
+  console.log('\n' + (fail ? '✘ ' : '✔ ') + '通過 ' + pass + ' 項，失敗 ' + fail + ' 項（截圖在 screenshots/）\n');
+  process.exit(fail ? 1 : 0);
+})();

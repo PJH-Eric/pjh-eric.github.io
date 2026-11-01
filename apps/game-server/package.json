@@ -1,0 +1,1 @@
+{ "name": "@pjh/game-server", "version": "0.1.0", "private": true, "main": "server.js", "scripts": { "start": "tsx server.js", "test": "tsx tests/smoke.js" } }

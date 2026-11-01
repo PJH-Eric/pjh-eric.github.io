@@ -1,0 +1,22 @@
+# Render 藍圖：全部 18 款遊戲共用「一個」Web Service（apps/game-server）。
+# bomb-squad 另外跑在 Oracle Cloud（https://bomb-squad.duckdns.org），這裡用 GAMES_EXCLUDE 排除，其餘 17 款由這個服務提供。
+# 路徑：/g/<遊戲id>/（HTTP）、/g/<遊戲id>/ws（WebSocket）、/health（彙總）。
+# 免費方案：閒置約 15 分鐘休眠，首次連線要等十幾秒；房間只存在記憶體，重啟即清空。
+services:
+  - type: web
+    name: game-island-server
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: npm ci --omit=dev && npm ci --omit=dev --workspaces=false
+    startCommand: node_modules/.bin/tsx apps/game-server/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: GAMES_EXCLUDE
+        value: bomb-squad
+      - key: NODE_VERSION
+        value: "26.12.1"
+      # 允許連線的前端來源（逗號分隔），例如 https://pjh-eric.github.io
+      - key: GAME_ALLOWED_ORIGIN
+        sync: false

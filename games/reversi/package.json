@@ -1,0 +1,20 @@
+{
+  "name": "reversi",
+  "version": "1.0.0",
+  "description": "黑白棋：木質棋盤與大理石棋子的 2D 畫面，單機五段電腦與線上 1 對 1（含觀戰、邀請連結、聊天室）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/server-outage.cjs && node tests/analytics.js && node tests/localization.js && node tests/verify.js && node tests/i18n-hans.js",
+    "verify": "node tests/verify.js",
+    "test:online": "node --experimental-websocket tests/online-check.js",
+    "inject": "node scripts/inject-server-url.js",
+    "test:localization": "node tests/localization.js",
+    "test:analytics": "node tests/analytics.js"
+  },
+  "engines": {
+    "node": "^26.12.1"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

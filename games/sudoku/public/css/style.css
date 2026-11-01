@@ -1,0 +1,739 @@
+/* ===== 數獨小學堂 — 可愛風主題 ===== */
+:root{
+  --ink:#4A3B55;
+  --ink-soft:#7A6A88;
+  --paper:#FFFDF8;
+  --grape:#C9B6F5;  --grape-d:#A48FDB;  --grape-t:#6E4FBF;
+  --mint:#A9E7D2;   --mint-d:#79C6AC;
+  --peach:#FFC2B4;  --peach-d:#E89C8B;
+  --sky:#AED9F5;    --sky-d:#7FB4DA;
+  --lemon:#FFE3A0;  --lemon-d:#E7C263;
+  --rose:#FFB8CF;   --rose-d:#E88CAA;
+  --cream:#FFF0DE;  --cream-d:#E6D2B4;
+  --danger:#D2444F; --danger-bg:#FFE6E8;
+  --line:#DED3EA;
+  --radius:22px;
+  --d:8px;
+  font-size:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;min-height:100%;margin:0;padding:0}
+body{
+  font-family:"Yuanti TC","圓體-繁","PingFang TC","蘋方-繁","Microsoft JhengHei","Noto Sans TC","Segoe UI",system-ui,sans-serif;
+  color:var(--ink);
+  background:linear-gradient(165deg,#F4EEFF 0%,#FFF7EC 48%,#E9F9F2 100%);
+  overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+#bgdeco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#bgdeco span{position:absolute;display:block;border-radius:34%;opacity:.4;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(0) rotate(0)}50%{transform:translateY(-24px) rotate(10deg)}100%{transform:translateY(0) rotate(0)}}
+
+#app{position:relative;z-index:1;height:100%;min-height:100dvh}
+.screen{
+  position:absolute;inset:0;display:none;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.screen.active{display:block}
+.screen.flexcenter.active{display:flex;align-items:center;justify-content:center}
+[hidden]{display:none!important}
+
+/* ---------- 立體 SVG 按鈕 ---------- */
+.btn3d{
+  position:relative;border:0;background:none;padding:13px 24px calc(13px + var(--d));
+  font:inherit;font-weight:800;font-size:1.02rem;color:var(--ink);cursor:pointer;
+  letter-spacing:.03em;line-height:1.15;min-height:52px;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.btn3d .b3-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.btn3d .b3-face{transition:transform .07s ease}
+.btn3d .b3-lbl{position:relative;z-index:2;display:inline-flex;align-items:center;gap:.4em;transition:transform .07s ease;text-shadow:0 1px 0 rgba(255,255,255,.65)}
+.btn3d.press .b3-face,.btn3d.press .b3-lbl{transform:translateY(calc(var(--d) - 2px))}
+.btn3d[disabled]{opacity:.42;cursor:default}
+.btn3d:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px;border-radius:18px}
+.btn3d.big{font-size:1.3rem;padding:18px 34px calc(18px + var(--d));min-height:70px;--d:10px}
+.btn3d.small{font-size:.9rem;padding:9px 15px calc(9px + var(--d));min-height:48px;--d:6px}
+.btn3d.icononly{padding:10px 12px calc(10px + var(--d));min-width:52px;min-height:52px;font-size:1.3rem;--d:6px}
+.btn3d .ico{font-size:1.15em}
+
+/* 右上角設定入口：固定在安全區內，不遮住遊戲控制 */
+.settings-fab{
+  position:fixed;z-index:70;
+  top:calc(10px + env(safe-area-inset-top));
+  right:calc(12px + env(safe-area-inset-right));
+  --d:6px;
+}
+.settings-fab .b3-lbl{font-size:1.3rem}
+/* 語言切換鈕（I18N.mountToggle 產生）：固定在設定鈕左側，尺寸、位置、風格與設定鈕同步 */
+.lang-toggle{
+  position:fixed;z-index:70;box-sizing:border-box;
+  top:calc(10px + env(safe-area-inset-top));
+  right:calc(12px + 52px + 8px + env(safe-area-inset-right));
+  width:52px;height:46px;padding:0;margin:0;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:3px solid var(--ink);border-radius:16px;background:var(--cream);color:var(--ink);
+  font:inherit;font-weight:900;font-size:.95rem;letter-spacing:.02em;line-height:1;cursor:pointer;
+  box-shadow:0 6px 0 var(--cream-d);
+  -webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;
+  transition:transform .08s ease,box-shadow .08s ease,background .15s;
+}
+.lang-toggle:hover{background:#FFF6E8}
+.lang-toggle:active{transform:translateY(4px);box-shadow:0 2px 0 var(--cream-d)}
+.lang-toggle:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px}
+.lobby-home-link{position:fixed;z-index:65;top:calc(10px + env(safe-area-inset-top));left:calc(12px + env(safe-area-inset-left));display:inline-flex;align-items:center;min-height:44px;padding:9px 14px;border:3px solid var(--ink);border-radius:14px;background:var(--cream);color:var(--ink);font-size:.8rem;font-weight:900;text-decoration:none;box-shadow:0 4px 0 var(--cream-d);transition:transform .15s,box-shadow .15s,background .15s}
+.lobby-home-link:hover{background:#FFF6E8;transform:translateY(-2px)}
+.lobby-home-link:active{transform:translateY(3px);box-shadow:0 1px 0 var(--cream-d)}
+.lobby-home-link:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px}
+@media (max-width:600px){
+  #s-home .home-wrap{padding-top:max(70px,10vh)}
+  .lobby-home-link{top:calc(8px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));padding:8px 10px;font-size:.74rem}
+}
+
+/* ---------- 設定彈窗 ----------
+ * 面板本身不捲動：標題列固定在上、按鈕列固定在下，中間的 .settings-body 才是唯一的捲動區。
+ * 這樣內容再長，「完成」與關閉鈕都看得到，捲軸也不會壓在圓角與描邊上。 */
+.settings-modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
+.settings-modal.open{display:flex}
+.settings-backdrop{position:absolute;inset:0;background:rgba(74,59,85,.36);backdrop-filter:blur(3px)}
+.settings-panel{
+  position:relative;display:flex;flex-direction:column;
+  width:min(94vw,470px);max-height:min(88dvh,700px);overflow:hidden;
+  background:var(--paper);border:3px solid var(--ink);border-radius:26px;
+  box-shadow:0 12px 0 rgba(74,59,85,.2);outline:none;
+}
+.settings-head{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:12px 14px 10px;background:linear-gradient(180deg,#F6EEFF 0%,var(--paper) 100%);
+  border-bottom:3px solid var(--line);border-radius:23px 23px 0 0;
+}
+.settings-badge{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:38px;height:38px;
+  border:3px solid var(--ink);border-radius:50%;background:var(--lemon);
+  box-shadow:0 3px 0 var(--lemon-d);font-size:1.15rem;
+}
+.settings-head h2{flex:1;margin:0;text-align:center;font-size:1.3rem;letter-spacing:.05em}
+.settings-close{flex:0 0 auto;width:44px;height:44px;border:3px solid var(--ink);border-radius:50%;background:var(--rose);color:var(--ink);font:inherit;font-size:1.1rem;font-weight:900;cursor:pointer;box-shadow:0 4px 0 var(--rose-d)}
+.settings-close:active{transform:translateY(3px);box-shadow:0 1px 0 var(--rose-d)}
+
+/* 唯一的捲動區。scrollbar-gutter 讓捲軸出現／消失時內容不會左右跳動。 */
+.settings-body{
+  flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;scrollbar-gutter:stable;
+  padding:10px 12px 12px;outline:none;
+  scrollbar-width:thin;scrollbar-color:var(--grape-d) transparent;
+  -webkit-overflow-scrolling:touch;
+}
+.settings-body:focus-visible{outline:3px solid var(--sky-d);outline-offset:-3px;border-radius:12px}
+.settings-body::-webkit-scrollbar{width:12px}
+.settings-body::-webkit-scrollbar-track{background:transparent;margin:6px 0}
+.settings-body::-webkit-scrollbar-thumb{background:var(--grape);border:2px solid var(--ink);border-radius:999px}
+.settings-body::-webkit-scrollbar-thumb:hover{background:var(--grape-d)}
+
+/* ---------- 完整答案彈窗 ---------- */
+.game-dialog-modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
+.game-dialog-modal.open{display:flex}
+.game-dialog-backdrop{position:absolute;inset:0;background:rgba(74,59,85,.36);backdrop-filter:blur(3px)}
+.game-dialog-panel{
+  position:relative;display:flex;flex-direction:column;
+  width:min(94vw,760px);max-height:min(88dvh,700px);overflow:hidden;
+  background:var(--paper);border:3px solid var(--ink);border-radius:26px;
+  box-shadow:0 12px 0 rgba(74,59,85,.2);outline:none;
+}
+.game-dialog-head{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:12px 14px 10px;background:linear-gradient(180deg,#F6EEFF 0%,var(--paper) 100%);
+  border-bottom:3px solid var(--line);border-radius:23px 23px 0 0;
+}
+.game-dialog-badge{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:38px;height:38px;
+  border:3px solid var(--ink);border-radius:50%;background:var(--sky);
+  box-shadow:0 3px 0 var(--sky-d);font-size:1.05rem;
+}
+.game-dialog-head h2{flex:1;margin:0;text-align:center;font-size:1.3rem;letter-spacing:.05em}
+.game-dialog-close{flex:0 0 auto;width:44px;height:44px;border:3px solid var(--ink);border-radius:50%;background:var(--rose);color:var(--ink);font:inherit;font-size:1.1rem;font-weight:900;cursor:pointer;box-shadow:0 4px 0 var(--rose-d)}
+.game-dialog-close:active{transform:translateY(3px);box-shadow:0 1px 0 var(--rose-d)}
+.game-dialog-body{
+  flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;scrollbar-gutter:stable;
+  padding:12px 14px 16px;scrollbar-width:thin;scrollbar-color:var(--grape-d) transparent;
+  -webkit-overflow-scrolling:touch;
+}
+.game-dialog-body:focus-visible{outline:3px solid var(--sky-d);outline-offset:-3px;border-radius:12px}
+.game-dialog-body::-webkit-scrollbar{width:12px}
+.game-dialog-body::-webkit-scrollbar-track{background:transparent;margin:6px 0}
+.game-dialog-body::-webkit-scrollbar-thumb{background:var(--grape);border:2px solid var(--ink);border-radius:999px}
+.game-dialog-note{margin:0 0 12px;padding:10px 12px;background:#F6F0FF;border:2px solid var(--line);border-radius:14px;color:var(--ink-soft);font-size:.82rem;font-weight:700;line-height:1.55;text-align:center}
+.peek-panel{width:min(94vw,460px)}
+.peek-grid{display:grid;grid-template-columns:repeat(9,1fr);width:100%;max-width:400px;margin:0 auto;border:3px solid var(--ink);border-radius:10px;overflow:hidden;background:#fff}
+.peek-cell{display:flex;align-items:center;justify-content:center;aspect-ratio:1;font-size:clamp(.95rem,4.6vw,1.4rem);font-weight:800;color:var(--grape-d);border:1px solid var(--line)}
+.peek-cell.given{background:#ECE6F3;color:var(--ink)}
+.peek-cell.cr{border-right:2px solid var(--ink)}
+.peek-cell.cb{border-bottom:2px solid var(--ink)}
+
+/* 捲動陰影：純 CSS 的 background-attachment 技巧，只有真的可以捲時才會出現，
+ * 不需要 JS，也不會在減少動態模式下動來動去。 */
+.settings-body{
+  background:
+    linear-gradient(var(--paper) 34%, rgba(255,253,248,0)) top / 100% 22px no-repeat local,
+    linear-gradient(rgba(255,253,248,0), var(--paper) 66%) bottom / 100% 22px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(74,59,85,.18), rgba(74,59,85,0)) top / 100% 11px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(74,59,85,.18), rgba(74,59,85,0)) bottom / 100% 11px no-repeat scroll;
+}
+
+/* 每一組設定是一張柔和底色的小卡，取代原本的虛線分隔 */
+.settings-group{
+  background:#FFFFFF;border:3px solid var(--line);border-radius:20px;
+  padding:8px 10px 6px;margin-bottom:10px;
+}
+.settings-group:last-child{margin-bottom:0}
+.settings-group h3{
+  display:flex;align-items:center;gap:7px;margin:2px 2px 6px;
+  color:var(--grape-t);font-size:1rem;letter-spacing:.03em;
+}
+.settings-group .gico{
+  display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:0 0 auto;
+  border:2px solid var(--ink);border-radius:9px;background:var(--cream);font-size:.9rem;
+}
+.settings-note{margin:6px 4px 4px;font-size:.76rem;color:var(--ink-soft);line-height:1.5}
+.setting-toggle,.setting-range{display:flex;align-items:center;justify-content:space-between;gap:12px;border-radius:14px;padding:8px;min-height:54px;cursor:pointer}
+.setting-toggle:hover,.setting-range:hover{background:#FAF5FF}
+.setting-toggle>span,.setting-range>span{display:flex;flex-direction:column;gap:2px;font-weight:800;min-width:0}
+.setting-toggle small{color:var(--ink-soft);font-size:.73rem;font-weight:700;line-height:1.35}
+.setting-toggle input[type=checkbox]{appearance:none;-webkit-appearance:none;position:relative;flex:0 0 auto;width:54px;height:31px;margin:0;border:3px solid var(--ink-soft);border-radius:999px;background:#EAE4F0;cursor:pointer;transition:background .15s,border-color .15s}
+.setting-toggle input[type=checkbox]::after{content:"";position:absolute;top:2px;left:2px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 2px 0 rgba(74,59,85,.2);transition:transform .15s}
+.setting-toggle input[type=checkbox]:checked{border-color:var(--mint-d);background:var(--mint)}
+.setting-toggle input[type=checkbox]:checked::after{transform:translateX(21px)}
+.setting-toggle input:focus-visible,.setting-range input:focus-visible,
+.settings-close:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+.setting-range>span{flex-direction:row;align-items:center;gap:6px;min-width:118px}
+.setting-range output{min-width:3.2em;text-align:right;color:var(--grape-t);font-weight:900}
+.setting-range input[type=range]{width:min(52%,220px);accent-color:var(--grape-d);cursor:pointer;min-height:32px}
+.settings-foot{
+  flex:0 0 auto;display:flex;justify-content:center;gap:10px;
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,#F6EEFF 0%,var(--paper) 100%);
+  border-top:3px solid var(--line);border-radius:0 0 23px 23px;
+}
+.settings-foot .btn3d{min-height:48px}
+.settings-reset{flex:0 1 auto}
+.settings-done{flex:0 1 auto;min-width:120px}
+
+/* 減少動態 */
+.reduced-motion *,.reduced-motion *::before,.reduced-motion *::after{
+  animation-duration:.01ms!important;animation-iteration-count:1!important;
+  transition-duration:.01ms!important;scroll-behavior:auto!important;
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
+/* ---------- 主選單 ---------- */
+.home-wrap{text-align:center;padding:24px 20px;width:100%;max-width:600px}
+.logo{margin:0 auto 20px;max-width:480px}
+.logo svg{width:100%;height:auto;display:block}
+.home-btns{display:flex;flex-direction:column;gap:13px;align-items:stretch}
+.home-row{display:flex;gap:12px}
+.home-row .btn3d{flex:1}
+@media (min-width:601px) and (max-height:500px){
+  #s-home .home-wrap{max-width:calc(100% - 250px)}
+}
+.daily-challenge{margin-top:22px;padding:16px;border:2px solid var(--ink-soft);border-radius:18px}
+.daily-challenge h2{margin:0;font-size:1.15rem}
+.daily-challenge p{margin:6px 0;font-size:.85rem;line-height:1.5}
+.daily-buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
+.daily-buttons .btn3d{min-height:44px}
+.home-note{margin:18px 6px 0;font-size:.86rem;color:var(--ink-soft);font-weight:700;line-height:1.6}
+
+/* ---------- 面板 ---------- */
+.panel{
+  background:var(--paper);border:3px solid var(--ink);border-radius:26px;
+  box-shadow:0 10px 0 rgba(74,59,85,.16);
+  width:min(760px,calc(100% - 32px));margin:20px auto;padding:16px 20px 22px;
+}
+.panel-head{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.panel-head h2{flex:1;text-align:center;margin:6px 0;font-size:1.4rem;letter-spacing:.05em}
+.panel-head .spacer{width:92px;flex:0 0 auto}
+.lbl{font-size:1.02rem;margin:18px 0 10px;padding-left:12px;position:relative}
+.lbl::before{content:"";position:absolute;left:0;top:.15em;width:6px;height:1.1em;border-radius:3px;background:var(--grape)}
+.panel-foot{margin-top:20px;display:flex;justify-content:center}
+.panel-foot.col{flex-direction:column;align-items:stretch;gap:12px}
+.hint-note{font-size:.8rem;color:var(--ink-soft);text-align:center;margin:12px 4px 0;line-height:1.6}
+
+/* ---------- 難度卡 ---------- */
+.diff-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+/* 五張卡在兩欄時最後一張會落單，讓它橫跨整列比較整齊 */
+.diff-row .optcard:last-child{grid-column:1 / -1}
+.optcard{
+  background:#fff;border:3px solid var(--ink);border-radius:20px;
+  padding:13px 12px;font:inherit;color:var(--ink);cursor:pointer;text-align:left;
+  box-shadow:0 6px 0 rgba(74,59,85,.14);transition:transform .1s,box-shadow .1s,background .15s;
+  display:flex;flex-direction:column;gap:3px;min-height:96px;
+}
+.optcard:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(74,59,85,.14)}
+.optcard:focus-visible{outline:3px solid var(--sky-d);outline-offset:3px}
+.optcard b{font-size:1.18rem}
+.optcard .s{font-size:.86rem;font-weight:800;color:var(--grape-t)}
+.optcard .t{font-size:.76rem;color:var(--ink-soft);line-height:1.45}
+.optcard.on{background:var(--lemon);box-shadow:0 6px 0 var(--lemon-d)}
+.optcard.on .s{color:var(--ink)}
+
+.seed-row{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.seed-row input{
+  flex:1 1 160px;min-width:0;font:inherit;font-weight:800;letter-spacing:.16em;
+  border:3px solid var(--ink);border-radius:14px;padding:10px 14px;background:#fff;color:var(--ink);
+  outline:none;min-height:52px;text-transform:uppercase;user-select:text;-webkit-user-select:text;
+}
+.seed-row input:focus{border-color:var(--grape-d);box-shadow:0 0 0 3px rgba(164,143,219,.28)}
+
+/* ---------- 載入／錯誤狀態 ---------- */
+.state-box{text-align:center;padding:30px 24px;max-width:460px;width:calc(100% - 32px);
+  background:var(--paper);border:3px solid var(--ink);border-radius:26px;box-shadow:0 10px 0 rgba(74,59,85,.16)}
+.state-box h2{margin:14px 0 8px;font-size:1.35rem}
+.state-box p{margin:0;color:var(--ink-soft);font-weight:700;line-height:1.6}
+.state-face{font-size:3rem;line-height:1}
+.state-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.spinner{width:52px;height:52px;margin:0 auto;border-radius:50%;
+  border:7px solid var(--grape);border-top-color:var(--grape-t);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- 遊戲畫面 ---------- */
+#s-game.active{display:flex;flex-direction:column;overflow:hidden}
+.gtop{flex:0 0 auto}
+.gbar{display:flex;align-items:center;gap:8px;padding:8px 76px 0 12px}
+.gmeta{flex:1;min-width:0;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.chip{background:var(--grape);border:2px solid var(--ink);border-radius:999px;padding:3px 11px;font-size:.78rem;font-weight:800;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip.ghost{background:#fff;color:var(--ink-soft)}
+
+.statbar{display:flex;gap:8px;justify-content:center;padding:8px 12px 4px;flex-wrap:wrap}
+.stat{display:flex;align-items:baseline;gap:6px;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:4px 12px;box-shadow:0 4px 0 rgba(74,59,85,.13)}
+.stat-time{align-items:center}
+.stat .k{font-size:.72rem;color:var(--ink-soft);font-weight:800}
+.stat b{font-size:1.05rem;font-weight:900;font-variant-numeric:tabular-nums}
+.stat-action{flex:0 0 auto;min-width:44px;min-height:44px;padding:6px 9px calc(6px + var(--d));font-size:.72rem;--d:5px}
+.stat-action .b3-lbl{gap:.25em}
+.stat-action .ico{font-size:1em}
+
+.gamebody{display:flex;flex:1;min-height:0;gap:10px;padding:4px 10px 0;flex-direction:column}
+.boardwrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:0;min-width:0}
+
+.board{
+  --bs:min(88vw,52dvh);
+  --board-line:#806B94;
+  width:var(--bs);height:var(--bs);
+  display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);
+  background:var(--paper);border:4px solid var(--ink);border-radius:14px;overflow:hidden;
+  box-shadow:0 7px 0 rgba(74,59,85,.18);overflow:visible;
+}
+.board.hidden-board .cell .v,.board.hidden-board .cell .nt{visibility:hidden}
+
+.cell{
+  position:relative;border:0;border-right:1px solid var(--board-line);border-bottom:1px solid var(--board-line);
+  background:#fff;font:inherit;color:var(--grape-t);cursor:pointer;padding:0;margin:0;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  transition:background .12s;overflow:visible;
+}
+.cell.br{border-right:3px solid var(--ink)}
+.cell.bb{border-bottom:3px solid var(--ink)}
+.cell:nth-child(9n){border-right:0}
+.cell .v{font-size:calc(var(--bs,320px) / 9 * .62);font-weight:800;line-height:1;pointer-events:none}
+.cell.given{background:#F3EEFA;color:var(--ink)}
+.cell.given .v{font-weight:900}
+.cell.peer{background:#E3D6F5}
+.cell.same{background:var(--mint)}
+.cell.conflict{background:var(--danger-bg);color:var(--danger)}
+.cell.wrong{background:var(--danger-bg);color:var(--danger)}
+.cell.wrong .v{text-decoration:underline wavy var(--danger)}
+.cell.sel{background:var(--lemon);color:var(--ink);box-shadow:inset 0 0 0 3px var(--grape-t)}
+.cell.sel.given{background:var(--lemon-d)}
+.cell:focus-visible{outline:3px solid var(--sky-d);outline-offset:-3px;z-index:2}
+.cell.sel:focus-visible{outline-color:var(--grape-t)}
+.cell.hinted{animation:hintglow .5s ease-in-out 3}
+@keyframes hintglow{50%{background:var(--mint);box-shadow:inset 0 0 0 3px var(--mint-d)}}
+.cell .nt{position:absolute;inset:8%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);pointer-events:none}
+.cell .nt i{font-style:normal;font-size:calc(var(--bs,320px) / 9 * .25);line-height:1;color:transparent;display:flex;align-items:center;justify-content:center;font-weight:800}
+.cell .nt i.on{color:var(--ink-soft)}
+
+/* 數字盤與工具列 */
+.padwrap{display:flex;flex-direction:column;gap:8px;flex:0 0 auto;padding-bottom:2px}
+.tools{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.tools .btn3d{min-height:52px;padding:7px 6px calc(7px + var(--d));font-size:.82rem;--d:6px}
+.tools .btn3d .b3-lbl{flex-direction:column;gap:1px}
+.tools .ico{font-size:1.15rem;line-height:1}
+.tools .tag{font-size:.66rem;color:var(--ink-soft);font-weight:800}
+.tools .tool.on{outline:3px solid var(--grape-t);outline-offset:2px;filter:saturate(1.25)}
+.tools .tool.on .tag{padding:1px 5px;color:var(--ink);background:var(--lemon);border:2px solid var(--ink);border-radius:999px}
+.numpad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.numkey{--d:7px;min-height:58px;padding:8px 4px calc(8px + var(--d))}
+.numkey .b3-lbl{flex-direction:column;gap:0}
+.numkey .nk{font-size:1.5rem;font-weight:900;line-height:1.05}
+.numkey .nleft{font-size:.66rem;font-weight:800;color:#5C4A6B;opacity:.75;line-height:1}
+.numkey.done .nk{opacity:.4}
+.hide-remaining .numkey .nleft{display:none}
+
+.gfoot{padding:6px 12px calc(8px + env(safe-area-inset-bottom))}
+.feedback{margin:0;text-align:center;font-size:.86rem;font-weight:800;color:var(--ink-soft);
+  min-height:2.6em;line-height:1.35;display:flex;align-items:center;justify-content:center;
+  background:#fff;border:2px solid var(--line);border-radius:14px;padding:6px 12px}
+.feedback.good{color:var(--grape-t);border-color:var(--grape)}
+.feedback.warn{color:#B77B21;border-color:var(--lemon-d);background:#FFF9EA}
+.feedback.bad{color:var(--danger);border-color:var(--danger);background:var(--danger-bg)}
+
+/* 暫停遮罩 */
+.overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(74,59,85,.34);backdrop-filter:blur(3px);z-index:40;padding:20px}
+.overlay.on{display:flex}
+.ovbox{background:var(--paper);border:4px solid var(--ink);border-radius:28px;padding:24px 28px;text-align:center;box-shadow:0 12px 0 rgba(74,59,85,.24);max-width:420px;width:100%;outline:none}
+.ovbox h2{margin:0 0 6px;font-size:1.5rem}
+.ovbox p{margin:0 0 4px;color:var(--ink-soft);font-weight:700}
+
+.toast{position:absolute;left:50%;top:14%;transform:translate(-50%,-14px);z-index:50;
+  background:var(--ink);color:#fff;font-weight:800;padding:11px 20px;border-radius:999px;opacity:0;
+  transition:opacity .25s,transform .25s;pointer-events:none;max-width:82vw;text-align:center;font-size:.88rem}
+.toast.on{opacity:.95;transform:translate(-50%,0)}
+
+/* ---------- 結算 ---------- */
+.panel.result{max-width:500px;text-align:center;margin-top:6vh}
+.restrophy{width:96px;margin:0 auto}
+.restrophy svg{width:100%;height:auto;display:block}
+.panel.result h2{font-size:1.6rem;margin:8px 0 4px}
+.res-sub{margin:0 0 14px;color:var(--ink-soft);font-weight:700;font-size:.9rem}
+.resstats{display:flex;flex-direction:column;gap:8px;font-weight:700;text-align:left}
+.resstats .row{display:flex;justify-content:space-between;gap:10px;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:9px 14px;font-size:.92rem}
+.resstats .row b{text-align:right;overflow-wrap:anywhere}
+.resstats .row.best{background:var(--lemon);box-shadow:0 4px 0 var(--lemon-d)}
+
+/* ---------- 紀錄 ---------- */
+.ranklist{display:flex;flex-direction:column;gap:12px}
+.rankgrp{background:#fff;border:3px solid var(--ink);border-radius:20px;padding:12px 16px;box-shadow:0 5px 0 rgba(74,59,85,.13)}
+.rankgrp h4{margin:0 0 8px;font-size:1.08rem;color:var(--grape-t)}
+.rankgrp .r{display:flex;justify-content:space-between;gap:10px;font-weight:700;padding:5px 0;border-bottom:2px dashed var(--line);font-size:.9rem}
+.rankgrp .r:last-child{border:0}
+.rankgrp .empty-row{color:var(--ink-soft)}
+
+/* ---------- 教學 ---------- */
+.tut{background:#fff;border:3px solid var(--ink);border-radius:20px;padding:14px 16px;box-shadow:0 5px 0 rgba(74,59,85,.13)}
+.tut-progress{font-size:.78rem;font-weight:800;color:var(--grape-t);margin-bottom:6px}
+.tut h3{margin:0 0 10px;font-size:1.2rem}
+.tut-body p{margin:0 0 10px;line-height:1.85;font-size:.95rem}
+.tut-body p:last-child{margin-bottom:0}
+.tut-foot{display:flex;gap:10px;justify-content:space-between;margin-top:14px}
+.tut-foot .btn3d{flex:1}
+
+/* ---------- 只給螢幕閱讀器看的文字 ---------- */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ---------- 平板／桌機：橫向時盤面在左、輸入在右 ---------- */
+@media (orientation:landscape){
+  .gamebody{flex-direction:row;align-items:stretch}
+  .padwrap{width:clamp(168px,26vw,300px);justify-content:center}
+  .tools{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .numpad{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .numkey{min-height:52px}
+}
+/* 矮橫向（手機橫拿）：把標題列與數據列併成同一排，把高度讓給盤面 */
+@media (orientation:landscape) and (max-height:520px){
+  .settings-fab{top:calc(2px + env(safe-area-inset-top));--d:5px}
+  .settings-fab.btn3d.icononly{min-height:44px;min-width:44px;padding:6px 9px calc(6px + var(--d))}
+  .lang-toggle{top:calc(2px + env(safe-area-inset-top));right:calc(12px + 44px + 8px + env(safe-area-inset-right));width:44px;height:39px;border-radius:14px;box-shadow:0 5px 0 var(--cream-d);font-size:.85rem}
+  .gtop{display:flex;align-items:center;gap:8px;padding:4px 122px 0 8px}
+  .gbar{flex:0 0 auto;padding:0;gap:6px}
+  .statbar{flex:1;min-width:0;justify-content:flex-end;padding:0;gap:6px;flex-wrap:nowrap;overflow:hidden}
+  #g-seed,#g-tech{display:none}
+  .stat{padding:2px 9px;border-width:2px}
+  .stat b{font-size:.92rem}
+  .stat .k{font-size:.64rem}
+  .gamebody{padding:2px 7px 0;gap:8px}
+  /* 右上角固定的設定鈕會壓在輸入區上方，這裡把它的高度讓出來 */
+  .padwrap{padding-top:calc(26px + env(safe-area-inset-top));min-height:0;overflow-y:auto;justify-content:flex-start}
+  .gfoot{padding:2px 10px calc(4px + env(safe-area-inset-bottom))}
+  .feedback{min-height:1.7em;font-size:.74rem;padding:3px 8px;border-radius:11px}
+  .numkey{min-height:44px;--d:6px}
+  .numkey .nk{font-size:1.25rem}
+  .tools .btn3d{min-height:44px;font-size:.74rem}
+  .btn3d.small{min-height:42px}
+  /* 五張難度卡在矮橫向壓成一行式，維持 44px 以上命中區 */
+  .diff-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .optcard{min-height:52px;padding:8px 10px;flex-direction:row;align-items:center;flex-wrap:wrap;gap:2px 8px}
+  .optcard b{flex:0 0 auto;font-size:1rem}
+  .optcard .s{flex:1 1 auto;text-align:right;font-size:.76rem}
+  .optcard .t{flex:1 1 100%;font-size:.68rem;line-height:1.35}
+}
+
+/* 面板寬度撐滿螢幕時，標題列右側要讓開固定在右上角的設定按鈕 */
+@media (max-width:820px){
+  .panel-head{padding-right:calc(50px + env(safe-area-inset-right))}
+  .panel-head .spacer{display:none}
+}
+
+/* ---------- 桌機寬版：面板置中、留白多一點 ---------- */
+@media (min-width:1100px){
+  .panel{padding:20px 28px 26px}
+  #s-setup .panel{width:min(1060px,calc(100% - 32px))}
+  .diff-row{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .diff-row .optcard:last-child{grid-column:auto}
+  .optcard .t{font-size:.74rem}
+  /* 桌機盤面依可用高度放大，容器收縮後不會在棋盤與輸入區之間留下大片空白 */
+  .gamebody{padding:6px 24px 0;gap:22px;justify-content:center;width:100%;max-width:1120px;margin:0 auto}
+  .boardwrap{flex:0 0 auto;width:min(52vw,72dvh,720px)}
+  .board{--bs:min(52vw,72dvh,720px)}
+  .padwrap{width:300px;justify-content:center}
+  .numkey{min-height:66px}
+  .numkey .nk{font-size:1.7rem}
+  .numkey .nleft{font-size:.72rem}
+  .tools .btn3d{min-height:62px;font-size:.88rem}
+  .tools .ico{font-size:1.3rem}
+  .feedback{font-size:.95rem}
+}
+
+/* 中等寬度（平板橫向、小筆電）：難度卡改三欄，總高度不會拖太長 */
+@media (min-width:900px) and (max-width:1099px){
+  .diff-row{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .diff-row .optcard:last-child{grid-column:auto}
+}
+
+/* ---------- 平板直向 ---------- */
+@media (orientation:portrait) and (min-width:700px){
+  .board{--bs:min(74vw,58dvh)}
+  .numpad{grid-template-columns:repeat(9,minmax(0,1fr))}
+  .numkey{min-height:64px}
+  .tools .btn3d{min-height:58px;font-size:.9rem}
+  .gamebody{padding:6px 28px 0}
+  .padwrap{max-width:720px;width:100%;margin:0 auto}
+}
+
+/* 直向將棋盤和輸入盤組成一組，不把剩餘高度分散在兩者之間。 */
+@media (orientation:portrait){
+  #s-game .gamebody{justify-content:center;align-items:center}
+  #s-game .boardwrap{flex:0 0 auto;width:100%;height:var(--board-size,auto)}
+  #s-game .padwrap{width:100%;max-width:760px}
+}
+
+/* ---------- 手機窄版 ---------- */
+@media (max-width:560px){
+  .settings-fab{top:calc(7px + env(safe-area-inset-top));right:calc(8px + env(safe-area-inset-right));--d:5px}
+  .settings-fab.btn3d.icononly{min-width:48px;min-height:48px;padding:8px 10px calc(8px + var(--d))}
+  .lang-toggle{top:calc(7px + env(safe-area-inset-top));right:calc(8px + 48px + 8px + env(safe-area-inset-right));width:48px;height:43px;border-radius:15px;box-shadow:0 5px 0 var(--cream-d)}
+  .settings-modal{padding:10px}
+  .settings-panel{width:100%;max-height:92dvh;border-radius:22px}
+  .settings-head{padding:9px 10px 8px}
+  .settings-badge{width:34px;height:34px}
+  .settings-head h2{font-size:1.16rem}
+  .settings-body{padding:8px 8px 10px}
+  .settings-group{padding:6px 7px 4px;border-radius:17px}
+  .settings-foot{padding:8px 10px calc(8px + env(safe-area-inset-bottom))}
+  .settings-head h2{font-size:1.2rem}
+  .game-dialog-modal{padding:10px}
+  .game-dialog-panel{width:100%;max-height:92dvh;border-radius:22px}
+  .game-dialog-head{padding:9px 10px 8px}
+  .game-dialog-badge{width:34px;height:34px}
+  .game-dialog-head h2{font-size:1.16rem}
+  .game-dialog-body{padding:8px 8px 12px}
+  .game-dialog-note{font-size:.76rem;padding:8px 10px}
+  .setting-toggle,.setting-range{padding-left:4px;padding-right:4px;gap:8px}
+  .setting-range input[type=range]{width:44%}
+  .panel{width:calc(100% - 20px);margin:12px auto 20px;padding:14px 13px 20px;border-radius:22px}
+  .panel-head h2{font-size:1.2rem}
+  .panel-head .spacer{width:56px}
+  .diff-row{grid-template-columns:1fr}
+  .optcard{min-height:0;flex-direction:row;align-items:center;flex-wrap:wrap;gap:4px 10px}
+  .optcard b{flex:0 0 auto}
+  .optcard .s{flex:1 1 auto;text-align:right}
+  .optcard .t{flex:1 1 100%}
+  .logo{max-width:330px}
+  .home-wrap{padding:20px 14px}
+  .btn3d.big{font-size:1.15rem;min-height:62px}
+  .gbar{padding:6px 62px 0 8px;gap:6px}
+  /* 窄版把標題列壓成一排，多出來的高度留給盤面；技巧名稱在結算畫面仍看得到 */
+  .gmeta{gap:4px;flex-wrap:nowrap}
+  .chip{font-size:.7rem;padding:2px 9px;flex:0 1 auto;min-width:0}
+  #g-tech{display:none}
+  .statbar{gap:6px;padding:6px 8px 2px}
+  .stat{padding:3px 9px;border-width:2px}
+  .stat-time{gap:4px;padding-left:6px;padding-right:6px}
+  .stat-action{min-width:44px;min-height:44px;padding:5px 7px calc(5px + var(--d));font-size:.68rem}
+  .stat-action-label{display:none}
+  .stat .k{font-size:.66rem}
+  .stat b{font-size:.95rem}
+  .gamebody{padding:4px 7px 0;gap:8px}
+  .board{--bs:min(94vw,50dvh);border-width:3px}
+  .tools{gap:5px}
+  .tools .btn3d{min-height:50px;font-size:.72rem;padding:6px 2px calc(6px + var(--d))}
+  .tools .tx{font-size:.72rem}
+  .numpad{gap:5px}
+  .numkey{min-height:52px}
+  .numkey .nk{font-size:1.3rem}
+  .gfoot{padding:5px 8px calc(6px + env(safe-area-inset-bottom))}
+  .feedback{font-size:.78rem;min-height:2.4em}
+  .tut-foot{flex-direction:column}
+  .panel.result{margin-top:2vh}
+  .resstats .row{font-size:.85rem;padding:8px 11px}
+}
+
+/* 手機／平板遊戲控制：保留觸控命中區，把省下的高度還給棋盤 */
+@media (max-width:820px){
+  #s-game .gbar .btn3d{min-height:44px;font-size:.8rem;padding:7px 12px calc(7px + var(--d));--d:5px}
+  #s-game .gbar .btn3d .ico{font-size:1rem}
+  #s-game .gamebody{gap:5px}
+  #s-game .tools{gap:4px}
+  #s-game .tools .btn3d{min-height:44px;font-size:.66rem;padding:3px 1px calc(3px + var(--d));--d:5px}
+  #s-game .tools .ico{font-size:1rem}
+  #s-game .tools .tag{font-size:.58rem}
+  #s-game .numpad{gap:4px}
+  #s-game .numkey{min-height:46px;padding:4px 2px calc(4px + var(--d));--d:5px}
+  #s-game .numkey .nk{font-size:1.2rem}
+  #s-game .numkey .nleft{font-size:.6rem}
+  #s-game .gfoot{padding:3px 6px calc(4px + env(safe-area-inset-bottom))}
+  #s-game .feedback{font-size:.74rem;min-height:2em;padding:4px 8px;border-radius:12px}
+}
+
+/* 矮橫向手機：控制列再壓低，讓棋盤和完整數字盤同時留在視線內 */
+@media (orientation:landscape) and (max-height:520px){
+  #s-game .gtop{padding-top:0}
+  #s-game .gbar{padding:0 62px 0 6px;gap:4px}
+  #s-game .gbar .btn3d{min-height:44px;font-size:.68rem;padding:4px 8px calc(4px + var(--d));--d:4px}
+  #s-game .gmeta{gap:3px}
+  #s-game .chip{font-size:.64rem;padding:1px 7px}
+  #s-game .statbar{gap:4px;padding:1px 6px 0}
+  #s-game .stat{padding:1px 6px;border-width:2px}
+  #s-game .stat-time{height:44px;padding-top:0;padding-bottom:0}
+  #s-game .stat .k{font-size:.6rem}
+  #s-game .stat b{font-size:.84rem}
+  #s-game .gamebody{padding:0 6px;gap:6px}
+  #s-game .padwrap{width:clamp(156px,23vw,240px);gap:5px}
+  #s-game .tools{gap:3px}
+  #s-game .tools .btn3d{min-height:44px;font-size:.62rem;padding:3px 1px calc(3px + var(--d));--d:4px}
+  #s-game .tools .ico{font-size:.88rem}
+  #s-game .tools .tag{font-size:.52rem}
+  #s-game .numpad{gap:3px}
+  #s-game .numkey{min-height:44px;padding:3px 1px calc(3px + var(--d));--d:4px}
+  #s-game .numkey .nk{font-size:1.12rem}
+  #s-game .numkey .nleft{font-size:.56rem}
+  #s-game .gfoot{padding:0 6px calc(2px + env(safe-area-inset-bottom))}
+  #s-game .feedback{min-height:1.5em;font-size:.68rem;padding:2px 6px;border-radius:10px}
+}
+
+/* 平板橫向：標題／底部提示讓出一點高度，棋盤優先 */
+@media (orientation:landscape) and (min-width:821px) and (max-width:1099px){
+  #s-game .gbar{padding:4px 68px 0 10px}
+  #s-game .statbar{gap:5px;padding:4px 10px 2px}
+  #s-game .stat{padding:3px 8px}
+  #s-game .gamebody{padding:2px 10px 0;gap:10px}
+  #s-game .gfoot{padding:3px 8px calc(4px + env(safe-area-inset-bottom))}
+  #s-game .feedback{min-height:1.9em;font-size:.8rem;padding:4px 9px}
+}
+
+/* 更窄的手機：種子改在結算畫面顯示，標題列只留難度 */
+@media (max-width:400px){
+  #g-seed{display:none}
+  .statbar{gap:5px}
+  .stat{padding:2px 8px}
+}
+
+/* 直向手機：主選單從上方開始排，避免小畫面被裁切 */
+@media (orientation:portrait) and (max-width:560px){
+  .screen.flexcenter.active{align-items:flex-start}
+  .home-wrap{padding-top:clamp(52px,10dvh,96px)}
+  #s-loading.active,#s-error.active{align-items:center}
+}
+
+/* 手機主選單：減少裝飾留白，讓每日挑戰更早出現在畫面中。 */
+@media (orientation:portrait) and (max-width:560px){
+  #s-home .home-wrap{padding:70px 14px 20px}
+  #s-home .logo{max-width:250px;margin-bottom:12px}
+  #s-home .home-btns{gap:8px}
+  #s-home .home-row{gap:8px}
+  #s-home .home-btns > .btn3d{min-height:54px;padding:10px 18px calc(10px + var(--d))}
+  #s-home .home-row .btn3d{min-width:0;min-height:48px;padding:8px 10px calc(8px + var(--d))}
+  #s-home .daily-challenge{margin-top:14px;padding:11px 10px}
+  #s-home .daily-challenge h2{font-size:1.05rem}
+  #s-home .daily-challenge p{margin:4px 0;font-size:.8rem}
+  #s-home .daily-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}
+  #s-home .daily-buttons .btn3d{min-width:0;min-height:48px;padding:7px 4px calc(7px + var(--d))}
+  #s-home .home-note{margin-top:12px}
+}
+
+/* 極矮視窗：允許遊戲畫面捲動，不要硬擠 */
+@media (max-height:420px) and (orientation:portrait){
+  #s-game.active{overflow-y:auto}
+  .board{--bs:min(92vw,44dvh)}
+}
+
+/* 計時與三項統計共用一列：統計等寬、數字固定對齊，不隨位數跳動。 */
+#s-game .statbar{
+  display:grid;grid-template-columns:minmax(max-content,1.7fr) repeat(3,minmax(0,1fr));
+  width:100%;max-width:800px;margin:0 auto;gap:6px;
+}
+#s-game .statbar > .stat{
+  min-width:0;min-height:52px;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:4px 6px;border-width:2px;border-radius:14px;
+}
+#s-game .statbar > .stat-time{flex-direction:row;gap:5px;padding:2px 6px}
+#s-game .statbar .k{font-size:.7rem;line-height:1.2;overflow-wrap:anywhere;text-align:center}
+#s-game .statbar b{font-size:1.2rem;line-height:1.15;font-variant-numeric:tabular-nums}
+#st-left{color:var(--grape-t)}
+#s-game .statbar > .stat:nth-child(2){background:#F6F0FF}
+#s-game .statbar > .stat:nth-child(3){background:#FFF9EA}
+#s-game .statbar > .stat:nth-child(4){background:#FFF0F3}
+@media (orientation:landscape) and (min-height:521px){
+  #s-game .statbar{
+    max-width:min(800px,calc(100% - var(--board-left,12px) - 12px));
+    margin-left:var(--board-left,12px);padding-left:0;padding-right:0;
+  }
+}
+@media (max-width:599px){
+  #s-game .stat-time > .k{display:none}
+  #s-game .statbar .stat-action-label{display:none}
+}
+@media (orientation:landscape) and (max-height:520px){
+  #s-game .statbar{display:flex;flex:1;padding:1px 0 0}
+  #s-game .statbar > .stat{flex:1;min-height:44px;padding:1px 5px}
+  #s-game .statbar > .stat-time{flex:0 0 auto}
+  #s-game .statbar b{font-size:.95rem}
+  #s-game .statbar .k{font-size:.64rem}
+  #s-game .stat-time > .k{display:none}
+  #s-game .statbar .stat-action-label{display:none}
+}
+
+/* 平板操作區使用可讀字級，與棋盤共用寬度；手機維持雙排數字鍵。 */
+@media (min-width:600px) and (min-height:600px){
+  #s-game .tools .btn3d{min-height:54px;font-size:.85rem;padding:6px 4px calc(6px + var(--d))}
+  #s-game .tools .b3-lbl{flex-direction:row;gap:4px}
+  #s-game .tools .tx{font-size:.85rem}
+  #s-game .tools .ico{font-size:1.15rem}
+  #s-game .tools .tag{font-size:.7rem}
+  #s-game .numkey{min-height:54px}
+  #s-game .numkey .nk{font-size:1.5rem}
+  #s-game .numkey .nleft{font-size:.72rem}
+}
+@media (orientation:portrait) and (max-width:599px){
+  #s-game .numpad{grid-template-columns:repeat(10,minmax(0,1fr))}
+  #s-game .numkey{grid-column:span 2}
+  #s-game .numkey:nth-child(6){grid-column:2 / span 2}
+}
+
+/* ================================================================
+ * 手機軟體鍵盤修正（js/keyboard.js 量測後寫入 --app-h）
+ * 鍵盤彈出時把滿版高度改成「真正看得到的高度」，輸入欄位才不會
+ * 被鍵盤蓋住；沒有鍵盤時不會縮小版面。
+ * ================================================================ */
+#app{height:var(--app-h,100%);min-height:var(--app-h,100dvh)}
+
+/* 版面用 user-select:none 防拖曳，但可輸入的欄位一定要能選字 */
+input,textarea,select{user-select:text;-webkit-user-select:text}
+
+.custom-scroll-area{scrollbar-width:none;scrollbar-gutter:auto}
+.custom-scroll-area::-webkit-scrollbar{display:none}
+.custom-scrollbar{position:fixed;z-index:120;width:10px;border-radius:10px;background:#EEE6F5;touch-action:none;cursor:pointer}
+.custom-scrollbar-thumb{position:absolute;top:0;left:1px;width:8px;border:2px solid var(--ink);border-radius:10px;background:var(--grape-d)}
+.custom-scrollbar:focus-visible{outline:3px solid var(--sky-d);outline-offset:2px}
+
+/* 全域語言工具列維持可用，手機與平板面板從工具列下方開始。 */
+@media (max-width:1100px){
+  #s-setup > .panel,#s-help > .panel,#s-stats > .panel{
+    margin-top:calc(74px + env(safe-area-inset-top));
+  }
+  .panel-head{padding-right:0}
+  .settings-modal,.game-dialog-modal{
+    padding:calc(74px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
+  }
+  .settings-panel,.game-dialog-panel{max-height:100%}
+}
