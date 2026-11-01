@@ -84,12 +84,10 @@
       "tags": [
         "邏輯",
         "數字",
-        "單機",
-        "觀戰"
+        "單機"
       ],
       "modes": [
         "單機解題",
-        "線上觀戰",
         "格子留言"
       ],
       "controls": "選擇格子，再用數字鍵盤填入",
@@ -105,12 +103,10 @@
           "tags": [
             "Logic",
             "Numbers",
-            "Solo",
-            "Spectate"
+            "Solo"
           ],
           "modes": [
             "Solo Puzzles",
-            "Online Spectating",
             "Cell Notes"
           ],
           "controls": "Select a cell, then fill it in with the number pad",
@@ -123,12 +119,10 @@
           "tags": [
             "逻辑",
             "数字",
-            "单机",
-            "观战"
+            "单机"
           ],
           "modes": [
             "单机解题",
-            "线上观战",
             "格子留言"
           ],
           "controls": "选择格子，再用数字键盘填入",

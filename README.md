@@ -21,7 +21,7 @@
 - [ ] 階段 A2-3：ui-kit（五種自繪 UI 合併）
 - [x] 階段 A3-1：`packages/net-server/ws.js` 統一 7 款自寫 WebSocket
 - [x] 階段 A3-2：`sio-compat`（伺服器）＋ `web-core/sio-client.js`（用戶端），5 款 socket.io 遊戲改走共用 WS（socket.io 相依已移除）
-- [ ] 階段 A3-3：npm ws 的 3 款（amaze-go、maze-roll、ice-duel）、sudoku（SSE）、flip-match（內嵌 ws）、snake-3d
+- [ ] 階段 A3-3：npm ws 的 3 款（amaze-go、maze-roll、ice-duel）、flip-match（內嵌 ws）、snake-3d
 - [ ] 階段 A4：統一前端建置與部署
 - [ ] 階段 B：共用伺服器 `apps/game-server`
 

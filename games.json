@@ -100,12 +100,10 @@
       "tags": [
         "邏輯",
         "數字",
-        "單機",
-        "觀戰"
+        "單機"
       ],
       "modes": [
         "單機解題",
-        "線上觀戰",
         "格子留言"
       ],
       "controls": "選擇格子，再用數字鍵盤填入",
@@ -121,12 +119,10 @@
           "tags": [
             "Logic",
             "Numbers",
-            "Solo",
-            "Spectate"
+            "Solo"
           ],
           "modes": [
             "Solo Puzzles",
-            "Online Spectating",
             "Cell Notes"
           ],
           "controls": "Select a cell, then fill it in with the number pad",
@@ -139,12 +135,10 @@
           "tags": [
             "逻辑",
             "数字",
-            "单机",
-            "观战"
+            "单机"
           ],
           "modes": [
             "单机解题",
-            "线上观战",
             "格子留言"
           ],
           "controls": "选择格子，再用数字键盘填入",
@@ -1126,7 +1120,7 @@
       "id": "pinball-hoops",
       "title": "彈珠籃球",
       "eyebrow": "彈珠投籃",
-      "description": "只有一片彈板，點畫面揮板把球打進會上下移動的籃框。限時衝分，四段難度，也能線上同台競分或觀戰。",
+      "description": "只有一片彈板，點畫面揮板把球打進會上下移動的籃框。限時衝分，挑戰四段難度並刷新個人紀錄。",
       "icon": "pinball",
       "accent": "peach",
       "category": "sports",
@@ -1134,17 +1128,11 @@
         "運動",
         "反應",
         "幼幼班",
-        "單機",
-        "電腦對戰",
-        "線上多人",
-        "觀戰"
+        "單機"
       ],
       "modes": [
         "單機四段難度",
-        "電腦對戰",
-        "線上房間",
-        "觀戰",
-        "邀請連結"
+        "本機紀錄與成就"
       ],
       "controls": "點畫面任何地方（或按空白鍵）揮板，把球打進籃框",
       "launchUrl": "https://pjh-eric.github.io/pinball-hoops/",
@@ -1155,22 +1143,16 @@
         "en": {
           "title": "Pinball Hoops",
           "eyebrow": "Pinball Basketball",
-          "description": "With just one paddle, tap the screen to swing it and knock the ball into the moving hoop. Beat the clock for points, with four difficulty levels, plus online score battles and spectating.",
+          "description": "With one paddle, tap the screen to send the ball into the moving hoop. Beat the clock across four difficulty levels and improve your personal record.",
           "tags": [
             "Sports",
             "Reflex",
             "Little Kids",
-            "Solo",
-            "vs Computer",
-            "Online Multiplayer",
-            "Spectate"
+            "Solo"
           ],
           "modes": [
-            "Solo, 4 Difficulties",
-            "vs Computer",
-            "Online Room",
-            "Spectate",
-            "Invite Link"
+            "Solo play",
+            "Local records and achievements"
           ],
           "controls": "Tap anywhere (or press the space bar) to swing the paddle and sink the ball",
           "badge": "Hoops"
@@ -1178,22 +1160,16 @@
         "zh-Hans": {
           "title": "弹珠篮球",
           "eyebrow": "弹珠投篮",
-          "description": "只有一片弹板，点画面挥板把球打进会上下移动的篮框。限时冲分，四段难度，也能线上同台竞分或观战。",
+          "description": "只有一片弹板，点画面挥板把球打进会上下移动的篮框。限时冲分，挑战四段难度并刷新个人纪录。",
           "tags": [
             "运动",
             "反应",
             "幼幼班",
-            "单机",
-            "电脑对战",
-            "线上多人",
-            "观战"
+            "单机"
           ],
           "modes": [
             "单机四段难度",
-            "电脑对战",
-            "线上房间",
-            "观战",
-            "邀请连结"
+            "本机记录与成就"
           ],
           "controls": "点画面任何地方（或按空白键）挥板，把球打进篮框",
           "badge": "投篮"
