@@ -117,12 +117,17 @@ for (const hostname of ['localhost', '127.0.0.1', 'preview.example', '']) {
   assert.equal(local.browser.gtag, undefined);
   assert.doesNotThrow(() => local.api.start({ mode: 'solo', players: 1 }));
 }
-const maze = client('pjh-eric.github.io', { MR_CONFIG: { ga4MeasurementId: 'G-MAZE123' } });
-assert.equal(maze.browser.MR_ANALYTICS, maze.api, '保留迷宮滾球畫面追蹤 API');
+const maze = client('pjh-eric.github.io', {
+  MR_CONFIG: { ga4MeasurementId: 'G-MAZE123' },
+  GAME_ANALYTICS_CONFIG: undefined
+});
+assert.equal(maze.browser.MR_ANALYTICS, undefined, '共用版不依賴迷宮滾球設定');
+vm.runInNewContext(fs.readFileSync(path.join(root, 'public/js/analytics-config.js'), 'utf8'), maze.context);
+assert.equal(maze.browser.MR_ANALYTICS, maze.api, '迷宮滾球專用設定保留畫面追蹤 API');
 assert.equal(maze.calls.find(call => call[0] === 'config')[2].send_page_view, false);
 maze.api.pageView('home');
 maze.api.pageView('home');
 maze.api.pageView('game');
 assert.equal(maze.calls.filter(call => call[1] === 'page_view').length, 2);
 assert.ok(!JSON.stringify(maze.calls).includes('private-'));
-console.log('GA4 verified: initialization, local isolation, lifecycle deduplication, spectator, room flow, parameters and native screen views');
+console.log('GA4 verified: initialization, local isolation, lifecycle deduplication, spectator, room flow and parameter filtering');

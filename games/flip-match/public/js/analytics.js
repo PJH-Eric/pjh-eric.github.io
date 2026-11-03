@@ -149,11 +149,7 @@
     init: init, track: track, start: start, end: end, reset: reset, sync: sync, pageView: pageView,
     roomRequest: roomRequest, roomResponse: roomResponse, roomAccepted: roomAccepted, roomLeft: roomLeft
   };
-  if (global.MR_CONFIG) {
-    global.MR_ANALYTICS = global.GameAnalytics;
-    init({ game_id: 'maze-roll', measurement_id: global.MR_CONFIG.ga4MeasurementId,
-      page_location: 'https://pjh-eric.github.io/maze-roll/', manual_page_view: true });
-  } else init(global.GAME_ANALYTICS_CONFIG);
+  init(global.GAME_ANALYTICS_CONFIG);
 
   if (global.document) global.document.addEventListener('click', function (event) {
     var link = event.target.closest && event.target.closest('a[href]');

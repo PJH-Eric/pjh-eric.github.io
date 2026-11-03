@@ -25,8 +25,8 @@
 - [ ] 階段 A4：統一前端建置與部署
 - [ ] 階段 B：共用伺服器 `apps/game-server`
 
-## 已知待清理
-- 共用的 `analytics.js` 內含迷宮滾球（`MR_CONFIG`）專用分支，對其他款無作用，但之後應移到 maze-roll 自己的設定。
+## 共用檔範圍與例外
+- 迷宮滾球專用 GA4 初始化位於 `games/maze-roll/public/js/analytics-config.js`；`packages/web-core/analytics.js` 僅保留共用設定。
 - house-stack 的 `i18n.js`（ES module 版）與 `analytics.js` 與共用版不同，暫列為例外；snake-3d、ice-duel 為 Vite 專案，不走這套同步。
 
 ## 測試環境備註

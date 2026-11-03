@@ -66,7 +66,7 @@ npm run verify     # 再加上真 WebSocket 的端對端檢查
 
 1. **後端（Render）**：以 `render.yaml` 建立 Web Service（`region: singapore`，免費方案）。在 Render 服務設定環境變數 `GAME_ALLOWED_ORIGIN`＝前端網址（如 `https://<帳號>.github.io`）；健康檢查為 `/health`。
 2. **前端（GitHub Pages）**：repo Settings → Pages 選 GitHub Actions；到 Settings → Secrets and variables → Actions → **Variables** 新增 `GAME_SERVER_URL`＝Render 後端 HTTPS 網址，以及 `GA4_MEASUREMENT_ID`＝GA4 Measurement ID（格式 `G-XXXXXXXXXX`）。推到 `main` 即部署（workflow 會先跑測試，再把兩個公開設定注入 `public/js/config.js`）。
-3. GA4 追蹤畫面瀏覽、真人玩家的開局／結算及成功建立／加入房間。保留 `MR_ANALYTICS.pageView()`，以固定畫面名稱產生虛擬路徑；觀戰不計開局，重連同一局不重複計數，不送出暱稱、房號或邀請 token。`page_referrer` 也會移除 query/hash。未設定有效 Measurement ID 時不載入 Google tag。建議將 `GA4_MEASUREMENT_ID` 設成與大廳相同的資源，以比較各遊戲。
+3. GA4 追蹤畫面瀏覽、真人玩家的開局／結算及成功建立／加入房間。maze-roll 專用初始化由 `public/js/analytics-config.js` 設定；保留 `MR_ANALYTICS.pageView()`，以固定畫面名稱產生虛擬路徑。觀戰不計開局，重連同一局不重複計數，不送出暱稱、房號或邀請 token。`page_referrer` 也會移除 query/hash。未設定有效 Measurement ID 時不載入 Google tag。建議將 `GA4_MEASUREMENT_ID` 設成與大廳相同的資源，以比較各遊戲。
 4. `npm run test:analytics` 驗證共用追蹤契約；共用來源在同工作區的 `game-lobby/scripts/seo/`，由該專案的 `scripts/sync-seo-shared.js --write` 同步，保留本遊戲原有的設定注入方式。
 
 > 免費層限制：Render 服務閒置會休眠，第一次連線要等幾十秒（遊戲會顯示「連線中」）；房間資料只存在記憶體，服務重啟就會清空——房間本來就是可清理的暫時狀態。Render 不能修改既有服務的 region，需要換節點時請建立新服務、再更新 `GAME_SERVER_URL`，確認 `/health` 與線上對局可用後才停用舊服務。
