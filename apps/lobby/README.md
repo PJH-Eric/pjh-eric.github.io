@@ -8,7 +8,6 @@
 - 水果連連看
 - 小朋友下樓梯
 - 你畫我猜
-- 海島心臟病
 - 炸彈小隊
 - 彩虹泡泡砲
 
@@ -113,7 +112,6 @@ GA4 後台可依報表需求建立事件範圍的自訂維度：`game_id`、`mod
 | 水果連連看 | `github.io/fruit-link` | 3040 |
 | 小朋友下樓梯 | `github.io/stair-kids` | 3060 |
 | 你畫我猜 | `github.io/draw-guess` | 3030 |
-| 海島心臟病 | `github.io/heart-attack` | 3080 |
 | 炸彈小隊 | `github.io/bomb-squad` | 3120 |
 | 彩虹泡泡砲 | `github.io/rainbow-bubble` | 3140 |
 | 彈珠籃球 | `github.io/pinball-hoops` | 3200 |

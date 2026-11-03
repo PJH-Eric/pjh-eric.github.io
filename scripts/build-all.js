@@ -1,5 +1,5 @@
 /*
- * scripts/build-all.js — 統一建置：把大廳＋18 款遊戲的前端組成一個 site-dist/，可直接放 GitHub Pages。
+ * scripts/build-all.js — 統一建置：把大廳＋17 款遊戲的前端組成一個 site-dist/，可直接放 GitHub Pages。
  *   node scripts/build-all.js                         （只建靜態遊戲，vite 遊戲略過並提示）
  *   node scripts/build-all.js --vite                  （連 snake-3d、ice-duel 一起建；需要網路 npm install）
  *   GAME_SERVER_URL=https://xxx.onrender.com node scripts/build-all.js

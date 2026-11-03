@@ -1,5 +1,5 @@
 'use strict';
-/* 共用伺服器煙霧測試：18 款都載入、/g/<id>/health、/g/<id>/ws 可升級連線；socket.io 相容遊戲再多驗一次事件往返。
+/* 共用伺服器煙霧測試：17 款都載入、/g/<id>/health、/g/<id>/ws 可升級連線；socket.io 相容遊戲再多驗一次事件往返。
  * 執行：tsx tests/smoke.js（ice-duel 為 TypeScript，需要 tsx） */
 const assert = require('assert');
 const path = require('path');

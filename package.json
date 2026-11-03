@@ -2,7 +2,7 @@
   "name": "pjh-games-all-in-one",
   "version": "0.1.0",
   "private": true,
-  "description": "遊戲小小島 all-in-one：18 款遊戲＋大廳的單一 monorepo（共用前端套件、共用伺服器）",
+  "description": "遊戲小小島 all-in-one：17 款遊戲＋大廳的單一 monorepo（共用前端套件、共用伺服器）",
   "workspaces": [
     "packages/*"
   ],

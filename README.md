@@ -8,7 +8,7 @@
 - 全部切換完成並驗收前，不會關閉任何舊的 repo、Pages 或 Render service。
 
 ## 結構
-- `games/`：18 款遊戲（各自保留 public/、server.js、tests/）
+- `games/`：17 款遊戲（各自保留 public/、server.js、tests/）
 - `apps/lobby/`：原 game-lobby；`apps/site/`：原 pjh-eric.github.io
 - `packages/`：共用套件（階段 A2 起建立）
 - `games.json`：全專案唯一的遊戲清單（由大廳設定升級，新增 buildType／server）
