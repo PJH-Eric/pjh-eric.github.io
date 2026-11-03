@@ -56,7 +56,7 @@ function wsOpen(url) {
 
   // 本機同源測試：config 即時注入 <本機網址>/g/<id>
   for (const id of ids) {
-    if (id === 'snake-3d' || id === 'ice-duel' || id === 'house-stack') continue;
+    if (manifest.games.find((game) => game.id === id).server === 'static' || id === 'snake-3d' || id === 'ice-duel' || id === 'house-stack') continue;
     const t = await (await fetch(base + '/g/' + id + '/js/config.js')).text();
     assert.ok(t.includes(base + '/g/' + id), id + ' config.js 沒有被注入本機網址');
   }
@@ -64,12 +64,13 @@ function wsOpen(url) {
   assert.ok((await (await fetch(base + '/')).text()).includes('遊戲小小島'), '首頁不存在');
   ok('本機同源測試：config／env 即時注入、首頁清單');
 
-  // WebSocket 升級：每款（sudoku 的串流用 sio 協定同路徑 /ws）
-  for (const id of ids) {
+  // WebSocket 升級：僅檢查 manifest 標記為線上伺服器的遊戲
+  const websocketIds = ids.filter((id) => manifest.games.find((game) => game.id === id).server !== 'static');
+  for (const id of websocketIds) {
     const ws = await wsOpen(wsBase + '/g/' + id + '/ws');
     ws.close();
   }
-  ok('每款 /g/<id>/ws 都能升級為 WebSocket');
+  ok(websocketIds.length + ' 款線上遊戲 /g/<id>/ws 都能升級為 WebSocket');
 
   // 排除外部伺服器：GAMES_EXCLUDE 的遊戲不載入，回報 external，/g/<id>/ 回 503
   {
@@ -96,15 +97,6 @@ function wsOpen(url) {
   }
   ok('socket.io 相容遊戲經 /g/<id> 可連線');
 
-  // sudoku：串流訂閱走共用 WS，並回 ack
-  {
-    const s = io(base + '/g/sudoku', { reconnection: false, timeout: 5000 });
-    await new Promise((resolve, reject) => { s.on('connect', resolve); s.on('connect_error', reject); });
-    const res = await new Promise((resolve) => s.emit('stream', { kind: 'lobby' }, resolve));
-    assert.ok(res && res.ok, 'sudoku lobby 訂閱失敗：' + JSON.stringify(res));
-    s.disconnect();
-  }
-  ok('sudoku 大廳串流訂閱 ack 正常');
 
   console.log('共用伺服器煙霧測試：' + pass + ' 項通過');
   await app.close().catch(() => {});

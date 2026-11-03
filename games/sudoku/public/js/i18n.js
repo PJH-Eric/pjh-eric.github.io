@@ -9,7 +9,7 @@
  *   HTML：  <span data-i18n="menu.start">開始</span>
  *           <button data-i18n-attr="title=settings.open;aria-label=settings.open">
  *           <p data-i18n-html="help.body"></p>        （字典值可含受信任的 HTML 標籤）
- *   JS：    I18N.t('pad.left', { n: 3 })              字典值可為字串（{n} 取代）或 function(params)
+ *   JS：    I18N.t('room.players', { n: 3 })           字典值可為字串（{n} 取代）或 function(params)
  *           I18N.onChange(function (lang) { rerender(); })
  *           I18N.setLang('en')
  *   切換鈕：I18N.mountToggle({ after: settingsButtonEl })  放在設定鈕旁，樣式由各專案 CSS 的 .lang-toggle 控制
@@ -114,7 +114,7 @@
       '.language-controls[data-floating="absolute"]{position:absolute}' +
       '.language-controls>.lang-toggle{position:relative!important;inset:auto!important;margin:0!important;box-sizing:border-box;flex:0 0 48px;width:48px!important;min-width:48px!important;height:48px!important;min-height:48px!important;display:inline-grid;place-items:center;padding:0!important}' +
       '.language-controls>[data-language-settings]{position:relative!important;inset:auto!important;margin:0!important;flex-shrink:0}' +
-      '.language-badge{position:absolute;right:3px;bottom:2px;font:800 10px/1.15 system-ui,sans-serif;letter-spacing:0;padding:1px 2px;border-radius:3px;pointer-events:none;background:inherit;color:inherit}' +
+      '.language-badge{position:absolute;right:3px;bottom:2px;font:800 11px/1.15 system-ui,sans-serif;letter-spacing:0;padding:1px 2px;border-radius:3px;pointer-events:none;background:inherit;color:inherit}' +
       '.language-menu{box-sizing:border-box;position:fixed;inset:auto;margin:0;width:188px;max-width:calc(100vw - 16px);padding:6px;gap:4px;z-index:2147483001;display:none;overflow:visible}' +
       '.language-menu[data-open]{display:grid}' +
       '.language-menu .language-option{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:46px;padding:10px 12px;border:2px solid transparent;border-radius:inherit;color:inherit;font-family:inherit;font-weight:700;font-size:15px;line-height:1.3;cursor:pointer;touch-action:manipulation}' +

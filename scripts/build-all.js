@@ -21,7 +21,18 @@ if (serverUrl && !/^https:\/\//.test(serverUrl) && !/^http:\/\/(localhost|127\.0
   console.error('✗ GAME_SERVER_URL 正式部署請用 https：' + serverUrl); process.exit(1);
 }
 
-const run = (cmd, cwd, env) => spawnSync('bash', ['-c', cmd], { cwd, env: Object.assign({}, process.env, env || {}), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+const runNode = (script, args, cwd, env) => spawnSync(process.execPath, [script, ...(args || [])], {
+  cwd,
+  env: Object.assign({}, process.env, env || {}),
+  encoding: 'utf8',
+  maxBuffer: 64 * 1024 * 1024
+});
+const runNpm = (args, cwd, env) => spawnSync(
+  fs.existsSync(npmCli) ? process.execPath : (process.platform === 'win32' ? 'npm.cmd' : 'npm'),
+  [...(fs.existsSync(npmCli) ? [npmCli] : []), ...args],
+  { cwd, env: Object.assign({}, process.env, env || {}), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, shell: !fs.existsSync(npmCli) && process.platform === 'win32' }
+);
 function copyDir(src, dst) { fs.mkdirSync(dst, { recursive: true }); fs.cpSync(src, dst, { recursive: true, filter: (p) => !/(^|[\\/])(node_modules|\.git)([\\/]|$)/.test(p) }); }
 
 const { injectConfig, envJs } = require('./lib/inject-config.js');
@@ -57,7 +68,7 @@ fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 
 // 1) 大廳 → 根目錄
-let r = run('node scripts/build-pages.js', path.join(root, 'apps/lobby'));
+let r = runNode('scripts/build-pages.js', [], path.join(root, 'apps/lobby'));
 if (r.status !== 0) { console.error('✗ 大廳建置失敗\n' + r.stdout + r.stderr); process.exit(1); }
 copyDir(path.join(root, 'apps/lobby/dist'), out);
 console.log('✓ 大廳');
@@ -73,7 +84,7 @@ for (const g of manifest.games) {
       const work = path.join(os.tmpdir(), 'pjh-seo', g.id);
       fs.rmSync(work, { recursive: true, force: true });
       copyDir(proj, work);
-      const x = run('node scripts/inject-seo.js', work, GA_ENV);
+      const x = runNode('scripts/inject-seo.js', [], work, GA_ENV);
       if (x.status !== 0) { console.error('✗ ' + g.id + ' SEO 注入失敗\n' + x.stdout + x.stderr); process.exit(1); }
       pub = path.join(work, 'public');
     }
@@ -86,11 +97,16 @@ for (const g of manifest.games) {
     copyDir(proj, work);
     const env = serverUrl ? { VITE_GAME_SERVER_URL: serverUrl + '/g/' + g.id, GAME_SERVER_URL: serverUrl + '/g/' + g.id } : {};
     const clientDir = g.id === 'snake-3d' ? path.join(work, 'client') : work;
-    const steps = ['npm install --no-audit --no-fund --silent', g.id === 'snake-3d' ? 'npx vite build' : 'npx vite build'];
     let ok = true;
-    for (const s of steps) { const x = run(s, clientDir, env); if (x.status !== 0) { ok = false; console.error(x.stdout + x.stderr); break; } }
+    const install = runNpm(['install', '--no-audit', '--no-fund', '--silent'], clientDir, env);
+    if (install.status !== 0) { ok = false; console.error(install.stdout + install.stderr); }
+    if (ok) {
+      const vite = path.join(clientDir, 'node_modules', 'vite', 'bin', 'vite.js');
+      const build = runNode(vite, ['build'], clientDir, env);
+      if (build.status !== 0) { ok = false; console.error(build.stdout + build.stderr); }
+    }
     if (ok && fs.existsSync(path.join(work, 'scripts', 'inject-seo.mjs'))) {   // ice-duel：建置後把 GA4／SEO 寫進 dist
-      const x = run('node scripts/inject-seo.mjs', work, GA_ENV);
+      const x = runNode('scripts/inject-seo.mjs', [], work, GA_ENV);
       if (x.status !== 0) { console.error(x.stdout + x.stderr); ok = false; }
     }
     if (ok) { copyDir(path.join(clientDir, 'dist'), dst); report.push(['✓', g.id, 'vite', serverUrl ? 'ok' : 'skip']); }

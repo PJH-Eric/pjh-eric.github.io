@@ -148,7 +148,7 @@
       "iconUrl": "https://pjh-eric.github.io/sudoku/favicon-96.png",
       "imageUrl": "https://pjh-eric.github.io/sudoku/assets/images/cover.webp",
       "buildType": "static",
-      "server": "sse",
+      "server": "static",
       "sourceRepo": "https://github.com/PJH-Eric/sudoku",
       "shared": [
         "analytics",
@@ -1085,7 +1085,7 @@
       "iconUrl": "https://pjh-eric.github.io/pinball-hoops/favicon-96.png",
       "imageUrl": "https://pjh-eric.github.io/pinball-hoops/assets/images/cover.webp",
       "buildType": "static",
-      "server": "ws-custom",
+      "server": "static",
       "sourceRepo": "https://github.com/PJH-Eric/pinball-hoops",
       "shared": [
         "analytics",
