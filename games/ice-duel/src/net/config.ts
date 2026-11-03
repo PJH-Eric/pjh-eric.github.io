@@ -12,7 +12,7 @@ function validate(u: string): string | null {
   try {
     const url = new URL(u)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
-    return url.origin
+    return url.origin + url.pathname.replace(/\/+$/, '')
   } catch {
     return null
   }
