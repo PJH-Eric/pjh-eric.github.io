@@ -7,7 +7,6 @@ const path = require('node:path');
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const PORT = Number(process.env.PORT) || 3010;
 const HOST = '127.0.0.1';
-const embedded = process.env.ALLINONE_EMBEDDED === '1';
 const MIME_TYPES = {
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
@@ -42,12 +41,6 @@ const server = http.createServer((request, response) => {
     return;
   }
 
-  if (new URL(request.url, 'http://localhost').pathname === '/health') {
-    response.writeHead(200, { 'Cache-Control': 'no-store', 'Content-Type': 'application/json; charset=utf-8' });
-    response.end(JSON.stringify({ ok: true, game: 'sudoku' }));
-    return;
-  }
-
   const filePath = resolvePublicFile(request.url);
   if (!filePath) {
     response.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
@@ -75,11 +68,9 @@ const server = http.createServer((request, response) => {
   });
 });
 
-if (!embedded) {
-  server.listen(PORT, HOST, () => {
-    console.log('數獨小學堂本機頁面伺服器已啟動：http://' + HOST + ':' + PORT);
-    console.log('按 Ctrl+C 停止伺服器。');
-  });
-}
+server.listen(PORT, HOST, () => {
+  console.log('數獨小學堂本機頁面伺服器已啟動：http://' + HOST + ':' + PORT);
+  console.log('按 Ctrl+C 停止伺服器。');
+});
 
-module.exports = { server };
+module.exports = server;

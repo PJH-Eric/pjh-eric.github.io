@@ -117,4 +117,4 @@ for (const hostname of ['localhost', '127.0.0.1', 'preview.example', '']) {
   assert.equal(local.browser.gtag, undefined);
   assert.doesNotThrow(() => local.api.start({ mode: 'solo', players: 1 }));
 }
-console.log('GA4 verified: initialization, local isolation, lifecycle deduplication, spectator, room flow and parameter filtering');
+console.log('GA4 verified: initialization, local isolation, lifecycle deduplication, event allowlist and parameter filtering');

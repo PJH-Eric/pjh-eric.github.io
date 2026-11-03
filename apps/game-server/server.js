@@ -70,14 +70,58 @@ function createGameServer(options) {
     }
     const m = PREFIX.exec(url);
     if (!m) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return res.end('Not found'); }
+    const gm = manifest.games.find((x) => x.id === m[1]);
     const p = plugins.get(m[1]);
+    const sub = m[2] || '/';
+    // 單機靜態遊戲不載入各自的本機伺服器；共用伺服器直接提供 public/。
+    if (gm && gm.server === 'static' && (req.method === 'GET' || req.method === 'HEAD')) {
+      const publicDir = path.resolve(root, gm.projectFolder, 'public');
+      let rel;
+      try { rel = decodeURIComponent(sub.split('?')[0]); }
+      catch (e) { res.writeHead(400); return res.end('Bad request'); }
+      if (rel === '/' || rel === '') rel = '/index.html';
+      let file = path.resolve(publicDir, '.' + rel);
+      if (file !== publicDir && !file.startsWith(publicDir + path.sep)) { res.writeHead(403); return res.end('Forbidden'); }
+      let stats;
+      try {
+        stats = fs.statSync(file);
+        if (stats.isDirectory()) {
+          file = path.join(file, 'index.html');
+          stats = fs.statSync(file);
+        }
+      } catch (e) { /* 回傳下方的 404 */ }
+      if (!file.startsWith(publicDir + path.sep) || !stats || !stats.isFile()) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end('Not found');
+      }
+      const ext = path.extname(file).toLowerCase();
+      const mime = {
+        '.html': 'text/html; charset=utf-8',
+        '.js': 'application/javascript; charset=utf-8',
+        '.mjs': 'application/javascript; charset=utf-8',
+        '.css': 'text/css; charset=utf-8',
+        '.json': 'application/json; charset=utf-8',
+        '.svg': 'image/svg+xml',
+        '.png': 'image/png',
+        '.jpg': 'image/jpeg',
+        '.webp': 'image/webp',
+        '.ico': 'image/x-icon',
+        '.woff2': 'font/woff2',
+        '.mp3': 'audio/mpeg',
+        '.wav': 'audio/wav',
+        '.ogg': 'audio/ogg',
+        '.xml': 'application/xml; charset=utf-8',
+        '.txt': 'text/plain; charset=utf-8'
+      }[ext] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': mime, 'Cache-Control': 'no-cache' });
+      return res.end(req.method === 'HEAD' ? undefined : fs.readFileSync(file));
+    }
     if (!p) {
       const known = status[m[1]];
       res.writeHead(known ? 503 : 404, { 'Content-Type': 'application/json; charset=utf-8' });
       return res.end(JSON.stringify({ ok: false, game: m[1], error: known ? known.error || 'unavailable' : 'unknown game' }));
     }
     // 本機同源測試：即時把「<本機網址>/g/<id>」注入該遊戲的連線設定，不必先 build
-    const sub = m[2] || '/';
     if (req.method === 'GET' && (sub === '/js/config.js' || sub === '/env.js')) {
       const proto = req.headers['x-forwarded-proto'] || 'http';
       const base = proto + '://' + (req.headers.host || 'localhost') + '/g/' + m[1];
@@ -93,7 +137,6 @@ function createGameServer(options) {
       } catch (e) { /* 找不到就交給遊戲自己的伺服器處理 */ }
     }
     // Vite 遊戲（snake-3d、ice-duel）：由共用伺服器直接發建置好的前端，並把網址佔位符換成實際主機
-    const gm = manifest.games.find((x) => x.id === m[1]);
     if (gm && gm.viteDist && (req.method === 'GET' || req.method === 'HEAD') && sub !== '/health') {
       const distDir = path.join(root, gm.projectFolder, gm.viteDist);
       let rel = decodeURIComponent(sub.split('?')[0]);
@@ -138,6 +181,7 @@ function createGameServer(options) {
   async function loadAll() {
     for (const g of manifest.games) {
       if (only && !only.includes(g.id)) continue;
+      if (g.server === 'static') { status[g.id] = { state: 'ok', type: 'static' }; continue; }
       if (exclude.includes(g.id)) { status[g.id] = { state: 'external', url: g.externalServer || null }; continue; }
       status[g.id] = { state: 'loading' };
       try {

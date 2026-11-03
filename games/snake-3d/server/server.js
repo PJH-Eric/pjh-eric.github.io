@@ -1,6 +1,6 @@
 /* ===== server.js — 房間伺服器（Node.js，無第三方套件） =====
  *
- * HTTP 只提供 /health 與（若已建置）前端靜態檔；連線用 lib/net/ws.js（原生 WebSocket）。
+ * HTTP 只提供 /health 與（若已建置）前端靜態檔；連線用 lib/ws.js（原生 WebSocket）。
  *
  *   lib/rooms.js   房間、席位、觀戰、邀請、聊天、權威對局（純邏輯）
  *   這一支          HTTP、WebSocket、訊息分派與廣播
@@ -14,7 +14,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-import * as ws from './lib/net/ws.js';
+import * as ws from './lib/ws.js';
 import { createHub } from './lib/rooms.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));

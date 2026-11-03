@@ -12,7 +12,7 @@ function validate(u: string): string | null {
   try {
     const url = new URL(u)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
-    return url.origin + url.pathname.replace(/\/+$/, '') // 保留 /g/<id> 前綴（共用伺服器）
+    return url.origin
   } catch {
     return null
   }

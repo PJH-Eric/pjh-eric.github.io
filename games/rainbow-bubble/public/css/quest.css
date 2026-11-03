@@ -77,6 +77,7 @@
 .q-hint { position: absolute; z-index: 30; left: 50%; top: 56%; transform: translateX(-50%); width: min(460px, calc(100% - 24px)); box-sizing: border-box; display: flex; gap: 10px; align-items: center;
   padding: 8px 14px; border-radius: 20px; font-size: clamp(13px, 2.6vw, 16px); line-height: 1.35; background: #fff; border: 3px solid var(--sun); color: var(--ink); font-weight: 800; box-shadow: 0 6px 0 var(--sun-d), 0 14px 26px rgba(60, 20, 100, .25);
   animation: pop .25s; cursor: pointer; transition: opacity .25s, transform .25s; }
+.board-wrap { position: relative; }
 .q-hint.out { opacity: 0; transform: translateX(-50%) translateY(-10px); }
 .q-hint-ico { display: grid; color: var(--sun-d); flex: none; }
 

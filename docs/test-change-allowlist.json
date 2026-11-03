@@ -106,8 +106,8 @@
       "sha256": "96335d32d762ab76cd13daebb27d8a17aa10e1625aa934abfc8943b178523ee8"
     },
     "games/bomb-squad/scripts/layout-sweep.js": {
-      "reason": "過時步驟：規則面板簡化後已沒有「更多設定」按鈕，改為有才點",
-      "sha256": "b500199ad4a24fa85f1a0aa377e6635f14f493b54b929bc5925c63956392b44b"
+      "reason": "同步原專案最新版面檢查步驟",
+      "sha256": "7b2de8c874481363fffa225aa0d118c71a86743020abfeba3129bebd8415318d"
     },
     "games/bomb-squad/scripts/layout-check.js": {
       "reason": "同步原專案的上游測試更新（與原專案相同）",
@@ -158,7 +158,7 @@
       "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
     },
     "games/sudoku/scripts/inject-seo.js": {
-      "reason": "同步原專案的上游測試更新（與原專案相同）",
+      "reason": "同步原專案 SEO 注入邏輯",
       "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
     },
     "games/whack-a-mole/scripts/inject-seo.js": {
@@ -174,8 +174,8 @@
       "sha256": "9fa78ebb478e5da2083b3e4b7a15a363e4e17d7207915d1cbb9a47e94b3c70ea"
     },
     "games/pinball-hoops/tests/verify.js": {
-      "reason": "依單機功能驗證 app 不呼叫線上分析，移除多餘 WebSocket 副本並保留本機健康檢查",
-      "sha256": "717d17b3e580b42696e381be2e31877409baf7d16362d1e23c1348a03545fe25"
+      "reason": "依原專案單機伺服器行為更新整合檢查",
+      "sha256": "66f43704b998df144a140d5784a85ab938fad580a02182a13be234adf66beb4e"
     },
     "games/pinball-hoops/tests/i18n-hans.js": {
       "reason": "移除觀戰後，刪除簡體翻譯測試中已無用途的觀戰人數範例",
@@ -184,6 +184,70 @@
     "games/pinball-hoops/tests/localization.js": {
       "reason": "移除房間功能後，改用一般網址參數驗證語系連結保留行為",
       "sha256": "27bd88cb274ba9a8bbede13fd0465bc039b51a6658c6af725b4ea6de9c3c9bb4"
+    },
+    "games/amaze-go/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/bomb-squad/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/draw-guess/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/flip-match/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/fruit-link/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/ice-duel/scripts/online-check.ts": {
+      "reason": "整合版線上檢查改用共用連線層或同步上游流程",
+      "sha256": "87405a219cdccb1882038254d60dec9f4eca8a719b97e59dec619bddfc8e610f"
+    },
+    "games/maze-roll/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "e3a43ecd0822de05035908eccfb5fce009aa990e5cef775c167a6b4fef71338f"
+    },
+    "games/pinball-hoops/scripts/inject-seo.js": {
+      "reason": "同步原專案 SEO 注入邏輯",
+      "sha256": "b2aa73c4d5b34e6c7a151e08101b579f843731390f290622b8481bf077f5e52f"
+    },
+    "games/pool-duel/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/rainbow-bubble/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/reversi/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/shoot-balloon/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/stair-kids/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/sudoku/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
+    },
+    "games/sudoku/tests/seo.js": {
+      "reason": "同步原專案 SEO 與 analytics 測試更新",
+      "sha256": "ca7313c3f1b77b1c8526499831b65e6e77983606c21ad49a779f2bb8411c1d59"
+    },
+    "games/whack-a-mole/tests/analytics.js": {
+      "reason": "同步共用 analytics 測試，確認事件白名單與參數過濾",
+      "sha256": "c5b3540dbcb41e5d563074835ad19beee80f789ef4f2afd9e86b1a540673aa3d"
     }
   }
 }

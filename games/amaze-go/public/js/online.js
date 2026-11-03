@@ -29,7 +29,7 @@ window.AmazeOnline = (function () {
     const u = new URL(base); // 格式不對會丟錯 → 由 connect 轉成可讀錯誤
     if (!/^https?:$/.test(u.protocol)) throw Object.assign(new Error('server URL must be http(s)'), { i18n: 'net.urlProto' });
     if (location.protocol === 'https:' && u.protocol === 'http:' && u.hostname !== 'localhost') throw Object.assign(new Error('HTTPS page needs an HTTPS server'), { i18n: 'net.https' });
-    return (u.origin + u.pathname.replace(/\/+$/, '')).replace(/^http/, 'ws') + '/ws'; // 保留 /g/<id> 前綴（共用伺服器）
+    return u.origin.replace(/^http/, 'ws') + '/ws';
   }
   // 狀態文字以函式保存（切換語言時重新組字）；傳 null 代表清除
   function setStatus(fn, bad) { statusFn = fn || null; statusBad = !!bad; paintStatus(); }

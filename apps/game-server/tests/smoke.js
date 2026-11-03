@@ -38,17 +38,22 @@ function wsOpen(url) {
   ok('未知遊戲／路徑回 404');
 
   for (const id of ids) {
+    if (manifest.games.find((game) => game.id === id).server === 'static') continue;
     const r = await fetch(base + '/g/' + id + '/health', { headers: { Origin: ORIGIN } });
     assert.strictEqual(r.status, 200, id + ' /health 狀態 ' + r.status);
     const type = r.headers.get('content-type') || '';
     if (/json/.test(type)) assert.ok((await r.json()).ok !== false, id + ' /health ok=false'); else await r.text();
   }
-  ok('每款 /g/<id>/health 回 200');
+  ok('線上遊戲 /g/<id>/health 回 200，靜態遊戲略過 API 健康檢查');
 
   // 靜態首頁（有 public/index.html 的）
   let staticCount = 0;
   for (const id of ids) {
     const r = await fetch(base + '/g/' + id + '/', { headers: { Origin: ORIGIN } });
+    if (manifest.games.find((game) => game.id === id).server === 'static') {
+      assert.strictEqual(r.status, 200, id + ' 靜態首頁無法載入');
+      assert.ok(/html/.test(r.headers.get('content-type') || ''), id + ' 靜態首頁 Content-Type 錯誤');
+    }
     if (r.status === 200 && /html/.test(r.headers.get('content-type') || '')) staticCount++;
     await r.text();
   }

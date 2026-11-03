@@ -283,7 +283,7 @@ t('本機伺服器不建立即時連線或房間路由', () => {
   assert.ok(!server.includes('WebSocket'));
   assert.ok(!server.includes("'upgrade'"));
   assert.ok(!server.includes('ALLOW_ORIGIN'));
-  assert.ok(server.includes("pathname === '/health'"));
+  assert.ok(!server.includes("'/health'"));
   assert.ok(!server.includes('room_create'));
 });
 t('首頁移除線上大廳與房間畫面', () => {

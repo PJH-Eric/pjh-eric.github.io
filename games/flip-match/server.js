@@ -47,7 +47,10 @@ const MIME = {
 const server = http.createServer((req, res) => {
   setCorsHeaders(req, res);
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
-  if (urlPath === '/health') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end('{"ok":true,"game":"flip-match"}'); }
+  if (urlPath === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+    return res.end('{"ok":true,"game":"flip-match"}');
+  }
   if (urlPath === '/') urlPath = '/index.html';
   const filePath = path.join(ROOT, path.normalize(urlPath).replace(/^([/\\])+/, ''));
   if (!filePath.startsWith(ROOT)) { res.writeHead(403); return res.end('Forbidden'); }
@@ -58,15 +61,98 @@ const server = http.createServer((req, res) => {
   });
 });
 
-/* ---------------- WebSocket（共用連線層 lib/ws.js） ---------------- */
-const wsLib = require('./lib/ws');
-wsLib.attach(server, {
-  path: '*',                       // 這款原本就不限路徑
-  maxMessage: 4 * 1024 * 1024,     // 沿用原本的 4MB 上限
-  onConnection(conn) {
-    conn.sendText = (str) => conn.send(str);   // 相容原本的 WSConn 介面
-    handleClient(conn);
+/* ---------------- 原生 WebSocket 實作 ---------------- */
+const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
+
+class WSConn {
+  constructor(socket) {
+    this.socket = socket;
+    this.buf = Buffer.alloc(0);
+    this.frags = [];
+    this.fragOp = 0;
+    this.alive = true;
+    this.handlers = {};
+    socket.on('data', (d) => this._onData(d));
+    socket.on('close', () => this._close());
+    socket.on('error', () => this._close());
+    socket.setTimeout(0);
+    socket.setNoDelay(true);
   }
+  on(evt, fn) { this.handlers[evt] = fn; return this; }
+  _emit(evt, arg) { if (this.handlers[evt]) { try { this.handlers[evt](arg); } catch (e) { console.error(e); } } }
+  _close() { if (!this.alive) return; this.alive = false; this._emit('close'); }
+
+  _onData(chunk) {
+    this.buf = Buffer.concat([this.buf, chunk]);
+    for (;;) {
+      if (this.buf.length < 2) return;
+      const b0 = this.buf[0], b1 = this.buf[1];
+      const fin = (b0 & 0x80) !== 0;
+      const opcode = b0 & 0x0f;
+      const masked = (b1 & 0x80) !== 0;
+      let len = b1 & 0x7f;
+      let off = 2;
+      if (len === 126) { if (this.buf.length < 4) return; len = this.buf.readUInt16BE(2); off = 4; }
+      else if (len === 127) { if (this.buf.length < 10) return; len = Number(this.buf.readBigUInt64BE(2)); off = 10; }
+      if (len > 4 * 1024 * 1024) { return this.close(1009); }
+      let mask = null;
+      if (masked) { if (this.buf.length < off + 4) return; mask = this.buf.slice(off, off + 4); off += 4; }
+      if (this.buf.length < off + len) return;
+      let payload = this.buf.slice(off, off + len);
+      if (masked) { const p = Buffer.allocUnsafe(len); for (let i = 0; i < len; i++) p[i] = payload[i] ^ mask[i & 3]; payload = p; }
+      this.buf = this.buf.slice(off + len);
+
+      if (opcode === 0x8) { this.close(1000); return; }
+      if (opcode === 0x9) { this._send(0xA, payload); continue; }
+      if (opcode === 0xA) { continue; }
+      if (opcode === 0x0) {
+        this.frags.push(payload);
+        if (fin) { const full = Buffer.concat(this.frags); this.frags = []; if (this.fragOp === 0x1) this._emit('message', full.toString('utf8')); }
+        continue;
+      }
+      if (opcode === 0x1 || opcode === 0x2) {
+        if (!fin) { this.fragOp = opcode; this.frags = [payload]; continue; }
+        if (opcode === 0x1) this._emit('message', payload.toString('utf8'));
+        continue;
+      }
+    }
+  }
+
+  _send(opcode, payload) {
+    if (!this.alive) return;
+    const len = payload.length;
+    let head;
+    if (len < 126) { head = Buffer.allocUnsafe(2); head[1] = len; }
+    else if (len < 65536) { head = Buffer.allocUnsafe(4); head[1] = 126; head.writeUInt16BE(len, 2); }
+    else { head = Buffer.allocUnsafe(10); head[1] = 127; head.writeBigUInt64BE(BigInt(len), 2); }
+    head[0] = 0x80 | opcode;
+    try { this.socket.write(Buffer.concat([head, payload])); } catch (e) { this._close(); }
+  }
+  sendText(str) { this._send(0x1, Buffer.from(str, 'utf8')); }
+  sendJSON(obj) { this.sendText(JSON.stringify(obj)); }
+  ping() { this._send(0x9, Buffer.alloc(0)); }
+  close(code) {
+    if (!this.alive) return;
+    const b = Buffer.allocUnsafe(2); b.writeUInt16BE(code || 1000, 0);
+    this._send(0x8, b);
+    try { this.socket.end(); } catch (e) {}
+    this._close();
+  }
+}
+
+server.on('upgrade', (req, socket, head) => {
+  const key = req.headers['sec-websocket-key'];
+  if (!key) { socket.destroy(); return; }
+  const accept = crypto.createHash('sha1').update(key + WS_GUID).digest('base64');
+  socket.write(
+    'HTTP/1.1 101 Switching Protocols\r\n' +
+    'Upgrade: websocket\r\n' +
+    'Connection: Upgrade\r\n' +
+    'Sec-WebSocket-Accept: ' + accept + '\r\n\r\n'
+  );
+  const conn = new WSConn(socket);
+  if (head && head.length) conn._onData(head);
+  handleClient(conn);
 });
 
 /* ---------------- 遊戲大廳邏輯 ---------------- */
@@ -371,7 +457,6 @@ function handleClient(conn) {
 setInterval(() => { for (const c of clients.values()) c.conn.ping(); }, 25000);
 
 /* ---------------- 啟動 ---------------- */
-/* 內嵌於 all-in-one 共用伺服器時（ALLINONE_EMBEDDED=1）由外層負責監聽 */
 if (!process.env.ALLINONE_EMBEDDED) {
   server.listen(PORT, () => {
     const nets = os.networkInterfaces();

@@ -54,7 +54,7 @@ const click = (p, t) => p.getByRole('button', { name: t }).first().click();
     await p.goto(BASE); await wait(500); await check(p, v, '首頁');
     await p.getByText('怎麼玩').first().click(); await wait(300); await check(p, v, '怎麼玩'); await click(p, /返回|首頁/).catch(() => p.goBack()); await wait(300);
     await click(p, '一個人玩'); await wait(400); await check(p, v, '單人設定');
-    { const more = p.getByText('更多設定').first(); if (await more.count()) { await more.click(); await wait(200); } }   /* 規則面板簡化後已無「更多設定」，有才點 */ await check(p, v, '單人設定-更多');
+    await p.getByText('更多設定').first().click(); await wait(200); await check(p, v, '單人設定-更多');
     await p.locator('.dd-btn, .dd-trigger, [aria-haspopup="listbox"]').first().click().catch(() => {}); await wait(250); await check(p, v, '單人-下拉展開'); await p.keyboard.press('Escape'); await wait(150);
     await p.locator('button[aria-label*="設定"]').first().click().catch(() => {}); await wait(300); await check(p, v, '全域設定彈窗'); await p.keyboard.press('Escape'); await wait(200);
     await click(p, '開始遊戲'); await wait(4800); await check(p, v, '單人對戰');

@@ -16,6 +16,5 @@
   "directories": {
     "test": "tests"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

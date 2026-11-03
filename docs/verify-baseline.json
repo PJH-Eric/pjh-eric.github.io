@@ -55,6 +55,12 @@
     "node tests/i18n.js": {
       "count": null
     },
+    "node tests/analytics.js": {
+      "count": null
+    },
+    "node tests/seo.js": {
+      "count": null
+    },
     "node tests/localization.js": {
       "count": null
     },
@@ -104,8 +110,11 @@
     "tsc": {
       "count": null
     },
+    "tsc-worker": {
+      "count": null
+    },
     "vitest": {
-      "count": 47
+      "count": 55
     },
     "online-check": {
       "count": 13
@@ -163,6 +172,12 @@
     }
   },
   "stair-kids": {
+    "node tests/ai-statistics.cjs": {
+      "count": null
+    },
+    "node tests/flip-step.cjs": {
+      "count": null
+    },
     "node tests/verify.js": {
       "count": 237
     },
@@ -173,7 +188,7 @@
       "count": 81
     },
     "node scripts/match-check.js": {
-      "count": 52
+      "count": 64
     },
     "node scripts/online-check.js": {
       "count": 65
@@ -197,7 +212,7 @@
       "count": null
     },
     "node tests/ui-visuals.js": {
-      "count": 6
+      "count": 7
     }
   },
   "draw-guess": {
@@ -260,7 +275,7 @@
       "count": 11
     },
     "node tests/verify.js": {
-      "count": 77
+      "count": 78
     },
     "node tests/server-outage.cjs": {
       "count": null
@@ -270,6 +285,9 @@
     },
     "node tests/localization.js": {
       "count": null
+    },
+    "node tests/missions.js": {
+      "count": 11
     },
     "node tests/rooms.js": {
       "count": 30
@@ -345,6 +363,9 @@
     "node tests/i18n.js": {
       "count": null
     },
+    "node tests/records.js": {
+      "count": null
+    },
     "node tests/analytics.js": {
       "count": null
     },
@@ -364,16 +385,22 @@
     }
   },
   "rainbow-bubble": {
-    "node tests/verify.js": {
-      "count": 37
-    },
     "node tests/i18n.js": {
       "count": 2611
+    },
+    "node tests/verify.js": {
+      "count": 37
     },
     "node tests/rooms.js": {
       "count": 48
     },
     "node tests/server.js": {
+      "count": null
+    },
+    "node scripts/online-check.js": {
+      "count": null
+    },
+    "node scripts/netcode-check.js": {
       "count": null
     },
     "node tests/server-outage.cjs": {
@@ -393,12 +420,6 @@
     },
     "node tests/quest-data.js": {
       "count": 19
-    },
-    "node scripts/online-check.js": {
-      "count": null
-    },
-    "node scripts/netcode-check.js": {
-      "count": null
     }
   }
 }

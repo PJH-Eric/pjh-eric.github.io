@@ -12,7 +12,7 @@
 // 結果寫到 docs/verify-last.json（迴圈每輪重新讀它，不靠對話記憶）。
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 const root = path.resolve(__dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'games.json'), 'utf8'));
 const args = process.argv.slice(2);
@@ -116,19 +116,100 @@ function integrity(game) {
 }
 
 // TypeScript／Vite 專案（需要 npm 相依）：複製到暫存資料夾安裝後驗證，不在掛載資料夾裡產生 node_modules
-function verifyTypescript(g) {
-  const work = path.join(require('os').tmpdir(), 'pjh-work', g.id);
-  const sh = (cmd, sec) => spawnSync('bash', ['-c', cmd], { cwd: work, encoding: 'utf8', timeout: sec * 1000, maxBuffer: 64 * 1024 * 1024 });
-  fs.mkdirSync(work, { recursive: true });
-  spawnSync('rsync', ['-a', '--delete', '--exclude=node_modules', '--exclude=dist', path.join(root, g.projectFolder) + '/', work + '/'], { encoding: 'utf8' });
-  const steps = [['npm install', 'npm install --no-audit --no-fund --silent', 150], ['tsc', 'npx tsc --noEmit', 120], ['vitest', 'npx vitest run', 150]];
-  if (g.onlineCheck) {
-    steps.push(['online-check', 'PORT=3091 npx tsx server/index.ts > /tmp/pjh-server.log 2>&1 & SRV=$!; sleep 6; npx tsx ' + g.onlineCheck + ' ws://localhost:3091; RC=$?; kill $SRV 2>/dev/null; exit $RC', 120]);
+function runNpm(work, args, timeoutSec) {
+  const npmCli = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  const useNpmCli = fs.existsSync(npmCli);
+  return spawnSync(
+    useNpmCli ? process.execPath : (process.platform === 'win32' ? 'npm.cmd' : 'npm'),
+    [...(useNpmCli ? [npmCli] : []), ...args],
+    {
+      cwd: work,
+      encoding: 'utf8',
+      timeout: timeoutSec * 1000,
+      maxBuffer: 64 * 1024 * 1024,
+      shell: !useNpmCli && process.platform === 'win32',
+      env: process.env
+    }
+  );
+}
+
+function runLocalNode(work, script, args, timeoutSec, env) {
+  const entry = path.join(work, 'node_modules', script);
+  if (!fs.existsSync(entry)) return { status: 1, stdout: '', stderr: '找不到本機驗證工具：' + entry };
+  return spawnSync(process.execPath, [entry, ...args], {
+    cwd: work,
+    encoding: 'utf8',
+    timeout: timeoutSec * 1000,
+    maxBuffer: 64 * 1024 * 1024,
+    env: env || process.env
+  });
+}
+
+async function runOnlineCheck(work, game) {
+  const port = 3091;
+  const url = 'http://127.0.0.1:' + port + '/health';
+  const env = { ...process.env, PORT: String(port) };
+  const server = spawn(process.execPath, [path.join(work, 'node_modules', 'tsx', 'dist', 'cli.mjs'), 'server/index.ts'], {
+    cwd: work,
+    env,
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let serverOutput = '';
+  server.stdout.on('data', (chunk) => { serverOutput += chunk.toString(); });
+  server.stderr.on('data', (chunk) => { serverOutput += chunk.toString(); });
+  let result;
+  try {
+    const deadline = Date.now() + 20000;
+    let ready = false;
+    while (Date.now() < deadline && server.exitCode === null) {
+      try { ready = (await fetch(url)).ok; } catch (e) { /* 等待伺服器啟動 */ }
+      if (ready) break;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    if (!ready) {
+      result = { status: 1, stdout: '', stderr: '伺服器未能在 20 秒內啟動。\n' + serverOutput };
+    } else {
+      result = runLocalNode(work, 'tsx/dist/cli.mjs', [game.onlineCheck, 'ws://127.0.0.1:' + port], 120, env);
+    }
+  } catch (error) {
+    result = { status: 1, stdout: '', stderr: String(error && error.stack || error) };
+  } finally {
+    if (server.pid && server.exitCode === null) {
+      server.kill();
+      await Promise.race([
+        new Promise((resolve) => server.once('exit', resolve)),
+        new Promise((resolve) => setTimeout(resolve, 2000))
+      ]);
+      if (server.exitCode === null) server.kill();
+    }
   }
+  if (result && result.status !== 0 && !result.stderr) result.stderr = serverOutput;
+  return result;
+}
+
+async function verifyTypescript(g) {
+  const tempRoot = path.resolve(require('os').tmpdir(), 'pjh-work');
+  const work = path.resolve(tempRoot, g.id);
+  if (!work.startsWith(tempRoot + path.sep)) throw new Error('暫存路徑超出驗證目錄：' + work);
+  fs.mkdirSync(path.dirname(work), { recursive: true });
+  fs.rmSync(work, { recursive: true, force: true });
+  fs.cpSync(path.join(root, g.projectFolder), work, {
+    recursive: true,
+    filter: (file) => !/[\\/](node_modules|dist|\.git)([\\/]|$)/.test(file)
+  });
+  const steps = [
+    ['npm install', () => runNpm(work, ['install', '--no-audit', '--no-fund', '--silent'], 150)],
+    ['tsc', () => runLocalNode(work, 'typescript/bin/tsc', ['--noEmit'], 120)],
+    ['vitest', () => runLocalNode(work, 'vitest/vitest.mjs', ['run'], 150)]
+  ];
+  if (fs.existsSync(path.join(work, 'tsconfig.worker.json'))) {
+    steps.splice(2, 0, ['tsc-worker', () => runLocalNode(work, 'typescript/bin/tsc', ['-p', 'tsconfig.worker.json'], 120)]);
+  }
+  if (g.onlineCheck) steps.push(['online-check', () => runOnlineCheck(work, g)]);
   const commands = [];
-  for (const [name, cmd, sec] of steps) {
+  for (const [name, run] of steps) {
     const t0 = Date.now();
-    const r = sh(cmd, sec);
+    const r = await run();
     const out = (r.stdout || '') + (r.stderr || '');
     let count = null;
     if (name === 'online-check') count = (out.match(/PASS/g) || []).length;
@@ -178,7 +259,7 @@ for (const g of games) {
     childEnv.NODE_PATH = [path.join(root, 'node_modules'), path.join(src, 'node_modules'), process.env.NODE_PATH || ''].filter(Boolean).join(path.delimiter);   // 根目錄在前：playwright／Chromium 版本要和本機已安裝的一致，原專案自己的 node_modules 只補 socket.io 等缺的套件
   }
   if (useTs) {
-    for (const rec of verifyTypescript(g)) {
+    for (const rec of await verifyTypescript(g)) {
       entry.commands.push(rec);
       const b = (baseline[g.id] || {})[rec.cmd];
       if (rec.exit !== 0) entry.problems.push('失敗：' + rec.cmd + '（結束碼 ' + rec.exit + '）' + (rec.tail ? '\n' + rec.tail : ''));

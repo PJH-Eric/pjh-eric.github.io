@@ -13,7 +13,7 @@ export function wsUrl() {
   }
   let url; try { url = new URL(u); } catch (e) { return null; }
   if (!/^https?:$/.test(url.protocol)) return null;
-  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'; url.pathname = url.pathname.replace(/\/+$/, '') + '/ws'; url.search = ''; url.hash = '';
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'; url.pathname = '/ws'; url.search = ''; url.hash = '';
   return url.toString();
 }
 

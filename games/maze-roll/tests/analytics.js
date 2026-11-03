@@ -130,4 +130,4 @@ maze.api.pageView('home');
 maze.api.pageView('game');
 assert.equal(maze.calls.filter(call => call[1] === 'page_view').length, 2);
 assert.ok(!JSON.stringify(maze.calls).includes('private-'));
-console.log('GA4 verified: initialization, local isolation, lifecycle deduplication, spectator, room flow and parameter filtering');
+console.log('GA4 verified: initialization, local isolation, lifecycle deduplication, event allowlist and parameter filtering');

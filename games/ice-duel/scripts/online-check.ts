@@ -1,5 +1,5 @@
 /** 對真實伺服器做端到端檢查：npm run server 啟動後執行 `npx tsx scripts/online-check.ts [ws://localhost:3090]` */
-import WebSocket from '../server/lib/ws-client.js'
+import WebSocket from 'ws'
 import type { ClientMsg, ServerMsg } from '../server/protocol'
 
 const URL = process.argv[2] ?? 'ws://localhost:3090'
