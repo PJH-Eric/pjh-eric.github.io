@@ -157,10 +157,7 @@
         "result-share",
         "vendor/html2canvas.min"
       ],
-      "sharedServer": [
-        "ws",
-        "sio-compat"
-      ],
+      "sharedServer": [],
       "sharedLocales": [
         "result-share"
       ]
@@ -1093,9 +1090,7 @@
         "result-share",
         "vendor/html2canvas.min"
       ],
-      "sharedServer": [
-        "ws"
-      ],
+      "sharedServer": [],
       "sharedLocales": [
         "result-share"
       ]

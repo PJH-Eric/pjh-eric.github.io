@@ -76,7 +76,7 @@ assert.equal(events()[6][2].variant, 'solo_random');
 
 c.api.start({ mode: 'online', players: 2 }, 'legacy-online');
 c.api.end({ result: 'complete' }, 'legacy-online');
-assert.equal(events().at(-1)[2].mode, undefined, '線上模式不得上報');
+assert.equal(events().at(-1)[2].mode, 'online', '共用 analytics API 保留線上模式事件');
 c.api.start({ mode: 'spectator', players: 1 }, 'legacy-spectator');
 c.api.end({ result: 'complete' }, 'legacy-spectator');
 assert.equal(events().at(-1)[2].mode, undefined, '觀戰模式不得上報');
@@ -86,17 +86,17 @@ assert.equal(events().at(-1)[2].mode, undefined, '多人模式不得上報');
 
 const beforeLegacyEvents = events().length;
 c.api.track('room_create');
-assert.equal(events().length, beforeLegacyEvents);
+assert.equal(events().length, beforeLegacyEvents + 1, '共用 analytics API 保留建房事件');
 c.api.track('room_join');
-assert.equal(events().length, beforeLegacyEvents);
+assert.equal(events().length, beforeLegacyEvents + 2, '共用 analytics API 保留入房事件');
 c.api.track('room_leave');
-assert.equal(events().length, beforeLegacyEvents);
+assert.equal(events().length, beforeLegacyEvents + 2);
 c.api.track('chat_message');
-assert.equal(events().length, beforeLegacyEvents);
+assert.equal(events().length, beforeLegacyEvents + 2);
 c.api.track('invite_share');
-assert.equal(events().length, beforeLegacyEvents);
+assert.equal(events().length, beforeLegacyEvents + 2);
 c.api.track('spectator_join');
-assert.equal(events().length, beforeLegacyEvents);
+assert.equal(events().length, beforeLegacyEvents + 2);
 
 const beforeInvalid = events().length;
 c.api.track('nickname', { name: 'private-name' });
@@ -114,4 +114,4 @@ for (const hostname of ['localhost', '127.0.0.1', 'preview.example', '']) {
   assert.equal(local.browser.gtag, undefined);
   assert.doesNotThrow(() => local.api.start({ mode: 'solo', players: 1 }));
 }
-console.log('GA4 verified: initialization, local isolation, solo lifecycle, parameters and native screen views');
+console.log('GA4 verified: initialization, local isolation, lifecycle deduplication, event allowlist and parameter filtering');

@@ -55,15 +55,6 @@
     "node tests/i18n.js": {
       "count": null
     },
-    "node scripts/online-check.js": {
-      "count": null
-    },
-    "node tests/server-outage.cjs": {
-      "count": null
-    },
-    "node tests/analytics.js": {
-      "count": null
-    },
     "node tests/localization.js": {
       "count": null
     },

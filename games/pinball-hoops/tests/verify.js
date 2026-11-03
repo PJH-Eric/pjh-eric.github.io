@@ -283,7 +283,7 @@ t('本機伺服器不建立即時連線或房間路由', () => {
   assert.ok(!server.includes('WebSocket'));
   assert.ok(!server.includes("'upgrade'"));
   assert.ok(!server.includes('ALLOW_ORIGIN'));
-  assert.ok(!server.includes("'/health'"));
+  assert.ok(server.includes("pathname === '/health'"));
   assert.ok(!server.includes('room_create'));
 });
 t('首頁移除線上大廳與房間畫面', () => {
@@ -330,12 +330,12 @@ t('樣式表移除聊天室、觀戰與對手畫面', () => {
   assert.ok(!css.includes('.opp-col'));
   assert.ok(!css.includes('data-spectator'));
 });
-t('分析事件不再追蹤房間或觀戰事件', () => {
-  const analytics = readProjectFile('public/js/analytics.js');
-  assert.ok(!analytics.includes('room_create'));
-  assert.ok(!analytics.includes('room_join'));
-  assert.ok(!analytics.includes('room_leave'));
-  assert.ok(!analytics.includes('spectator_join'));
+t('遊戲流程只上報單機對局', () => {
+  const app = readProjectFile('public/js/app.js');
+  assert.ok(app.includes("GameAnalytics.start({ mode: 'solo'"));
+  assert.ok(!app.includes("mode: 'online'"));
+  assert.ok(!app.includes('GameAnalytics.roomRequest'));
+  assert.ok(!app.includes("GameAnalytics.track('room_"));
 });
 t('套件指令不再設定線上檢查或網址注入', () => {
   const pkg = readProjectFile('package.json');

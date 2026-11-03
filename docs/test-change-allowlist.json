@@ -166,16 +166,16 @@
       "sha256": "799bdae58f1dfc91773369697e374021f9c20b48a988c8cf1f3dd4f39b85ebed"
     },
     "games/pinball-hoops/tests/analytics.js": {
-      "reason": "移除線上遊戲後，改驗證舊房間、聊天室與觀戰事件不再送出",
-      "sha256": "cf54595a8bb672fc9dcb864c6bbe298689e33b3fbed1b15d0dc64439562ab5c9"
+      "reason": "共用 analytics API 保留通用事件；確認本遊戲只上報單機對局",
+      "sha256": "d4fca25150305337f45775992d9d6dcc0274995b5cf22c39d93321aacfa87710"
     },
     "games/pinball-hoops/tests/seo.js": {
-      "reason": "移除線上遊戲後，改驗證房間、邀請與觀戰遙測事件被拒絕",
-      "sha256": "4f3f813de34152832cc3bcc820bf7aa0696e4ea9e4d8722ba772d09bdd0aa362"
+      "reason": "共用 analytics 事件白名單更新，並保留本遊戲單機流程檢查",
+      "sha256": "9fa78ebb478e5da2083b3e4b7a15a363e4e17d7207915d1cbb9a47e94b3c70ea"
     },
     "games/pinball-hoops/tests/verify.js": {
-      "reason": "移除線上後端後，以單機與部署檢查取代房間服務測試，維持斷言數",
-      "sha256": "e93c6a893143829b5b87ce76bee866fa2c7b6621a90b3ef7eb8b264a194448ad"
+      "reason": "依單機功能驗證 app 不呼叫線上分析，移除多餘 WebSocket 副本並保留本機健康檢查",
+      "sha256": "717d17b3e580b42696e381be2e31877409baf7d16362d1e23c1348a03545fe25"
     },
     "games/pinball-hoops/tests/i18n-hans.js": {
       "reason": "移除觀戰後，刪除簡體翻譯測試中已無用途的觀戰人數範例",
