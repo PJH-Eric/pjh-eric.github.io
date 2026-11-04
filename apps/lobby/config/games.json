@@ -509,7 +509,7 @@
       "id": "rainbow-bubble",
       "title": "彩虹泡泡砲",
       "eyebrow": "泡泡射擊",
-      "description": "用彩虹砲對準同顏色的泡泡，咻！一次消掉好多好多；3～5 歲也能玩。",
+      "description": "發射並消除相連的同色泡泡，挑戰單機關卡與四段電腦，也能和朋友多人對戰、觀戰。",
       "icon": "rainbow",
       "accent": "sky",
       "category": "action",
@@ -520,7 +520,8 @@
         "單機",
         "電腦對戰",
         "線上多人",
-        "觀戰"
+        "觀戰",
+        "泡泡龍"
       ],
       "modes": [
         "幼幼班",
@@ -539,7 +540,7 @@
         "en": {
           "title": "Rainbow Bubble Blaster",
           "eyebrow": "Bubble Shooter",
-          "description": "Aim the rainbow cannon at same-colored bubbles and pop lots at once! Fun for ages 3 to 5, too.",
+          "description": "Match and pop connected bubbles, clear solo levels or challenge four AI levels, and play with or spectate friends online.",
           "tags": [
             "Shooting",
             "Matching",
@@ -547,7 +548,8 @@
             "Solo",
             "vs Computer",
             "Online Multiplayer",
-            "Spectate"
+            "Spectate",
+            "Bubble Shooter"
           ],
           "modes": [
             "Little Kids Mode",
@@ -563,7 +565,7 @@
         "zh-Hans": {
           "title": "彩虹泡泡砲",
           "eyebrow": "泡泡射击",
-          "description": "用彩虹砲对准同颜色的泡泡，咻！一次消掉好多好多；3～5 岁也能玩。",
+          "description": "发射并消除相连的同色泡泡，挑战单机闯关与四段电脑，也能和朋友多人对战、观战。",
           "tags": [
             "射击",
             "消除",
@@ -571,7 +573,8 @@
             "单机",
             "电脑对战",
             "线上多人",
-            "观战"
+            "观战",
+            "泡泡龙"
           ],
           "modes": [
             "幼幼班",
@@ -764,7 +767,7 @@
       "id": "reversi",
       "title": "黑白棋",
       "eyebrow": "棋類對弈",
-      "description": "木質棋盤與大理石棋子，夾住對手的棋子翻成自己的顏色。可挑戰五段電腦，或開房間邀朋友對戰、觀戰。",
+      "description": "在 8×8 棋盤夾住對手並翻轉棋子，挑戰五段電腦或邀朋友線上對弈；支援觀戰與聊天室。",
       "icon": "reversi",
       "accent": "mint",
       "category": "turn",
@@ -775,7 +778,8 @@
         "單機",
         "電腦對戰",
         "線上雙人",
-        "觀戰"
+        "觀戰",
+        "奧賽羅"
       ],
       "modes": [
         "幼幼班",
@@ -794,7 +798,7 @@
         "en": {
           "title": "Reversi",
           "eyebrow": "Board Game",
-          "description": "Wooden board, marble pieces: sandwich your opponent's pieces to flip them to your color. Take on a five-level computer, or open a room to play or spectate with friends.",
+          "description": "Trap and flip pieces on an 8×8 board. Challenge five AI levels or play friends online with spectating and chat.",
           "tags": [
             "Board Game",
             "Strategy",
@@ -802,7 +806,8 @@
             "Solo",
             "vs Computer",
             "Online 2-Player",
-            "Spectate"
+            "Spectate",
+            "Othello"
           ],
           "modes": [
             "Little Kids Mode",
@@ -818,7 +823,7 @@
         "zh-Hans": {
           "title": "黑白棋",
           "eyebrow": "棋类对弈",
-          "description": "木质棋盘与大理石棋子，夹住对手的棋子翻成自己的颜色。可挑战五段电脑，或开房间邀朋友对战、观战。",
+          "description": "在 8×8 棋盘夹住对手并翻转棋子，挑战五段电脑或邀请朋友在线对弈；支持观战与聊天室。",
           "tags": [
             "棋类",
             "策略",
@@ -826,7 +831,8 @@
             "单机",
             "电脑对战",
             "线上双人",
-            "观战"
+            "观战",
+            "奥赛罗"
           ],
           "modes": [
             "幼幼班",
