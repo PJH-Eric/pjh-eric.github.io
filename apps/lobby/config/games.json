@@ -281,7 +281,7 @@
       "id": "stair-kids",
       "title": "小朋友下樓梯",
       "eyebrow": "反應閃避",
-      "description": "左右閃躲、一路向下！踩穩階梯、避開尖刺與天花板，單人挑戰最深紀錄，或與朋友線上比一場。",
+      "description": "往下踩住階梯，避開天花板與深淵；雙人可互推，也能站在對手頭上。",
       "icon": "stairs",
       "accent": "mint",
       "category": "challenge",
@@ -310,7 +310,7 @@
         "en": {
           "title": "Stair Kids",
           "eyebrow": "Dodge & React",
-          "description": "Dodge left and right, land on platforms and keep descending. Beat your deepest run solo or race a friend online.",
+          "description": "Step down, dodge the ceiling and abyss; bump a rival or stand on their head in versus mode.",
           "tags": [
             "Reflex",
             "Dodging",
@@ -333,7 +333,7 @@
         "zh-Hans": {
           "title": "小朋友下楼梯",
           "eyebrow": "反应闪避",
-          "description": "左右闪躲、一路向下！踩稳阶梯、避开尖刺与天花板，单人挑战最深纪录，或与朋友线上比一场。",
+          "description": "往下踩住阶梯，避开天花板与深渊；双人可互推，也能站在对手头上。",
           "tags": [
             "反应",
             "闪避",
