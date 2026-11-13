@@ -12,7 +12,7 @@ function validate(u) {
     const x = new URL(u);
     if (!/^https?:$/.test(x.protocol)) return null;
     if (!isLocal && x.protocol !== 'https:') return null; // production 必須 HTTPS/WSS
-    return x.origin;
+    return x.origin + x.pathname.replace(/\/+$/, '');
   } catch (e) { return null; }
 }
 
