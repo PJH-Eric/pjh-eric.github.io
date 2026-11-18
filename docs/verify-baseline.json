@@ -338,13 +338,7 @@
   },
   "shoot-balloon": {
     "node tests/verify.js": {
-      "count": 311
-    },
-    "node scripts/online-check.js": {
-      "count": 67
-    },
-    "node tests/server-outage.cjs": {
-      "count": null
+      "count": 207
     },
     "node tests/analytics.js": {
       "count": null

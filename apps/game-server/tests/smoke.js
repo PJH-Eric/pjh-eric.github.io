@@ -95,7 +95,7 @@ function wsOpen(url) {
   await new Promise((r) => setTimeout(r, 50));
 
   // socket.io 相容遊戲：事件往返（健康度、ack）
-  for (const id of ['whack-a-mole', 'fruit-link', 'shoot-balloon', 'draw-guess', 'house-stack']) {
+  for (const id of ['whack-a-mole', 'fruit-link', 'draw-guess', 'house-stack']) {
     const s = io(base + '/g/' + id, { reconnection: false, timeout: 5000 });
     await new Promise((resolve, reject) => { s.on('connect', resolve); s.on('connect_error', (e) => reject(new Error(id + ' sio 連線失敗：' + (e && e.message)))); });
     s.disconnect();

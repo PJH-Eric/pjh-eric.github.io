@@ -115,7 +115,6 @@ GA4 後台可依報表需求建立事件範圍的自訂維度：`game_id`、`mod
 | 炸彈小隊 | `github.io/bomb-squad` | 3120 |
 | 彩虹泡泡砲 | `github.io/rainbow-bubble` | 3140 |
 | 彈珠籃球 | `github.io/pinball-hoops` | 3200 |
-| 射氣球 | `github.io/shoot-balloon` | 3220 |
 | 迷宮滾球 | `github.io/maze-roll` | 3090 |
 | 疊疊高樓 | `github.io/house-stack` | 3090 |
 

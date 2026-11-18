@@ -153,10 +153,7 @@
   },
   "shoot-balloon": {
     "node scripts/browser-check.js": {
-      "count": 168
-    },
-    "node scripts/server-outage-browser-check.cjs": {
-      "count": null
+      "count": 116
     },
     "node scripts/shots.js": {
       "count": null

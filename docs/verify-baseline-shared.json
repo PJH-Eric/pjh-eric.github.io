@@ -64,11 +64,6 @@
       "count": 13
     }
   },
-  "shoot-balloon": {
-    "../..::tsx scripts/online-via-shared.js shoot-balloon": {
-      "count": 67
-    }
-  },
   "maze-roll": {
     "../..::tsx scripts/online-via-shared.js maze-roll": {
       "count": null

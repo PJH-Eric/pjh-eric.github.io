@@ -222,7 +222,7 @@ async function verifyTypescript(g) {
   return commands;
 }
 
-const games = manifest.games.filter((g) => !ids.length || ids.includes(g.id));
+const games = manifest.games.filter((g) => (!ids.length || ids.includes(g.id)) && (!sharedMode || g.server !== "static"));
 const baseline = fs.existsSync(baseFile) ? JSON.parse(fs.readFileSync(baseFile, 'utf8')) : {};
 const last = fs.existsSync(lastFile) ? JSON.parse(fs.readFileSync(lastFile, 'utf8')) : {};
 let failed = 0;
