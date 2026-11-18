@@ -627,26 +627,20 @@
       "id": "rainbow-bubble",
       "title": "彩虹泡泡砲",
       "eyebrow": "泡泡射擊",
-      "description": "發射並消除相連的同色泡泡，挑戰單機關卡與四段電腦，也能和朋友多人對戰、觀戰。",
+      "description": "發射泡泡、消除同色連珠，享受單機自由遊玩，或挑戰四段難度的闖關關卡。",
       "icon": "rainbow",
       "accent": "sky",
       "category": "action",
       "tags": [
         "射擊",
         "消除",
+        "闖關",
         "幼幼班",
-        "單機",
-        "電腦對戰",
-        "線上多人",
-        "觀戰"
+        "單機"
       ],
       "modes": [
-        "幼幼班",
-        "單機練習",
-        "四段 AI",
-        "線上房間",
-        "觀戰",
-        "邀請連結"
+        "單機自由玩",
+        "闖關"
       ],
       "controls": "點哪裡泡泡就飛向哪裡；右下角小泡泡可以換泡泡",
       "launchUrl": "https://pjh-eric.github.io/rainbow-bubble/",
@@ -657,23 +651,17 @@
         "en": {
           "title": "Rainbow Bubble Blaster",
           "eyebrow": "Bubble Shooter",
-          "description": "Match and pop connected bubbles, clear solo levels or challenge four AI levels, and play with or spectate friends online.",
+          "description": "Aim and pop matching bubbles in solo play, or progress through unlockable challenge levels across four difficulty tiers.",
           "tags": [
             "Shooting",
             "Matching",
+            "Levels",
             "Little Kids",
-            "Solo",
-            "vs Computer",
-            "Online Multiplayer",
-            "Spectate"
+            "Solo"
           ],
           "modes": [
-            "Little Kids Mode",
-            "Solo Practice",
-            "Four AI Levels",
-            "Online Room",
-            "Spectate",
-            "Invite Link"
+            "Solo Play",
+            "Quest"
           ],
           "controls": "Bubbles fly wherever you tap; swap bubbles with the small bubble at the bottom right",
           "badge": "Cozy"
@@ -681,23 +669,17 @@
         "zh-Hans": {
           "title": "彩虹泡泡砲",
           "eyebrow": "泡泡射击",
-          "description": "发射并消除相连的同色泡泡，挑战单机闯关与四段电脑，也能和朋友多人对战、观战。",
+          "description": "发射泡泡、消除同色连珠，体验单机自由游玩，或挑战四段难度的闯关关卡。",
           "tags": [
             "射击",
             "消除",
+            "闯关",
             "幼幼班",
-            "单机",
-            "电脑对战",
-            "线上多人",
-            "观战"
+            "单机"
           ],
           "modes": [
-            "幼幼班",
-            "单机练习",
-            "四段 AI",
-            "线上房间",
-            "观战",
-            "邀请连结"
+            "单机自由玩",
+            "闯关"
           ],
           "controls": "点哪里泡泡就飞向哪里；右下角小泡泡可以换泡泡",
           "badge": "疗愈"
