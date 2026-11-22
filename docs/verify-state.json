@@ -5,9 +5,9 @@
     "rounds": 0
   },
   "whack-a-mole": {
-    "fp": "997c242f1faa",
-    "streak": 1,
-    "rounds": 1
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
   },
   "fruit-link": {
     "fp": "",
@@ -60,6 +60,31 @@
     "rounds": 0
   },
   "rainbow-bubble": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "flip-match": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "amaze-go": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "maze-roll": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "snake-3d": {
+    "fp": "",
+    "streak": 0,
+    "rounds": 0
+  },
+  "ice-duel": {
     "fp": "",
     "streak": 0,
     "rounds": 0
