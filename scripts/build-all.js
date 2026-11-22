@@ -1,10 +1,10 @@
 /*
- * scripts/build-all.js — 統一建置：把大廳＋17 款遊戲的前端組成一個 site-dist/，可直接放 GitHub Pages。
+ * scripts/build-all.js — 統一建置：把封面、大廳與遊戲前端組成一個 site-dist/，可直接放 GitHub Pages。
  *   node scripts/build-all.js                         （只建靜態遊戲，vite 遊戲略過並提示）
  *   node scripts/build-all.js --vite                  （連 snake-3d、ice-duel 一起建；需要網路 npm install）
  *   GAME_SERVER_URL=https://xxx.onrender.com node scripts/build-all.js
  *       → 每款的 config 注入 <GAME_SERVER_URL>/g/<遊戲id>（共用伺服器），沒給就維持同源／單機
- * 輸出：site-dist/（大廳在根目錄，每款在 /<遊戲id>/，與既有網址相同）
+ * 輸出：site-dist/（封面在根目錄，大廳在 /game-lobby/，各遊戲在 /<遊戲id>/）
  */
 'use strict';
 const fs = require('fs');
@@ -36,6 +36,7 @@ const runNpm = (args, cwd, env) => spawnSync(
 function copyDir(src, dst) { fs.mkdirSync(dst, { recursive: true }); fs.cpSync(src, dst, { recursive: true, filter: (p) => !/(^|[\\/])(node_modules|\.git)([\\/]|$)/.test(p) }); }
 
 const { injectConfig, envJs } = require('./lib/inject-config.js');
+const { render, writeSite } = require('../apps/site/scripts/build.js');
 
 // GA4／SEO：與各原專案的部署流程一致。測量 ID 全站共用，可用環境變數 GA_MEASUREMENT_ID 覆寫；
 // 注入腳本只在暫存複製上跑（不改 games/ 原始碼）。
@@ -67,10 +68,15 @@ function inject(dir, id) {
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 
-// 1) 大廳 → 根目錄
-let r = runNode('scripts/build-pages.js', [], path.join(root, 'apps/lobby'));
+// 1) 根目錄封面與遊戲大廳
+const lobbyDir = path.join(root, 'apps/lobby');
+const r = runNode('scripts/build-pages.js', [], lobbyDir);
 if (r.status !== 0) { console.error('✗ 大廳建置失敗\n' + r.stdout + r.stderr); process.exit(1); }
-copyDir(path.join(root, 'apps/lobby/dist'), out);
+copyDir(path.join(lobbyDir, 'dist'), path.join(out, 'game-lobby'));
+const siteConfig = require('../apps/site/seo.config.json');
+const lobbyConfig = require('../apps/lobby/config/games.json');
+writeSite(out, render({ ...siteConfig, gaMeasurementId: GA_ID }, lobbyConfig, './game-lobby/'));
+console.log('✓ 根網站封面');
 console.log('✓ 大廳');
 
 // 2) 各遊戲
@@ -131,9 +137,10 @@ let rewritten = 0;
     if (fs.statSync(f).isDirectory()) { walk(f); continue; }
     if (!/\.(html|xml|txt|json|js|webmanifest)$/.test(name)) continue;
     const t = fs.readFileSync(f, 'utf8');
-    const n = t
-      .replace(urlRe, (m, id) => ORIGIN + PREFIX + '/' + (id === 'game-lobby' ? '' : id + '/'))
-      .replace(/(['"])\/game-lobby\/\1/g, '$1' + PREFIX + '/$1');   // analytics.js 以 pathname 判斷「回大廳」連結
+    const n = dir === out
+      ? t.replaceAll(ORIGIN + '/', ORIGIN + PREFIX + '/')
+      : t.replace(urlRe, (m, id) => ORIGIN + PREFIX + '/' + id + '/')
+        .replace(/(['"])\/game-lobby\/\1/g, '$1' + PREFIX + '/game-lobby/$1');   // analytics.js 以 pathname 判斷「回大廳」連結
     if (n !== t) { fs.writeFileSync(f, n); rewritten++; }
   }
 })(out);

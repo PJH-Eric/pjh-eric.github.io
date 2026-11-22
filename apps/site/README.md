@@ -2,7 +2,7 @@
 
 Node.js 26.12.1，零套件依賴。`npm test` 驗證輸出與錯誤情境；`npm run build` 從已上線大廳讀取遊戲清單，產生 `dist/` 的入口頁、robots.txt、sitemap.xml、404.html 與 .nojekyll。
 
-首頁以品牌介紹、小島插畫及遊戲大廳入口為主，不逐款列出遊戲；遊戲清單只用於驗證與產生 sitemap。樣式及插畫來源為 `assets/home.css`、`assets/island.svg`，建置時複製至發布根目錄。
+首頁是「遊戲小小島」封面，提供遊戲大廳和贊助入口。樣式與封面插畫使用 `assets/home.css` 和 `assets/island-night.webp`。建置時一併發布 `assets/og-island-night.jpg` 作為社群分享圖，並從 `seo.config.json` 產生首頁的中繼資料與 JSON-LD。遊戲清單用於驗證與產生 sitemap。
 
 離線驗證可設定 `GAMES_JSON_PATH` 指向本機 `game-lobby/config/games.json`。正式 workflow 不設定此變數，使用 `seo.config.json` 的公開網址；下載失敗或清單格式錯誤會直接失敗。sitemap 包含根網站、大廳及所有遊戲，以結尾斜線統一網址；不捏造每日 lastmod。
 

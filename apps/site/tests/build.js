@@ -25,6 +25,8 @@ assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.lobbyUrl + 'sitemap.xml
 assert.ok(files['robots.txt'].includes('Sitemap: ' + game.launchUrl + 'sitemap.xml'));
 assert.ok(!files['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'snake-3d/sitemap.xml'));
 assert.ok(files['index.html'].includes('href="' + cfg.lobbyUrl + '"'));
+assert.ok(files['index.html'].includes('href="https://portaly.cc/pjh-eric/support"'));
+assert.equal((files['index.html'].match(/<a\s/g) || []).length, 2);
 assert.ok(!files['index.html'].includes('href="' + game.launchUrl + '"'));
 assert.ok(!files['index.html'].includes('src="' + game.imageUrl + '"'));
 assert.ok(!files['index.html'].includes(game.title));
@@ -34,8 +36,17 @@ assert.ok(!files['index.html'].includes('class="game-grid"'));
 assert.ok(files['sitemap.xml'].includes(game.launchUrl));
 assert.ok(!files['index.html'].includes('http-equiv="refresh"'));
 assert.ok(files['404.html'].includes('noindex'));
-assert.ok(files['index.html'].includes('rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png"'));
-assert.ok(files['index.html'].includes('property="og:image" content="' + cfg.siteUrl + 'og-image.png"'));
+assert.ok(files['index.html'].includes('rel="icon" type="image/png" sizes="96x96" href="./favicon-96.png"'));
+const shareUrl = cfg.siteUrl + 'og-island-night.jpg';
+assert.ok(fs.existsSync(path.join(__dirname, '..', 'assets', 'og-island-night.jpg')));
+assert.ok(files['index.html'].includes('property="og:image" content="' + shareUrl + '"'));
+assert.ok(files['index.html'].includes('name="twitter:image" content="' + shareUrl + '"'));
+const structuredData = JSON.parse(files['index.html'].match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
+const [website, webpage] = structuredData['@graph'];
+assert.equal(website['@type'], 'WebSite');
+assert.equal(website.url, cfg.siteUrl);
+assert.equal(webpage.primaryImageOfPage.url, shareUrl);
+assert.equal(webpage.significantLink, cfg.lobbyUrl);
 assert.throws(() => render(cfg, { games: [] }), /沒有任何遊戲/);
 assert.throws(() => render(cfg, { games: [game, game] }), /重複/);
 assert.throws(() => render(cfg, { games: [{ ...game, launchUrl: 'https://evil.example/' }] }), /遊戲設定/);
@@ -48,7 +59,7 @@ if (process.env.GAMES_JSON_PATH) assert.ok(fs.existsSync(local), 'GAMES_JSON_PAT
 if (fs.existsSync(local)) {
   const lobby = JSON.parse(fs.readFileSync(local, 'utf8'));
   const actual = render(cfg, lobby);
-  assert.equal(sourceRobots, actual['robots.txt']);
+  assert.equal(sourceRobots.replace(/\r\n/g, '\n'), actual['robots.txt']);
   assert.equal((actual['sitemap.xml'].match(/<loc>/g) || []).length, lobby.games.length + 2);
   assert.equal((actual['robots.txt'].match(/^Sitemap:/gm) || []).length, lobby.games.length + 2);
   assert.equal((actual['index.html'].match(/class="game-tile"/g) || []).length, 0);

@@ -12,11 +12,10 @@ Sitemap: https://pjh-eric.github.io/draw-guess/sitemap.xml
 Sitemap: https://pjh-eric.github.io/bomb-squad/sitemap.xml
 Sitemap: https://pjh-eric.github.io/rainbow-bubble/sitemap.xml
 Sitemap: https://pjh-eric.github.io/pool-duel/sitemap.xml
-Sitemap: https://pjh-eric.github.io/curling-duel/sitemap.xml
+Sitemap: https://pjh-eric.github.io/ice-duel/sitemap.xml
 Sitemap: https://pjh-eric.github.io/reversi/sitemap.xml
 Sitemap: https://pjh-eric.github.io/amaze-go/sitemap.xml
 Sitemap: https://pjh-eric.github.io/pinball-hoops/sitemap.xml
-Sitemap: https://pjh-eric.github.io/shoot-balloon/sitemap.xml
 Sitemap: https://pjh-eric.github.io/maze-roll/sitemap.xml
 Sitemap: https://pjh-eric.github.io/house-stack/sitemap.xml
 Sitemap: https://pjh-eric.github.io/snake-3d/sitemap.xml
