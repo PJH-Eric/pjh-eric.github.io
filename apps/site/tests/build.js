@@ -18,11 +18,14 @@ assert.ok(sourceRobots.includes('User-agent: *'));
 assert.ok(sourceRobots.includes('Allow: /'));
 assert.ok(sourceRobots.includes('Sitemap: ' + cfg.siteUrl + 'sitemap.xml'));
 assert.ok(sourceRobots.includes('Sitemap: ' + cfg.lobbyUrl + 'sitemap.xml'));
+assert.ok(sourceRobots.includes('Sitemap: ' + cfg.siteUrl + 'merge-zoo/sitemap.xml'));
 assert.ok(fs.existsSync(path.join(__dirname, '..', 'assets', 'images', 'games', 'snake-3d-cover.webp')));
-assert.equal((files['sitemap.xml'].match(/<loc>/g) || []).length, 3);
+assert.equal((files['sitemap.xml'].match(/<loc>/g) || []).length, 4);
+assert.ok(files['sitemap.xml'].includes(cfg.siteUrl + 'merge-zoo/'));
 assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'sitemap.xml'));
 assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.lobbyUrl + 'sitemap.xml'));
 assert.ok(files['robots.txt'].includes('Sitemap: ' + game.launchUrl + 'sitemap.xml'));
+assert.ok(files['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'merge-zoo/sitemap.xml'));
 assert.ok(!files['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'snake-3d/sitemap.xml'));
 assert.ok(files['index.html'].includes('href="' + cfg.lobbyUrl + '"'));
 assert.ok(files['index.html'].includes('href="https://portaly.cc/pjh-eric/support"'));
@@ -60,8 +63,10 @@ if (fs.existsSync(local)) {
   const lobby = JSON.parse(fs.readFileSync(local, 'utf8'));
   const actual = render(cfg, lobby);
   assert.equal(sourceRobots.replace(/\r\n/g, '\n'), actual['robots.txt']);
-  assert.equal((actual['sitemap.xml'].match(/<loc>/g) || []).length, lobby.games.length + 2);
-  assert.equal((actual['robots.txt'].match(/^Sitemap:/gm) || []).length, lobby.games.length + 2);
+  assert.equal((actual['sitemap.xml'].match(/<loc>/g) || []).length, lobby.games.length + 3);
+  assert.equal((actual['robots.txt'].match(/^Sitemap:/gm) || []).length, lobby.games.length + 3);
+  assert.ok(actual['sitemap.xml'].includes(cfg.siteUrl + 'merge-zoo/'));
+  assert.ok(actual['robots.txt'].includes('Sitemap: ' + cfg.siteUrl + 'merge-zoo/sitemap.xml'));
   assert.equal((actual['index.html'].match(/class="game-tile"/g) || []).length, 0);
   lobby.games.forEach(g => {
     assert.ok(actual['sitemap.xml'].includes(g.launchUrl));

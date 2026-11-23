@@ -11,7 +11,13 @@ const SHARE_IMAGE = {
   height: 630,
   alt: '遊戲小小島，月光下的海島遊戲廳'
 };
-const STANDALONE_GAMES = [];
+const STANDALONE_GAMES = [
+  {
+    id: 'merge-zoo',
+    launchUrl: ORIGIN + 'merge-zoo/',
+    imageUrl: ORIGIN + 'merge-zoo/assets/images/cover.webp'
+  }
+];
 const STANDALONE_GAME_URLS = STANDALONE_GAMES.map(game => game.launchUrl);
 const root = path.join(__dirname, '..');
 const esc = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -35,7 +41,8 @@ function render(cfg, lobby, lobbyHref = cfg.lobbyUrl) {
     seen.add(game.launchUrl); ids.add(game.id);
   }
   for (const game of STANDALONE_GAMES) {
-    if (ids.has(game.id) || game.imageUrl !== ORIGIN + 'images/games/snake-3d-cover.webp') {
+    if (!/^[a-z0-9-]+$/.test(game.id) || game.launchUrl !== ORIGIN + game.id + '/' ||
+        !game.imageUrl.startsWith(game.launchUrl) || ids.has(game.id)) {
       throw new Error('獨立遊戲設定不正確或重複：' + game.id);
     }
     ids.add(game.id);
